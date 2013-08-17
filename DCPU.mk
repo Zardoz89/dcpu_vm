@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=Luis Panadero Guardeño
-Date                   :=17/08/13
+Date                   :=18/08/13
 CodeLitePath           :="/home/luis/.codelite"
 LinkerName             :=g++
 SharedObjectLinkerName :=g++ -shared -fPIC
@@ -50,7 +50,7 @@ LibPath                := $(LibraryPathSwitch).
 AR       := ar rcus
 CXX      := g++
 CC       := gcc
-CXXFLAGS :=  -std=c++11 -Wno-packed-bitfield-compat -pthread  -O2 -Wall $(Preprocessors)
+CXXFLAGS :=  -std=c++11 -Wno-packed-bitfield-compat -pthread  -O3 -Wall $(Preprocessors)
 CFLAGS   :=  -Wno-packed-bitfield-compat -O2 -Wall $(Preprocessors)
 
 

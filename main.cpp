@@ -13,9 +13,9 @@
 
 using namespace cpu;
 
-#define THREADS           (40)
-const long PERTHREAD    = 40000 / THREADS;
-const long CYCLES       = 2000;
+#define THREADS           (1000)
+const long PERTHREAD    = 10000 / THREADS;
+const long CYCLES       = 1000*1000;
 
 
 std::vector<std::vector<std::shared_ptr<DCPU>>> threads;
