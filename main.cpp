@@ -2,21 +2,44 @@
 #include <fstream>
 #include <cstdint>
 #include <algorithm>
+#include <memory>
+#include <thread>
 
 #include <stdio.h>
+#include <time.h>
 
 #include "dcpu.hpp"
 #include "fake_lem1802.hpp"
 
 using namespace cpu;
 
+#define THREADS           (4)
+const int PERTHREAD     = 250000;
+const long CYCLES       = 1000000;
+
+std::vector<std::shared_ptr<DCPU>>* threads = 
+        new std::vector<std::shared_ptr<DCPU>>[THREADS];
+
+void hello(){
+    std::cout << "Hello from thread " << std::endl;
+}
+
+// Runs PERTHREAD cpus, doing CYCLES cycles
+void cpu_in_thread(int n) {
+    auto cpus = threads[n];
+    for (long i=0; i < CYCLES; i++) {
+        for (auto c = cpus.begin(); c != cpus.end(); c++) {
+            (*c)->tick();
+        }
+    }
+}
 
 int main (int argc, char **argv)
 {
 
     char* filename;
     std::ifstream binfile;
-    uint16_t* data = NULL;
+    uint16_t* data;
     size_t size = 0;
     
     
@@ -59,17 +82,27 @@ int main (int argc, char **argv)
     std::cout << "Readed " << size << " bytes - " << size / 2 << " words\n";
     size /= 2;
     
-    auto cpu = std::make_shared<DCPU>();
-    auto screen = std::make_shared<Fake_Lem1802>();
-    
-    cpu->attachHardware (screen);
-    cpu->reset();
-    cpu->loadProgram (data, size);
+    // Load program to all CPUs
+    for (int u=0; u<< THREADS; u++) {
+        std::vector<std::shared_ptr<DCPU>> cpus;
+        cpus.reserve (PERTHREAD);
+        for (int i = 0; i< PERTHREAD; i++) {
+            auto cpu = std::make_shared<DCPU>();   
+            auto screen = std::make_shared<Fake_Lem1802>();
+            cpu->attachHardware (screen);
+            cpu->reset();
+            cpu->loadProgram (data, size);
+            
+            cpus.push_back(cpu);
+        }
+
+        threads[i] = cpus;
+    }
     
     
     //std::cout << cpu->dumpRegisters() << "\n";
     
-    while (getchar() != 'q') {
+    /*while (getchar() != 'q') {
         //std::cout << "RAM[PC] = " << cpu->dumpRam() << "\n";
         for (int i = 0; i < 100; i++)
             cpu->tick();
@@ -80,8 +113,31 @@ int main (int argc, char **argv)
         //    std::cout << "STACK : "<< cpu->dumpRam(cpu->GetSP(), 0xFFFF) << "\n";
         
         
+    }*/
+    
+    long int start_time, finish_time;
+    struct timespec gettime_now;
+
+    std::thread tds[THREADS];
+
+    printf("Threads %d\t CPU PerThread %d\t", THREADS, PERTHREAD);
+    printf("N cpus %d\n", PERTHREAD * THREADS);
+    printf("Cycles %ld\n", CYCLES);
+    clock_gettime(CLOCK_REALTIME, &gettime_now);
+    start_time = gettime_now.tv_nsec + 1000000000 * gettime_now.tv_sec;
+    
+    for (int i=0; i< THREADS; i++) {
+        tds[i] = std::thread(cpu_in_thread, i);
     }
     
+    for (int i=0; i< THREADS; i++) {
+        tds[i].join();
+    }
+
+    
+    clock_gettime(CLOCK_REALTIME, &gettime_now);
+    finish_time = gettime_now.tv_nsec + 1000000000 * gettime_now.tv_sec;
+    printf("Running took %fms.\n", (float)(finish_time - start_time) / 1000000.0);
     
     delete[] data;
     return 0;

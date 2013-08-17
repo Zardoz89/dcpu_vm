@@ -2,12 +2,12 @@
 ## Auto Generated makefile by CodeLite IDE
 ## any manual changes will be erased      
 ##
-## Debug
+## Release
 ProjectName            :=DCPU
-ConfigurationName      :=Debug
+ConfigurationName      :=Release
 WorkspacePath          := "/home/luis/Repos/dcpu/DCPU"
 ProjectPath            := "/home/luis/Repos/dcpu/DCPU"
-IntermediateDirectory  :=./Debug
+IntermediateDirectory  :=./Release
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
@@ -35,7 +35,7 @@ PreprocessOnlySwitch   :=-E
 ObjectsFileList        :="DCPU.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
-LinkOptions            :=  
+LinkOptions            :=  -pthread  
 IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch). 
 IncludePCH             := 
 RcIncludePath          := 
@@ -50,8 +50,8 @@ LibPath                := $(LibraryPathSwitch).
 AR       := ar rcus
 CXX      := g++
 CC       := gcc
-CXXFLAGS :=  -std=c++11 -Wno-packed-bitfield-compat -g -O0 -Wall $(Preprocessors)
-CFLAGS   :=  -Wno-packed-bitfield-compat -g -O0 -Wall $(Preprocessors)
+CXXFLAGS :=  -std=c++11 -Wno-packed-bitfield-compat -pthread  -O2 -Wall $(Preprocessors)
+CFLAGS   :=  -Wno-packed-bitfield-compat -O2 -Wall $(Preprocessors)
 
 
 ##
@@ -77,7 +77,7 @@ $(OutputFile): $(IntermediateDirectory)/.d $(Objects)
 	$(LinkerName) $(OutputSwitch)$(OutputFile) @$(ObjectsFileList) $(LibPath) $(Libs) $(LinkOptions)
 
 $(IntermediateDirectory)/.d:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./Release || $(MakeDirCommand) ./Release
 
 PreBuild:
 
@@ -125,6 +125,6 @@ clean:
 	$(RM) $(IntermediateDirectory)/fake_lem1802$(DependSuffix)
 	$(RM) $(IntermediateDirectory)/fake_lem1802$(PreprocessSuffix)
 	$(RM) $(OutputFile)
-	$(RM) ".build-debug/DCPU"
+	$(RM) ".build-release/DCPU"
 
 
