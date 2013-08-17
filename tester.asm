@@ -1,4 +1,4 @@
-; This tester 1 for emulatros
+; Basic DCPU compilance test
 
 ; set and literals
 set a, 1
