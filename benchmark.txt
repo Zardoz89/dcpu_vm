@@ -1,66 +1,35 @@
 Input BIN File : ../tester.bin
 Readed 286 bytes - 143 words
-Threads 1        CPU PerThread 1000     N cpus 1000
-Cycles 1000
-Running took 0.222917ms.
-
-Input BIN File : ../tester.bin
-Readed 286 bytes - 143 words
 Threads 1        CPU PerThread 10000    N cpus 10000
 Cycles 1000
-Running took 0.225501ms.
+Measured time: 841ms
 
-Input BIN File : ../tester.bin
-Readed 286 bytes - 143 words
 Threads 4        CPU PerThread 2500     N cpus 10000
 Cycles 1000
-Running took 0.336444ms.
+Measured time: 242ms
 
-Input BIN File : ../tester.bin
-Readed 286 bytes - 143 words
+SpeedUp = 841 / 242 = 3.47
+
 Threads 40       CPU PerThread 250      N cpus 10000
 Cycles 1000
-Running took 2.885531ms.
+Measured time: 84ms
+
+SpeedUp = 841 / 84 = 10.01
 
 Input BIN File : ../tester.bin
 Readed 286 bytes - 143 words
-Threads 40       CPU PerThread 250      N cpus 10000
-Cycles 10000
-Running took 2.858948ms.
+Threads 1        CPU PerThread 40000    N cpus 40000
+Cycles 2000
+Measured time: 14173ms
 
-Input BIN File : ../tester.bin
-Readed 286 bytes - 143 words
-Threads 40       CPU PerThread 250      N cpus 10000
-Cycles 100000
-Running took 4.872714ms.
+Threads 4        CPU PerThread 10000    N cpus 40000
+Cycles 2000
+Measured time: 5115ms
 
-Input BIN File : ../tester.bin
-Readed 286 bytes - 143 words
-Threads 40       CPU PerThread 250      N cpus 10000
-Cycles 1000000
-Running took 19.028476ms.
+SpeedUp = 14173 / 5115 = 2.77
 
-Input BIN File : ../tester.bin
-Readed 286 bytes - 143 words
-Threads 40       CPU PerThread 2500     N cpus 100000
-Cycles 1000000
-Running took 20.303172ms.
+Threads 40       CPU PerThread 1000     N cpus 40000
+Cycles 2000
+Measured time: 926ms
 
-Input BIN File : ../tester.bin
-Readed 286 bytes - 143 words
-Threads 40       CPU PerThread 2500     N cpus 100000
-Cycles 1000000
-Running took 16.519280ms.
-
-Input BIN File : ../tester.bin
-Readed 286 bytes - 143 words
-Threads 40       CPU PerThread 25000    N cpus 1000000
-Cycles 1000000
-Running took 16.832256ms.
-
-Input BIN File : ../tester.bin
-Readed 286 bytes - 143 words
-Threads 4        CPU PerThread 250000   N cpus 1000000
-Cycles 1000000
-Running took 4.942234ms.
-
+SpeedUp = 14173 / 926 = 15.3

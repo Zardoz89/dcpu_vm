@@ -6,27 +6,25 @@
 #include <thread>
 
 #include <stdio.h>
-#include <time.h>
+#include <chrono>
 
 #include "dcpu.hpp"
 #include "fake_lem1802.hpp"
 
 using namespace cpu;
 
-#define THREADS           (4)
-const int PERTHREAD     = 250000;
-const long CYCLES       = 1000000;
+#define THREADS           (40)
+const long PERTHREAD    = 40000 / THREADS;
+const long CYCLES       = 2000;
 
-std::vector<std::shared_ptr<DCPU>>* threads = 
-        new std::vector<std::shared_ptr<DCPU>>[THREADS];
 
-void hello(){
-    std::cout << "Hello from thread " << std::endl;
-}
+std::vector<std::vector<std::shared_ptr<DCPU>>> threads;
+
 
 // Runs PERTHREAD cpus, doing CYCLES cycles
 void cpu_in_thread(int n) {
     auto cpus = threads[n];
+    //std::cerr << "cp "<< cpus.size() << std::endl;
     for (long i=0; i < CYCLES; i++) {
         for (auto c = cpus.begin(); c != cpus.end(); c++) {
             (*c)->tick();
@@ -83,7 +81,7 @@ int main (int argc, char **argv)
     size /= 2;
     
     // Load program to all CPUs
-    for (int u=0; u<< THREADS; u++) {
+    for (int u=0; u< THREADS; u++) {
         std::vector<std::shared_ptr<DCPU>> cpus;
         cpus.reserve (PERTHREAD);
         for (int i = 0; i< PERTHREAD; i++) {
@@ -96,7 +94,8 @@ int main (int argc, char **argv)
             cpus.push_back(cpu);
         }
 
-        threads[i] = cpus;
+        threads.push_back(cpus);
+        
     }
     
     
@@ -115,16 +114,16 @@ int main (int argc, char **argv)
         
     }*/
     
-    long int start_time, finish_time;
-    struct timespec gettime_now;
 
     std::thread tds[THREADS];
 
-    printf("Threads %d\t CPU PerThread %d\t", THREADS, PERTHREAD);
-    printf("N cpus %d\n", PERTHREAD * THREADS);
+    printf("Threads %d\t CPU PerThread %ld\t", THREADS, PERTHREAD);
+    printf("N cpus %ld\n", PERTHREAD * THREADS);
     printf("Cycles %ld\n", CYCLES);
-    clock_gettime(CLOCK_REALTIME, &gettime_now);
-    start_time = gettime_now.tv_nsec + 1000000000 * gettime_now.tv_sec;
+    
+    auto start = std::chrono::high_resolution_clock::now(); 
+    
+    //cpu_in_thread(0);
     
     for (int i=0; i< THREADS; i++) {
         tds[i] = std::thread(cpu_in_thread, i);
@@ -134,11 +133,12 @@ int main (int argc, char **argv)
         tds[i].join();
     }
 
-    
-    clock_gettime(CLOCK_REALTIME, &gettime_now);
-    finish_time = gettime_now.tv_nsec + 1000000000 * gettime_now.tv_sec;
-    printf("Running took %fms.\n", (float)(finish_time - start_time) / 1000000.0);
+	auto end = std::chrono::high_resolution_clock::now();
+    auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - start); 
+	std::cout << "Measured time: " << dur.count() << "ms" << std::endl;
+
     
     delete[] data;
+
     return 0;
 }
