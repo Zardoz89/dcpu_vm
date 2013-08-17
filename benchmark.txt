@@ -1,0 +1,66 @@
+Input BIN File : ../tester.bin
+Readed 286 bytes - 143 words
+Threads 1        CPU PerThread 1000     N cpus 1000
+Cycles 1000
+Running took 0.222917ms.
+
+Input BIN File : ../tester.bin
+Readed 286 bytes - 143 words
+Threads 1        CPU PerThread 10000    N cpus 10000
+Cycles 1000
+Running took 0.225501ms.
+
+Input BIN File : ../tester.bin
+Readed 286 bytes - 143 words
+Threads 4        CPU PerThread 2500     N cpus 10000
+Cycles 1000
+Running took 0.336444ms.
+
+Input BIN File : ../tester.bin
+Readed 286 bytes - 143 words
+Threads 40       CPU PerThread 250      N cpus 10000
+Cycles 1000
+Running took 2.885531ms.
+
+Input BIN File : ../tester.bin
+Readed 286 bytes - 143 words
+Threads 40       CPU PerThread 250      N cpus 10000
+Cycles 10000
+Running took 2.858948ms.
+
+Input BIN File : ../tester.bin
+Readed 286 bytes - 143 words
+Threads 40       CPU PerThread 250      N cpus 10000
+Cycles 100000
+Running took 4.872714ms.
+
+Input BIN File : ../tester.bin
+Readed 286 bytes - 143 words
+Threads 40       CPU PerThread 250      N cpus 10000
+Cycles 1000000
+Running took 19.028476ms.
+
+Input BIN File : ../tester.bin
+Readed 286 bytes - 143 words
+Threads 40       CPU PerThread 2500     N cpus 100000
+Cycles 1000000
+Running took 20.303172ms.
+
+Input BIN File : ../tester.bin
+Readed 286 bytes - 143 words
+Threads 40       CPU PerThread 2500     N cpus 100000
+Cycles 1000000
+Running took 16.519280ms.
+
+Input BIN File : ../tester.bin
+Readed 286 bytes - 143 words
+Threads 40       CPU PerThread 25000    N cpus 1000000
+Cycles 1000000
+Running took 16.832256ms.
+
+Input BIN File : ../tester.bin
+Readed 286 bytes - 143 words
+Threads 4        CPU PerThread 250000   N cpus 1000000
+Cycles 1000000
+Running took 4.942234ms.
+
