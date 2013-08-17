@@ -1,5 +1,6 @@
 ; Basic DCPU compilance test
 
+:init
 ; set and literals
 set a, 1
 set b, 2
@@ -114,6 +115,8 @@ hwn a
 ifg a, 0
 sub a, 1
 hwq a
+
+set pc, init
 
 :crash
 set pc, crash
