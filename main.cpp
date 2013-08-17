@@ -13,9 +13,11 @@
 
 using namespace cpu;
 
-#define THREADS           (1000)
-const long PERTHREAD    = 10000 / THREADS;
+#define THREADS           (210)
+const long PERTHREAD    = 1890 / THREADS;
 const long CYCLES       = 1000*1000;
+
+const int BATCH         = 10;
 
 
 std::vector<std::vector<std::shared_ptr<DCPU>>> threads;
@@ -25,9 +27,10 @@ std::vector<std::vector<std::shared_ptr<DCPU>>> threads;
 void cpu_in_thread(int n) {
     auto cpus = threads[n];
     //std::cerr << "cp "<< cpus.size() << std::endl;
-    for (long i=0; i < CYCLES; i++) {
+    for (long i=0; i < CYCLES; i+= BATCH) {
         for (auto c = cpus.begin(); c != cpus.end(); c++) {
-            (*c)->tick();
+            for ( int j=0; j < BATCH; j++)
+                (*c)->tick();
         }
     }
 }
