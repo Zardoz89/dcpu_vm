@@ -13,15 +13,19 @@
 
 using namespace cpu;
 
-#define THREADS           (210)
-const long PERTHREAD    = 3780 / THREADS;
+#define THREADS           (4)
+const long PERTHREAD    = 3400 / THREADS;
 const long CYCLES       = 1000*1000;
 
 const int BATCH         = 10;
 
 
 std::vector<std::vector<std::shared_ptr<DCPU>>> threads;
+uint16_t* data;
+size_t size = 0;
 
+void benchmark();
+void step();
 
 // Runs PERTHREAD cpus, doing CYCLES cycles
 void cpu_in_thread(int n) {
@@ -40,9 +44,6 @@ int main (int argc, char **argv)
 
     char* filename;
     std::ifstream binfile;
-    uint16_t* data;
-    size_t size = 0;
-    
     
     if (argc <= 1) {
         std::cerr << "Missing input file\n";
@@ -83,6 +84,27 @@ int main (int argc, char **argv)
     std::cout << "Readed " << size << " bytes - " << size / 2 << " words\n";
     size /= 2;
     
+badchar:
+    std::cout << "Select what to do : b -> benchmark  s -> step execution\n\n";
+    char choose;
+    std::cin >> choose;
+    
+    if (choose == 'b' || choose == 'B') {
+        benchmark();
+    } else if ( choose == 's' || choose == 'S') {
+        step();
+    } else {
+        goto badchar; /// HATE ME!!!!
+    }
+
+    delete[] data;
+
+    return 0;
+}
+
+
+void benchmark() 
+{
     // Load program to all CPUs
     for (int u=0; u< THREADS; u++) {
         std::vector<std::shared_ptr<DCPU>> cpus;
@@ -101,23 +123,6 @@ int main (int argc, char **argv)
         
     }
     
-    
-    //std::cout << cpu->dumpRegisters() << "\n";
-    
-    /*while (getchar() != 'q') {
-        //std::cout << "RAM[PC] = " << cpu->dumpRam() << "\n";
-        for (int i = 0; i < 100; i++)
-            cpu->tick();
-            
-        //std::cout << cpu->dumpRegisters() << "\n";
-        //std::cout << "T cycles " << cpu->getTotCycles() << "\n";
-        //if (cpu->GetSP() != 0x0000)
-        //    std::cout << "STACK : "<< cpu->dumpRam(cpu->GetSP(), 0xFFFF) << "\n";
-        
-        
-    }*/
-    
-
     std::thread tds[THREADS];
 
     printf("Threads %d\t CPU PerThread %ld\t", THREADS, PERTHREAD);
@@ -125,8 +130,6 @@ int main (int argc, char **argv)
     printf("Cycles %ld\n", CYCLES);
     
     auto start = std::chrono::high_resolution_clock::now(); 
-    
-    //cpu_in_thread(0);
     
     for (int i=0; i< THREADS; i++) {
         tds[i] = std::thread(cpu_in_thread, i);
@@ -139,9 +142,33 @@ int main (int argc, char **argv)
 	auto end = std::chrono::high_resolution_clock::now();
     auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - start); 
 	std::cout << "Measured time: " << dur.count() << "ms" << std::endl;
-
     
-    delete[] data;
+}
 
-    return 0;
+void step() {
+    using namespace std;
+    auto cpu = make_shared<DCPU>();
+    auto screen = make_shared<Fake_Lem1802>();
+    cpu->attachHardware (screen);
+    cpu->reset();
+    cpu->loadProgram (data, size);
+    
+    cout << cpu->dumpRegisters() << endl;
+    
+    while (getchar() != 'q') {
+        
+        cout << "PC= 0x";
+        cout << hex << cpu->GetPC();
+        cout << "\t RAM[PC] = " << cpu->dumpRam() << endl;
+        //for (int i = 0; i < 100; i++)
+            cpu->tick();
+            
+        cout << cpu->dumpRegisters() << endl;
+        cout << "T cycles " << dec << cpu->getTotCycles() << endl;
+        if (cpu->GetSP() != 0x0000)
+            cout << "STACK : "<< cpu->dumpRam(cpu->GetSP(), 0xFFFF) << endl;
+        
+        
+    }
+    
 }
