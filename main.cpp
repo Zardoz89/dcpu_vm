@@ -14,7 +14,7 @@
 using namespace cpu;
 
 #define THREADS           (210)
-const long PERTHREAD    = 3360 / THREADS;
+const long PERTHREAD    = 3780 / THREADS;
 const long CYCLES       = 1000*1000;
 
 const int BATCH         = 10;

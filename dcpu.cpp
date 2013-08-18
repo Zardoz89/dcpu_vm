@@ -145,10 +145,10 @@ int DCPU::realStep()
     int cycles = 0;
     
     uint16_t *a = NULL, *b = NULL;
-    int16_t sa, sb;   	// Signed versions
-    uint32_t tmp_result;
+    int_fast16_t sa, sb;   	// Signed versions
+    uint_fast32_t tmp_result;
     uint16_t tmp_a;			// Used by Literal values
-    uint16_t old_sp = rsp;
+    uint_fast16_t old_sp = rsp;
     
     opword* op = (opword*) (ram + (rpc++) );
     
