@@ -24,6 +24,14 @@ all commands of a real LEM1802, but don't uses palettes, color, border color or 
 It refresh at 60Hz (1666,7 cpu cycles), sou will need press a few times any key 
 to see anything in the terminal.
 
+The program will you ask if you like to run the benchmark or step execution mode.
+
+In step execution mode, each time that you press enter, except 'f' or 'q' followed by enter,
+you will exceute a CPU clock cycle. If you press 'q' followed by enter , you will end the VM
+, and if you press 'f' followed by enter, you will exceute directly 100 cycles.
+
+The benchmark setup is coded in some contants at tyhe begin of main.cpp.
+
 TODO
 ----
 
