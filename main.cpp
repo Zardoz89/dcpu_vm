@@ -155,19 +155,25 @@ void step() {
     
     cout << cpu->dumpRegisters() << endl;
     
-    while (getchar() != 'q') {
+    char c = getchar();
+    while (c != 'q') {
         
         cout << "PC= 0x";
         cout << hex << cpu->GetPC();
         cout << "\t RAM[PC] = " << cpu->dumpRam() << endl;
-        //for (int i = 0; i < 100; i++)
+        if (c == 'f') {
+            for (int i = 0; i < 100; i++)
+                cpu->tick();
+        } else {
             cpu->tick();
+        }
             
         cout << cpu->dumpRegisters() << endl;
         cout << "T cycles " << dec << cpu->getTotCycles() << endl;
         if (cpu->GetSP() != 0x0000)
             cout << "STACK : "<< cpu->dumpRam(cpu->GetSP(), 0xFFFF) << endl;
         
+        c = getchar();
         
     }
     
