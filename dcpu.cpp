@@ -89,6 +89,9 @@ int DCPU::realStep()
     
     opword* op = (opword*) (ram + (rpc++) );
     
+    // TODO Move skiing here and use a table to precalculate instrucction 
+    //      long for skining
+    
     switch (op->basic.a) {
         // registers, direct:
     case REG_A:
@@ -187,7 +190,7 @@ int DCPU::realStep()
         cycles++;
         break;
         
-    case PTR_NW_I: // TODO Mirar que pasa aqui !
+    case PTR_NW_I:
         a = ram + ri + ram[ (rpc++)];
         cycles++;
         break;
