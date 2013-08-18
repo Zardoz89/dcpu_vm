@@ -208,12 +208,12 @@ public:
 private:
     uint16_t* ram; /// RAM
     
-    int realStep();
+    inline int realStep();
     
-    void triggerInterrupt (uint16_t msg);
-    void handleInterrupt (uint16_t msg);
-    void handleHWInterrupts();
-    void tickHardware();
+    inline void triggerInterrupt (uint16_t msg);
+    inline void handleInterrupt (uint16_t msg);
+    inline void handleHWInterrupts();
+    inline void tickHardware();
     
     bool int_queueing;  /// Queue interrupts
     bool skipping_flag; /// Skiping next instruccion ?

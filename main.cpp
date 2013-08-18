@@ -14,7 +14,7 @@
 using namespace cpu;
 
 #define THREADS           (210)
-const long PERTHREAD    = 1890 / THREADS;
+const long PERTHREAD    = 3360 / THREADS;
 const long CYCLES       = 1000*1000;
 
 const int BATCH         = 10;
@@ -89,8 +89,8 @@ int main (int argc, char **argv)
         cpus.reserve (PERTHREAD);
         for (int i = 0; i< PERTHREAD; i++) {
             auto cpu = std::make_shared<DCPU>();   
-            auto screen = std::make_shared<Fake_Lem1802>();
-            cpu->attachHardware (screen);
+            //auto screen = std::make_shared<Fake_Lem1802>();
+            //cpu->attachHardware (screen);
             cpu->reset();
             cpu->loadProgram (data, size);
             
