@@ -46,6 +46,12 @@ Fake_Lem1802::~Fake_Lem1802()
     delete[] def_font_map;
 }
 
+void Fake_Lem1802::attachTo (DCPU* cpu, size_t index) {
+    this->IHardware::attachTo(cpu, index);
+    
+    tick_per_refresh = cpu->cpu_clock / 60;
+}
+
 void Fake_Lem1802::handleInterrupt()
 {
     if (this->cpu == NULL)
@@ -58,7 +64,7 @@ void Fake_Lem1802::handleInterrupt()
         screen_map = cpu->GetB();
         
         if (screen_map != 0)
-            ticks = 1667; // Force to do initial print
+            ticks = tick_per_refresh +1; // Force to do initial print
             
         break;
         
@@ -92,8 +98,8 @@ void Fake_Lem1802::handleInterrupt()
 
 void Fake_Lem1802::tick()
 {
-    if (++ticks > 1666) {
-        // Update screen at 60Hz aprox if CPU clock runs at 100Khz
+    if (++ticks > tick_per_refresh) {
+        // Update screen at 60Hz aprox
         ticks = 0;
         this->show();
     }

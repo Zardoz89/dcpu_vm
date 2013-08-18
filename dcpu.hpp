@@ -29,6 +29,8 @@ public:
     
     uint16_t ra, rb, rc, rx, ry, rz , ri, rj, rex, rpc, ria, rsp; /// Registers
     
+    const uint32_t cpu_clock = 100000;  /// CPU clock speed in Hz
+    
     /**
     * @brief Sets the CPU to the initial state
     * ADVICE: Also cleans the RAM
@@ -249,7 +251,7 @@ public:
      * @brief Attach the Hardware device to the CPU
      * @param cpu Ptr to the CPU
      */
-    void attachTo (DCPU* cpu, size_t index) {
+    virtual void attachTo (DCPU* cpu, size_t index) {
         this->cpu = cpu;
         this->index = index;
     }
@@ -257,7 +259,7 @@ public:
     /**
      * @brief Detachs from the CPU
      */
-    void detach() {
+    virtual void detach() {
         this->cpu = NULL;
     }
     

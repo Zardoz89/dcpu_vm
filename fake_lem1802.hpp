@@ -42,6 +42,8 @@ public:
     virtual void handleInterrupt();
     virtual void tick();
     
+    virtual void attachTo (DCPU* cpu, size_t index);
+    
     /**
      * @brief Try to show the screen in the terminal
      */
@@ -55,7 +57,9 @@ private:
     uint8_t border_col;             /// Border color (unused)
     const uint16_t *def_font_map;   /// Default font map
     uint16_t def_palette_map[16];   /// Default palette
-    uint16_t ticks;                 /// CPU clock ticks (for timing)
+    uint32_t ticks;                 /// CPU clock ticks (for timing)
+    
+    uint32_t tick_per_refresh;      /// How many ticks before refresh
     
 };
 
