@@ -14,7 +14,7 @@
 
 using namespace cpu;
 
-const long TOTALCPUS    = 3568;
+const long TOTALCPUS    = 215*16;
 const long PERTHREAD    = 16;  // At 16 looks that is the ideal for the FX-4100
 #define THREADS           (TOTALCPUS/PERTHREAD)
 const long CYCLES       = 1000*1000;
@@ -46,8 +46,8 @@ int main (int argc, char **argv)
     char* filename;
     std::ifstream binfile;
     
-    std::cout << "cpu " << sizeof(DCPU) << " IHardware " << sizeof(IHardware);
-    std::cout << " fake_LEM1802 " << sizeof(Fake_Lem1802) << std::endl;
+   /* std::cout << "cpu " << sizeof(DCPU) << " IHardware " << sizeof(IHardware);
+    std::cout << " fake_LEM1802 " << sizeof(Fake_Lem1802) << std::endl;*/
     
     if (argc <= 1) {
         std::cerr << "Missing input file\n";
@@ -157,16 +157,24 @@ void step() {
     cpu->reset();
     cpu->loadProgram (data, size);
     
-    cout << cpu->dumpRegisters() << endl;
     
     char c = getchar();
+    while (1) {
+        c = getchar();
+        if (c == 'f' || c == 'q' || c == '\n' )
+            break;
+    }
+    
     while (c != 'q') {
-        
-        cout << "PC= 0x";
-        cout << hex << cpu->GetPC();
-        cout << "\t RAM[PC] = " << cpu->dumpRam() << " - ";
+        cout << cpu->dumpRegisters() << endl;
+        cout << "T cycles " << dec << cpu->getTotCycles() << endl;
+        cout << "> " << cpu->dumpRam() << " - ";
         string s = disassembly(cpu->getMem() + cpu->GetPC(), 3);
         cout << s << endl;
+        
+        if (cpu->GetSP() != 0x0000)
+            cout << "STACK : "<< cpu->dumpRam(cpu->GetSP(), 0xFFFF) << endl;
+        
         if (c == 'f') {
             for (int i = 0; i < 100; i++)
                 cpu->tick();
@@ -174,12 +182,13 @@ void step() {
             cpu->tick();
         }
             
-        cout << cpu->dumpRegisters() << endl;
-        cout << "T cycles " << dec << cpu->getTotCycles() << endl;
-        if (cpu->GetSP() != 0x0000)
-            cout << "STACK : "<< cpu->dumpRam(cpu->GetSP(), 0xFFFF) << endl;
         
-        c = getchar();
+        
+        while (1) {
+            c = getchar();
+            if (c == 'f' || c == 'q' || c == '\n' )
+                break;
+        }
         
     }
     

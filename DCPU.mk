@@ -50,7 +50,7 @@ LibPath                := $(LibraryPathSwitch).
 AR       := ar rcus
 CXX      := g++
 CC       := gcc
-CXXFLAGS :=  -std=c++11 -Wno-packed-bitfield-compat -pthread  -O3 -Wall $(Preprocessors)
+CXXFLAGS :=  -std=c++11 -Wno-packed-bitfield-compat -pthread -O3 -Wall $(Preprocessors)
 CFLAGS   :=  -Wno-packed-bitfield-compat -O2 -Wall $(Preprocessors)
 
 
@@ -58,7 +58,7 @@ CFLAGS   :=  -Wno-packed-bitfield-compat -O2 -Wall $(Preprocessors)
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/main$(ObjectSuffix) $(IntermediateDirectory)/dcpu$(ObjectSuffix) $(IntermediateDirectory)/fake_lem1802$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/main$(ObjectSuffix) $(IntermediateDirectory)/dcpu$(ObjectSuffix) $(IntermediateDirectory)/fake_lem1802$(ObjectSuffix) $(IntermediateDirectory)/disassembler$(ObjectSuffix) 
 
 
 
@@ -109,6 +109,14 @@ $(IntermediateDirectory)/fake_lem1802$(DependSuffix): fake_lem1802.cpp
 $(IntermediateDirectory)/fake_lem1802$(PreprocessSuffix): fake_lem1802.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/fake_lem1802$(PreprocessSuffix) "fake_lem1802.cpp"
 
+$(IntermediateDirectory)/disassembler$(ObjectSuffix): disassembler.cpp $(IntermediateDirectory)/disassembler$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/luis/Repos/dcpu/DCPU/disassembler.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/disassembler$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/disassembler$(DependSuffix): disassembler.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/disassembler$(ObjectSuffix) -MF$(IntermediateDirectory)/disassembler$(DependSuffix) -MM "disassembler.cpp"
+
+$(IntermediateDirectory)/disassembler$(PreprocessSuffix): disassembler.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/disassembler$(PreprocessSuffix) "disassembler.cpp"
+
 
 -include $(IntermediateDirectory)/*$(DependSuffix)
 ##
@@ -124,6 +132,9 @@ clean:
 	$(RM) $(IntermediateDirectory)/fake_lem1802$(ObjectSuffix)
 	$(RM) $(IntermediateDirectory)/fake_lem1802$(DependSuffix)
 	$(RM) $(IntermediateDirectory)/fake_lem1802$(PreprocessSuffix)
+	$(RM) $(IntermediateDirectory)/disassembler$(ObjectSuffix)
+	$(RM) $(IntermediateDirectory)/disassembler$(DependSuffix)
+	$(RM) $(IntermediateDirectory)/disassembler$(PreprocessSuffix)
 	$(RM) $(OutputFile)
 	$(RM) ".build-release/DCPU"
 

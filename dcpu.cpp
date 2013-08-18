@@ -9,69 +9,6 @@
 
 namespace cpu {
 
-/**
- * Operator values
- */
-enum operator_type {
-    REG_A = 0x00,
-    REG_B,
-    REG_C,
-    REG_X,
-    REG_Y,
-    REG_Z,
-    REG_I,
-    REG_J,
-    
-    PTR_A = 0x08,
-    PTR_B,
-    PTR_C,
-    PTR_X,
-    PTR_Y,
-    PTR_Z,
-    PTR_I,
-    PTR_J,
-    
-    PTR_NW_A = 0x10,
-    PTR_NW_B,
-    PTR_NW_C,
-    PTR_NW_X,
-    PTR_NW_Y,
-    PTR_NW_Z,
-    PTR_NW_I,
-    PTR_NW_J,
-    
-    STACK = 0x18,
-    PEEK = 0x19,
-    PICK = 0x1A,
-    REG_SP = 0x1B,
-    
-    REG_PC = 0x1C,
-    REG_EX = 0x1D,
-    
-    PTR_NW = 0x1E,
-    NEXT_WORD = 0x1F,
-    
-    LIT_B = 0x20,
-    LIT_E = 0x3F
-};
-
-/**
- * Instrucction extraction
- * Take directly from Benedeck code
- */
-union opword {
-    uint16_t raw;
-    struct {
-        uint8_t o : 5;
-        uint8_t b : 5;
-        uint8_t a : 6;
-    } __attribute__ ( (__packed__) ) basic;
-    struct {
-        uint8_t zeros : 5;
-        uint8_t o     : 5;
-        uint8_t a     : 6;
-    } __attribute__ ( (__packed__) ) nonbasic;
-};
 
 /// Checks if a OpCode is a Branch instrucction
 #define IS_CONDITIONAL(x) ((x) >= IFB && (x) <= IFU)
