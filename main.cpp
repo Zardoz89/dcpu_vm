@@ -9,12 +9,14 @@
 #include <chrono>
 
 #include "dcpu.hpp"
+#include "disassembler.hpp"
 #include "fake_lem1802.hpp"
 
 using namespace cpu;
 
-#define THREADS           (4)
-const long PERTHREAD    = 3400 / THREADS;
+const long TOTALCPUS    = 3568;
+const long PERTHREAD    = 16;  // At 16 looks that is the ideal for the FX-4100
+#define THREADS           (TOTALCPUS/PERTHREAD)
 const long CYCLES       = 1000*1000;
 
 const int BATCH         = 10;
@@ -30,7 +32,6 @@ void step();
 // Runs PERTHREAD cpus, doing CYCLES cycles
 void cpu_in_thread(int n) {
     auto cpus = threads[n];
-    //std::cerr << "cp "<< cpus.size() << std::endl;
     for (long i=0; i < CYCLES; i+= BATCH) {
         for (auto c = cpus.begin(); c != cpus.end(); c++) {
             for ( int j=0; j < BATCH; j++)
@@ -44,6 +45,9 @@ int main (int argc, char **argv)
 
     char* filename;
     std::ifstream binfile;
+    
+    std::cout << "cpu " << sizeof(DCPU) << " IHardware " << sizeof(IHardware);
+    std::cout << " fake_LEM1802 " << sizeof(Fake_Lem1802) << std::endl;
     
     if (argc <= 1) {
         std::cerr << "Missing input file\n";
@@ -125,7 +129,7 @@ void benchmark()
     
     std::thread tds[THREADS];
 
-    printf("Threads %d\t CPU PerThread %ld\t", THREADS, PERTHREAD);
+    printf("Threads %ld\t CPU PerThread %ld\t", THREADS, PERTHREAD);
     printf("N cpus %ld\n", PERTHREAD * THREADS);
     printf("Cycles %ld\n", CYCLES);
     
@@ -160,7 +164,9 @@ void step() {
         
         cout << "PC= 0x";
         cout << hex << cpu->GetPC();
-        cout << "\t RAM[PC] = " << cpu->dumpRam() << endl;
+        cout << "\t RAM[PC] = " << cpu->dumpRam() << " - ";
+        string s = disassembly(cpu->getMem() + cpu->GetPC(), 3);
+        cout << s << endl;
         if (c == 'f') {
             for (int i = 0; i < 100; i++)
                 cpu->tick();
