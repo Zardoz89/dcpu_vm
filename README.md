@@ -8,12 +8,14 @@ Based on Benedek Vartok VM (https://bitbucket.org/benedek/dcpu-16/overview)
 COMPILING
 ---------
 
-  make
+    make
+    
+To chose if Relese or Debug versions, edit DCPU.mk.
 
 RUN
 ---
 
-  ./Debug/DCPU dcpuBinFileProgram
+    ./Debug/DCPU dcpuBinFileProgram
   
 
 Actually the VM have attached a fake LEM1802 monitor that shows in terminal a 
@@ -31,43 +33,33 @@ TODO
 BENCHMARKS
 ----------
 
-In a AMD FX-4100 with 8GiB DDR3 and with Kubuntu 13.04 x64
+In a AMD FX-4100 quad-core with 8GiB DDR3 with Kubuntu 13.04 x64
+
+Note : With 1000000 cycles, a "real" dcpu will take 10000ms to execute, so
+       trying to get bit less minor time, say us how many DCPUs can run at
+       same time
+
+    Threads 1        CPU PerThread 3400     N cpus 3400
+    Cycles 1000000
+    Measured time: 62518ms
 
 
-Input BIN File : ../tester.bin
-Readed 286 bytes - 143 words
-Threads 1        CPU PerThread 10000    N cpus 10000
-Cycles 1000
-Measured time: 841ms
+    Threads 4        CPU PerThread 850      N cpus 3400
+    Cycles 1000000
+    Measured time: 13871ms
 
-Threads 4        CPU PerThread 2500     N cpus 10000
-Cycles 1000
-Measured time: 242ms
+    SpeedUp = x4.5
 
-SpeedUp = 841 / 242 = 3.47
+    Threads 200      CPU PerThread 17       N cpus 3400
+    Cycles 1000000
+    Measured time: 9837ms
 
-Threads 40       CPU PerThread 250      N cpus 10000
-Cycles 1000
-Measured time: 84ms
+    SpeedUp = x6.35
 
-SpeedUp = 841 / 84 = 10.01
 
-Input BIN File : ../tester.bin
-Readed 286 bytes - 143 words
-Threads 1        CPU PerThread 40000    N cpus 40000
-Cycles 2000
-Measured time: 14173ms
 
-Threads 4        CPU PerThread 10000    N cpus 40000
-Cycles 2000
-Measured time: 5115ms
 
-SpeedUp = 14173 / 5115 = 2.77
 
-Threads 40       CPU PerThread 1000     N cpus 40000
-Cycles 2000
-Measured time: 926ms
 
-SpeedUp = 14173 / 926 = 15.3
 
 
