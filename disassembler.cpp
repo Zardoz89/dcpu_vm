@@ -551,7 +551,7 @@ std::string disassembly(const uint16_t* data, size_t size)
             break;
         }
         
-        str << op << " " << a << ", " << b;
+        str << op << " " << b << ", " << a;
         
     } else {
         // Special opcode
