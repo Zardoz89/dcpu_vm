@@ -52,6 +52,8 @@ void DCPU::loadProgram (const uint16_t* prog, int size, int offset)
 
 bool DCPU::tick()
 {
+
+    tot_cycles++;
     if (wait_cycles <= 0) {
         wait_cycles = realStep();
         tickHardware();
@@ -69,7 +71,8 @@ int DCPU::step() {
     i = cycles;
     while (i-- > 0)
         tickHardware();
-    
+
+    tot_cycles += cycles;
     return cycles;
 }
 
@@ -746,9 +749,7 @@ int DCPU::realStep()
     // only handle interrupts while not skipping (Notch said so)
     if (!skipping_flag)
         handleHWInterrupts();
-        
-    tot_cycles += cycles;
-    
+         
     return cycles;
 }
 
