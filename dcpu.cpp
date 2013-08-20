@@ -402,15 +402,15 @@ int DCPU::realStep()
     // assert( (op->basic.o != SPECIAL && b != NULL) || op->basic.o == SPECIAL);
     
     if (skipping_flag) { // We can't skip before, because we need to calculate cycles
+        cycles = 0;
         // do not execute instruction when skipping
         // stop skipping when non-branch instruction is encountered
         if (!IS_CONDITIONAL (op->basic.o) ) {
             skipping_flag = false;
         } else {
-            cycles += 2;
+            cycles = 1;
         }
         
-        cycles ++;
         // reading the values (above) can modify the SP; reset that here:
         rsp = old_sp;
         
