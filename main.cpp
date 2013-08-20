@@ -179,8 +179,10 @@ void step() {
             for (int i = 0; i < 100; i++)
                 cpu->tick();
         } else {
-            cpu->tick();
+            if (cpu->tick())
+                cout << "Execute! ";
         }
+        cout << endl;
             
         
         
