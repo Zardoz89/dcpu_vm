@@ -10,19 +10,13 @@ COMPILING
 
     make
     
-To chose if Relese or Debug versions, edit DCPU.mk.
+To doing a relese build (compiling with optimizations):
+    make release
 
 RUN
 ---
 
-    ./Debug/DCPU dcpuBinFileProgram
-  
-
-Actually the VM have attached a fake LEM1802 monitor that shows in terminal a 
-B&W ASCII representation of the screen. Allow to see text on it, and respond to 
-all commands of a real LEM1802, but don't uses palettes, color, border color or font maps.
-It refresh at 60Hz (1666,7 cpu cycles), sou will need press a few times any key 
-to see anything in the terminal.
+    ./dcpu_vm dcpuBinFileProgram
 
 The program will you ask if you like to run the benchmark or step execution mode.
 
@@ -30,13 +24,23 @@ In step execution mode, each time that you press enter, except 'f' or 'q' follow
 you will exceute a CPU clock cycle. If you press 'q' followed by enter , you will end the VM
 , and if you press 'f' followed by enter, you will exceute directly 100 cycles.
 
-The benchmark setup is coded in some contants at tyhe begin of main.cpp.
+The benchmark setup is coded in some contants at the begin of main.cpp.  
+
+Actually the VM have attached a fake LEM1802 monitor that shows in terminal a 
+B&W ASCII representation of the screen. Allow to see text on it, and respond to 
+all commands of a real LEM1802, but don't uses palettes, color, border color or font maps.
+It refresh at 60Hz (1666,7 cpu cycles), so you will need press a few times any key 
+to see anything in the terminal, in step mode.
+
 
 TODO
 ----
 
 - Implement more hardware devices
 - Realtime execution at 100KHz
+- A more precise benchmarks
+- make tesetes.dasm more exaustive, covering all posible cases and putting comments about 
+  expected results and wait cycle
 
 BENCHMARKS
 ----------
