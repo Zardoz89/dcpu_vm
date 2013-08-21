@@ -28,17 +28,10 @@ size_t size = 0;
 
 void benchmark();
 void step();
+void one_bench();
 
-// Runs PERTHREAD cpus, doing CYCLES cycles
-void cpu_in_thread(int n) {
-    auto cpus = threads[n];
-    for (long i=0; i < CYCLES; i+= BATCH) {
-        for (auto c = cpus.begin(); c != cpus.end(); c++) {
-            for ( int j=0; j < BATCH; j++)
-                (*c)->tick();
-        }
-    }
-}
+void cpu_in_thread(int n);
+
 
 int main (int argc, char **argv)
 {
@@ -89,7 +82,9 @@ int main (int argc, char **argv)
     size /= 2;
     
 badchar:
-    std::cout << "Select what to do : b -> benchmark  s -> step execution\n\n";
+    std::cout << "Select what to do :" << std::endl;
+    std::cout << "\tb -> benchmark  s -> step execution o-> benchmark one VM";
+    std::cout << std::endl << std::endl;
     char choose;
     std::cin >> choose;
     
@@ -97,6 +92,8 @@ badchar:
         benchmark();
     } else if ( choose == 's' || choose == 'S') {
         step();
+    } else if ( choose == 'o' || choose == 'O') {
+        one_bench();
     } else {
         goto badchar; /// HATE ME!!!!
     }
@@ -166,6 +163,7 @@ void step() {
     }
     
     while (c != 'q') {
+   
         cout << cpu->dumpRegisters() << endl;
         cout << "T cycles " << dec << cpu->getTotCycles() << endl;
         cout << "> " << cpu->dumpRam() << " - ";
@@ -195,3 +193,79 @@ void step() {
     }
     
 }
+
+
+void one_bench() {
+    using namespace std;
+
+    const int times = 200;
+    double d_creates[times] = {0}; 
+    double d_loads[times] = {0}; 
+    double d_executes[times] = {0}; 
+   
+    for (int x=0; x < times; x++) {
+        auto start_time = chrono::high_resolution_clock::now(); 
+        auto cpu = make_shared<DCPU>();
+
+        auto create_time = chrono::high_resolution_clock::now(); 
+        
+        //auto screen = make_shared<Fake_Lem1802>();
+        //cpu->attachHardware (screen);
+        
+        auto loadstart_time = chrono::high_resolution_clock::now(); 
+        
+        cpu->reset();
+        cpu->loadProgram (data, size);
+        
+        auto load_time = chrono::high_resolution_clock::now(); 
+        
+        for (int i=0; i < 10000; i++) {
+            cpu->tick();
+        }
+        auto finish_time = chrono::high_resolution_clock::now(); 
+        auto tmp = chrono::duration_cast<chrono::microseconds> 
+            (create_time - start_time);
+        d_creates[x] = tmp.count();
+        
+        tmp = chrono::duration_cast<chrono::microseconds> 
+            (load_time - loadstart_time); 
+        d_loads[x] = tmp.count();
+        
+        tmp = chrono::duration_cast<chrono::microseconds> 
+            (finish_time - load_time); 
+        d_executes[x] = tmp.count();
+    }
+
+
+    double d_create, d_load, d_execute;
+    d_create = d_load = d_execute = 0;
+    
+    for (int x=0; x < times; x++) {
+        d_create += d_creates[x];
+        d_load += d_loads[x];
+        d_execute += d_executes[x];
+    }
+    d_create /= times;
+    d_load /= times;
+    d_execute /= times;
+
+    cout << "Measured time: " << endl;
+    cout << "\tCreating time "<< d_create << "us" << endl;
+    cout << "\tLoad time "<< d_load << "us" << endl;
+    cout << "\tExecute 10k cycles time "<< d_execute << "us" << endl;
+
+}
+
+// Runs PERTHREAD cpus, doing CYCLES cycles
+void cpu_in_thread(int n) {
+    auto cpus = threads[n];
+    for (long i=0; i < CYCLES; i+= BATCH) {
+        for (auto c = cpus.begin(); c != cpus.end(); c++) {
+            for ( int j=0; j < BATCH; j++)
+                (*c)->tick();
+        }
+    }
+}
+
+
+
