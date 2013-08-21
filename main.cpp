@@ -197,43 +197,38 @@ void step() {
 
 void one_bench() {
     using namespace std;
-
+    using namespace std::chrono;
+    
     const int times = 200;
-    double d_creates[times] = {0}; 
-    double d_loads[times] = {0}; 
-    double d_executes[times] = {0}; 
+
+    high_resolution_clock::time_point  starts[times];
+    high_resolution_clock::time_point  creates[times];
+    high_resolution_clock::time_point  loadstarts[times];
+    high_resolution_clock::time_point  loads[times];
+    high_resolution_clock::time_point  finishs[times];
    
     for (int x=0; x < times; x++) {
-        auto start_time = chrono::high_resolution_clock::now(); 
+        using namespace std::chrono;
+        starts[x] = high_resolution_clock::now(); 
         auto cpu = make_shared<DCPU>();
 
-        auto create_time = chrono::high_resolution_clock::now(); 
+        creates[x] = high_resolution_clock::now(); 
         
         //auto screen = make_shared<Fake_Lem1802>();
         //cpu->attachHardware (screen);
         
-        auto loadstart_time = chrono::high_resolution_clock::now(); 
+        loadstarts[x] = high_resolution_clock::now(); 
         
         cpu->reset();
         cpu->loadProgram (data, size);
         
-        auto load_time = chrono::high_resolution_clock::now(); 
+        loads[x] = high_resolution_clock::now(); 
         
         for (int i=0; i < 10000; i++) {
             cpu->tick();
         }
-        auto finish_time = chrono::high_resolution_clock::now(); 
-        auto tmp = chrono::duration_cast<chrono::microseconds> 
-            (create_time - start_time);
-        d_creates[x] = tmp.count();
+        finishs[x] = high_resolution_clock::now(); 
         
-        tmp = chrono::duration_cast<chrono::microseconds> 
-            (load_time - loadstart_time); 
-        d_loads[x] = tmp.count();
-        
-        tmp = chrono::duration_cast<chrono::microseconds> 
-            (finish_time - load_time); 
-        d_executes[x] = tmp.count();
     }
 
 
@@ -241,9 +236,20 @@ void one_bench() {
     d_create = d_load = d_execute = 0;
     
     for (int x=0; x < times; x++) {
-        d_create += d_creates[x];
-        d_load += d_loads[x];
-        d_execute += d_executes[x];
+
+        auto tmp = duration_cast<chrono::microseconds> 
+            (creates[x] - starts[x]);
+        d_create += tmp.count();
+        
+        tmp = duration_cast<chrono::microseconds> 
+            (loads[x] - loadstarts[x]); 
+        d_load += tmp.count();
+        
+        tmp = duration_cast<chrono::microseconds> 
+            (finishs[x] - loads[x]); 
+        
+        d_execute += tmp.count();
+        
     }
     d_create /= times;
     d_load /= times;
@@ -255,6 +261,7 @@ void one_bench() {
     cout << "\tExecute 10k cycles time "<< d_execute << "us" << endl;
 
 }
+
 
 // Runs PERTHREAD cpus, doing CYCLES cycles
 void cpu_in_thread(int n) {
