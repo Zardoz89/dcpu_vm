@@ -17,7 +17,7 @@ namespace cpu {
     }
 
     Fake_Lem1802::Fake_Lem1802() : screen_map (0), font_map (0), palette_map (0),
-    border_col (0), ticks (0)
+    border_col (0), ticks (0), enable (true)
     {
         // Default font
         def_font_map = new uint16_t[256]{
@@ -145,7 +145,7 @@ namespace cpu {
         if (this->cpu == NULL)
             return;
 
-        if (screen_map != 0) {
+        if (screen_map != 0 && enable) {
             row (this->index * 32);
 
             for (int row = 0; row < 12; row++) {
@@ -163,6 +163,11 @@ namespace cpu {
             }
 
         }
+    }
+
+
+    void Fake_Lem1802::setEnable(bool enable) {
+        this->enable = enable;
     }
 
 } // END of NAMESPACE

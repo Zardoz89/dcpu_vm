@@ -48,8 +48,14 @@ public:
      * @brief Try to show the screen in the terminal
      */
     void show();
+
+    /**
+     * @brief Sets if it can display to stdout
+     */
+    void setEnable(bool enable);
     
 private:
+
     uint16_t screen_map;            /// Where map VIDEO RAM 
     uint16_t font_map;              /// Where map FONT
     uint16_t palette_map;           /// Where map PALETTE
@@ -60,6 +66,8 @@ private:
     uint32_t ticks;                 /// CPU clock ticks (for timing)
     
     uint32_t tick_per_refresh;      /// How many ticks before refresh
+
+    bool enable;                    /// Can print to stdout ?
     
 };
 

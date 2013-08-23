@@ -112,8 +112,9 @@ void benchmark()
         cpus.reserve (PERTHREAD);
         for (int i = 0; i< PERTHREAD; i++) {
             auto cpu = std::make_shared<DCPU>();   
-            //auto screen = std::make_shared<Fake_Lem1802>();
-            //cpu->attachHardware (screen);
+            auto screen = std::make_shared<Fake_Lem1802>();
+            screen->setEnable(false); // We not desire to write to stdout
+            cpu->attachHardware (screen);
             cpu->reset();
             cpu->loadProgram (data, size);
             
@@ -214,8 +215,9 @@ void one_bench() {
 
         creates[x] = high_resolution_clock::now(); 
         
-        //auto screen = make_shared<Fake_Lem1802>();
-        //cpu->attachHardware (screen);
+        auto screen = make_shared<Fake_Lem1802>();
+        screen->setEnable(false); // We not desire to write to stdout
+        cpu->attachHardware (screen);
         
         loadstarts[x] = high_resolution_clock::now(); 
         
