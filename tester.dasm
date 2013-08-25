@@ -119,12 +119,12 @@ hwq z                 ;  Get last attached hardware info        4
 ; Check if is a LEM
 ife a, 0xf615         ;                                       3 or 4
 ife b, 0x7349         ; Looks that is a LEM                   3 or 4
-set pc, print         ; Jumps to a function                     2
+jsr print             ; Calls to a function                     3
 
-ifg c, 0              ; Keep searching ?                      2 or 3
+ifg z, 0              ; Keep searching ?                      2 or 3
 set pc, search        ; Loop                                    2
 
-jsr pc, init          ; Goto 0x0000                             3
+set pc, init          ; Goto 0x0000                             2
 
 :crash
 set pc, crash         ; Something was wrong if reach here
