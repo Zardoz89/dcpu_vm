@@ -52,7 +52,7 @@ enum special_opcodes {
     NONS2   = 0x03,
     NONS3   = 0x04,
     MBG     = 0x05,
-    MBS     = 0x06,
+    MBO     = 0x06,
     
     HCF	    = 0x07,
     
