@@ -16,6 +16,11 @@ namespace cpu {
 #define PUSH (--rsp)    /// Push the stack
 #define POP (rsp++)     /// Pop the stack
 
+#define MBO_SRC(x)  ( ((x)&448) >> 6)
+#define MBO_DST(x)  ( ((x)&56) >> 3)
+#define MBO_BANK(x)   ((x)&7) 
+#define MBO_ADDR(x)   ((x)&0xFE00) 
+
 
 DCPU::DCPU()
 {
@@ -689,9 +694,19 @@ int DCPU::realStep()
             cycles++;
             break;
 
-        case MBS: // Sets selected bank
-            mb = *a & 0x7; // Only values from 0 to 7
-            cycles +=64;
+        case MBO: // Sets selected bank
+            if (MBO_SRC(*a) != MBO_DST(*a)) {
+                // We can copy
+                std::copy_n(ram[MBO_SRC(*a)]+ MBO_ADDR(*a),
+                            RAM_SIZE -  MBO_ADDR(*a),
+                            ram[MBO_DST(*a)]+ MBO_ADDR(*a) );
+                cycles += 64;
+            }
+            if (MBO_BANK(*a) != mb) {
+                mb = MBO_BANK(*a);
+                cycles += 2;
+            }
+            cycles++;
             break;
 
         case HCF: // FIRE!

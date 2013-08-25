@@ -564,8 +564,8 @@ std::string disassembly(const uint16_t* data, size_t size)
             op = "MBG";
             break;
 
-        case MBS: // Sets selected bank
-            op = "MBS";
+        case MBO: // Sets & copy bank
+            op = "MBO";
             break;
 
         case HCF: // FIRE!
