@@ -21,7 +21,7 @@ endif
 #Header include directories
 HEADERS =
 #Libraries for linking
-LIBS = -lpthread
+LIBS = -lpthread -lsfml-graphics -lsfml-window -lsfml-system
 
 # Dependency options
 DEPENDENCY_OPTIONS = -MM -std=c++11

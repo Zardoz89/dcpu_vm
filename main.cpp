@@ -11,6 +11,7 @@
 #include "dcpu.hpp"
 #include "disassembler.hpp"
 #include "fake_lem1802.hpp"
+#include "lem1802.hpp"
 
 using namespace cpu;
 
@@ -150,7 +151,7 @@ void benchmark()
 void step() {
     using namespace std;
     auto cpu = make_shared<DCPU>();
-    auto screen = make_shared<Fake_Lem1802>();
+    auto screen = make_shared<Lem1802>();
     cpu->attachHardware (screen);
     cpu->reset();
     cpu->loadProgram (data, size);
@@ -200,7 +201,7 @@ void one_bench() {
     using namespace std;
     using namespace std::chrono;
     
-    const int times = 200;
+    const int times = 1;
 
     high_resolution_clock::time_point  starts[times];
     high_resolution_clock::time_point  creates[times];
@@ -215,8 +216,8 @@ void one_bench() {
 
         creates[x] = high_resolution_clock::now(); 
         
-        auto screen = make_shared<Fake_Lem1802>();
-        screen->setEnable(false); // We not desire to write to stdout
+        auto screen = make_shared<Lem1802>();
+        //screen->setEnable(false); // We not desire to write to stdout
         cpu->attachHardware (screen);
         
         loadstarts[x] = high_resolution_clock::now(); 
@@ -230,7 +231,8 @@ void one_bench() {
             cpu->tick();
         }
         finishs[x] = high_resolution_clock::now(); 
-        
+        char c;
+		cin >> c;
     }
 
 
