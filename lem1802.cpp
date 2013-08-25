@@ -170,7 +170,8 @@ namespace cpu {
                     }
                     
                     // Does the blink
-                    if (blink > BLINKRATE && (cpu->getMem()[pos] & 0x100) > 0 ) {
+                    if (blink > BLINKRATE &&  
+                           ((cpu->getMem()[pos] & 0x80) > 0) ) {
                         fg_col = bg_col;
                     }
 
