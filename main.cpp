@@ -30,6 +30,7 @@ size_t size = 0;
 void benchmark();
 void step();
 void one_bench();
+void run100k();
 
 void cpu_in_thread(int n);
 
@@ -84,7 +85,7 @@ int main (int argc, char **argv)
     
 badchar:
     std::cout << "Select what to do :" << std::endl;
-    std::cout << "\tb -> benchmark  s -> step execution o-> benchmark one VM";
+    std::cout << "\tb -> benchmark  s -> step execution o-> benchmark one VM r-> run 100k cycles";
     std::cout << std::endl << std::endl;
     char choose;
     std::cin >> choose;
@@ -95,6 +96,8 @@ badchar:
         step();
     } else if ( choose == 'o' || choose == 'O') {
         one_bench();
+    } else if ( choose == 'r' || choose == 'R') {
+        run100k();
     } else {
         goto badchar; /// HATE ME!!!!
     }
@@ -201,7 +204,7 @@ void one_bench() {
     using namespace std;
     using namespace std::chrono;
     
-    const int times = 1;
+    const int times = 200;
 
     high_resolution_clock::time_point  starts[times];
     high_resolution_clock::time_point  creates[times];
@@ -216,8 +219,8 @@ void one_bench() {
 
         creates[x] = high_resolution_clock::now(); 
         
-        auto screen = make_shared<Lem1802>();
-        //screen->setEnable(false); // We not desire to write to stdout
+        auto screen = make_shared<Fake_Lem1802>();
+        screen->setEnable(false); // We not desire to write to stdout
         cpu->attachHardware (screen);
         
         loadstarts[x] = high_resolution_clock::now(); 
@@ -231,8 +234,6 @@ void one_bench() {
             cpu->tick();
         }
         finishs[x] = high_resolution_clock::now(); 
-        char c;
-		cin >> c;
     }
 
 
@@ -265,6 +266,28 @@ void one_bench() {
     cout << "\tExecute 10k cycles time "<< d_execute << "us" << endl;
 
 }
+
+void run100k() {
+
+    auto cpu = std::make_shared<DCPU>();
+    auto screen = std::make_shared<Lem1802>();
+    cpu->attachHardware (screen);
+    
+    
+    cpu->reset();
+    cpu->loadProgram (data, size);
+    
+    
+    for (int i=0; i < 100000; i++) {
+        cpu->tick();
+    }
+
+    std::cout << "Finished" << std::endl;
+    char c;
+    std::cin >> c;
+
+}
+
 
 
 // Runs PERTHREAD cpus, doing CYCLES cycles
