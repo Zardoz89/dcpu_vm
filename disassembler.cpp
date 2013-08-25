@@ -559,7 +559,15 @@ std::string disassembly(const uint16_t* data, size_t size)
         case JSR:
             op = "JSR";
             break;
-            
+        
+        case MBG: // Gets selected bank
+            op = "MBG";
+            break;
+
+        case MBS: // Sets selected bank
+            op = "MBS";
+            break;
+
         case HCF: // FIRE!
             op = "HCF";
             break;
@@ -596,14 +604,18 @@ std::string disassembly(const uint16_t* data, size_t size)
             op = "HWI";
             break;
             
-        /*case NONS1:
-        case NONS2:
-        case NONS3:
-        case NONS4:
-        case NONS5:
-        case NONS6:
-        case NONS7:
-        case NONS8:*/
+        case GRM:
+            op = "GRM";
+            break;
+            
+        case DRM:
+            op = "DRM";
+            break;
+            
+        case SRT:
+            op = "SRT";
+            break;
+        
         default:
             op = "???";
             break;
