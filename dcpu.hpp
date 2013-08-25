@@ -13,6 +13,7 @@ const unsigned int DCPU_TOTAL_REGS  = 12;       /// DCPU registers
 const unsigned int MAX_DEVICES      = 65535;    /// Max hardware devices
 const unsigned int QUEUE_SIZE       = 256;      /// Int. queue size
 const unsigned int RAM_SIZE         = 0x10000;  /// RAM size
+const unsigned int RAM_BANKS        = 8;        /// Number of RAM banks
 
 class IHardware;
 
@@ -28,8 +29,10 @@ public:
     virtual ~DCPU();
     
     uint16_t ra, rb, rc, rx, ry, rz , ri, rj, rex, rpc, ria, rsp; /// Registers
+    uint16_t mb, rm; /// DCPU-16e extra registers
     
     const uint32_t cpu_clock = 100000;  /// CPU clock speed in Hz
+    
     
     /**
     * @brief Sets the CPU to the initial state
@@ -76,7 +79,7 @@ public:
      * @return Ptr. to the RAM
      */
     inline uint16_t* getMem() {
-        return ram;
+        return ram[mb];
     }
     
     /**
@@ -191,7 +194,14 @@ public:
     inline const uint16_t& GetIA() const {
         return ria;
     }
-    
+   
+    inline const uint16_t& GetMB() const {
+        return mb;
+    }
+
+    inline const uint16_t& GetRM() const {
+        return rm;
+    }
     // pretty dump
     
     /**
@@ -206,7 +216,7 @@ public:
     
     
 private:
-    uint16_t* ram; /// RAM
+    uint16_t* ram[RAM_BANKS]; /// RAM
     
     inline int realStep();
     
