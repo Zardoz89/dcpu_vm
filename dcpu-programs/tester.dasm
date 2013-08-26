@@ -136,7 +136,7 @@ set pc, pop           ; Return                                  1
 
 .org 0x200
 :str 
-dat 0xA14F            ; 'O'
+dat 0xA1CF            ; 'O'
 dat 0xA16B            ; 'k'
 
 :print               ; Subrutine that prints on screen

@@ -15,9 +15,9 @@ endif(BUILD_tests)
 
 set(CMAKE_MODULE_PATH ${dcpu-vm_SOURCE_DIR}/cmake)
 
-#set(TRILLEK_INCLUDE_DIRS
-#    ${dcpu-vm_SOURCE_DIR}/src/include
-#)
+set(DCPU-VM_INCLUDE_DIRS
+    ${dcpu-vm_SOURCE_DIR}/src
+)
 
 include(Platform)
 
