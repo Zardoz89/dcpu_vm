@@ -60,7 +60,7 @@ namespace cpu {
 
         std::string title = "LEM1802 DevId= ";
         title.append( std::to_string(index));
-        window.create(sf::VideoMode(WIDTH*2, HEIGHT*2), title, 
+        window.create(sf::VideoMode(WIDTH*2 +20, HEIGHT*2 + 20), title, 
                 sf::Style::Close | sf::Style::Titlebar);
         
         window.setFramerateLimit(FPS);
@@ -241,8 +241,20 @@ namespace cpu {
             sf::Sprite sprite;
             sprite.setTexture(texture);
             sprite.scale(2.0, 2.0);
-            
-            window.clear(sf::Color::Black);
+            sprite.setPosition(10.0, 10.0);
+           
+            // Clear and set the border color
+            uint16_t border;
+            if (palette_map == 0) { // Use default palette
+                border = Lem1802::def_palette_map[border_col];
+            } else {
+                border = cpu->getMem()[palette_map+ border_col];
+            }
+            window.clear(sf::Color(
+                        ((border &0x0F00) >> 8) *0x11 ,
+                        ((border &0x00F0) >> 4) *0x11 ,
+                        ((border &0x000F)     ) *0x11 ,
+                        0xFF ));
             
             window.draw(sprite);
 
