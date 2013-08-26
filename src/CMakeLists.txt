@@ -1,6 +1,8 @@
 #include(GL)
 #include(SFML)
 
+FIND_PACKAGE(Threads)
+
 set(dcpu-vm_SRCS
     main.cpp
     dcpu.cpp
@@ -16,10 +18,11 @@ add_executable(dcpu-vm ${dcpu-vm_SRCS})
 #    ${SFML_INCLUDE_DIR}
 #)
 
-#target_link_libraries(trillek-client-m1
+target_link_libraries(dcpu-vm
+    ${CMAKE_THREAD_LIBS_INIT}
 #    ${OPENGL_LIBRARIES}
 #    ${SFML_LIBRARIES}
-#)
+)
 
 INSTALL(TARGETS dcpu-vm DESTINATION ${dcpu-vm_SOURCE_DIR})
 
