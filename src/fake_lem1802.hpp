@@ -53,7 +53,10 @@ public:
      * @brief Sets if it can display to stdout
      */
     void setEnable(bool enable);
-    
+   
+    const static uint16_t def_palette_map[16];   /// Default palette
+    const static uint16_t def_font_map[128*2];   /// Default fontmap
+
 private:
 
     uint16_t screen_map;            /// Where map VIDEO RAM 
@@ -61,8 +64,6 @@ private:
     uint16_t palette_map;           /// Where map PALETTE
     
     uint8_t border_col;             /// Border color (unused)
-    const uint16_t *def_font_map;   /// Default font map
-    uint16_t def_palette_map[16];   /// Default palette
     uint32_t ticks;                 /// CPU clock ticks (for timing)
     
     uint32_t tick_per_refresh;      /// How many ticks before refresh
