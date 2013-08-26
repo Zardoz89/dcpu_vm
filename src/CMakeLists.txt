@@ -1,0 +1,25 @@
+#include(GL)
+#include(SFML)
+
+set(dcpu-vm_SRCS
+    main.cpp
+    dcpu.cpp
+    disassembler.cpp  
+    fake_lem1802.cpp
+)
+
+add_executable(dcpu-vm ${dcpu-vm_SRCS})
+
+#include_directories(trillek-client-m1
+#    ${TRILLEK_INCLUDE_DIRS}
+#    ${OPENGL_INCLUDE_DIR}
+#    ${SFML_INCLUDE_DIR}
+#)
+
+#target_link_libraries(trillek-client-m1
+#    ${OPENGL_LIBRARIES}
+#    ${SFML_LIBRARIES}
+#)
+
+INSTALL(TARGETS dcpu-vm DESTINATION ${dcpu-vm_SOURCE_DIR})
+
