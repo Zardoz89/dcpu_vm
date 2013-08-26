@@ -7,30 +7,32 @@ Based on Benedek Vartok VM (https://bitbucket.org/benedek/dcpu-16/overview)
 
 COMPILING
 ---------
-
+    cd build
+    cmake ..
     make
     
-To doing a relese build (compiling with optimizations):
-    make release
+To doing a release build (compiling with optimizations):
+    cmake -DCMAKE_BUILD_TYPE=Release ..
+
+Run make install to copy the executable to the root of the project
 
 RUN
 ---
 
     ./dcpu_vm dcpuBinFileProgram
 
-The program will you ask if you like to run the benchmark or step execution mode.
+The program will you ask if you like to run the threaded benchmark, step execution mode, single VM benchmark and run 100K cycles.
 
 In step execution mode, each time that you press enter, except 'f' or 'q' followed by enter,
-you will exceute a CPU clock cycle. If you press 'q' followed by enter , you will end the VM
-, and if you press 'f' followed by enter, you will exceute directly 100 cycles.
+you will execute a CPU clock cycle. If you press 'q' followed by enter , you will end the VM
+, and if you press 'f' followed by enter, you will execute directly 100 cycles.
 
-The benchmark setup is coded in some contants at the begin of main.cpp.  
+The benchmark setup is coded in some constants at the begin of main.cpp.
 
-Actually the VM have attached a fake LEM1802 monitor that shows in terminal a 
-B&W ASCII representation of the screen. Allow to see text on it, and respond to 
-all commands of a real LEM1802, but don't uses palettes, color, border color or font maps.
-It refresh at 60Hz (1666,7 cpu cycles), so you will need press a few times any key 
-to see anything in the terminal, in step mode.
+In run 100K cycles mode, at the end of the emulation, the program will wait to press any character to finish the execution.
+
+Actually the step and run100k VM have attached a LEM1802 monitor that shows in a window.
+It refresh at 30Hz (~833 cpu cycles), so you will need press a few times any key to see anything in the terminal, in step mode.
 
 
 TODO
@@ -39,7 +41,7 @@ TODO
 - Implement more hardware devices
 - Realtime execution at 100KHz
 - A more precise benchmarks
-- make tesetes.dasm more exaustive, covering all posible cases and putting comments about 
+- make tester.dasm more exhaustive, covering all possibly cases and putting comments about 
   expected results and wait cycle
 
 BENCHMARKS
