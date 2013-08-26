@@ -35,9 +35,31 @@ find_library(SFML_WINDOW_LIBRARY
     PATHS ${TRILLEK_SEARCH_PATHS}
 )
 
+message(STATUS "Looking for sfml-graphics library")
+find_library(SFML_GRAPHICS_LIBRARY
+    NAMES sfml-graphics
+    HINTS
+    NO_DEFAULT_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
+    NO_CMAKE_SYSTEM_PATH
+    NO_SYSTEM_ENVIRONMENT_PATH
+    NO_CMAKE_PATH
+    CMAKE_FIND_FRAMEWORK NEVER
+    PATH_SUFFIXES lib lib64
+    PATHS ${TRILLEK_SEARCH_PATHS}
+)
+
 if (SFML_SYSTEM_LIBRARY)
     if (SFML_WINDOW_LIBRARY)
-        set (SFML_LIBRARIES "${SFML_SYSTEM_LIBRARY}" "${SFML_WINDOW_LIBRARY}")
+        if (SFML_GRAPHICS_LIBRARY)
+            set (SFML_LIBRARIES 
+                "${SFML_SYSTEM_LIBRARY}" 
+                "${SFML_WINDOW_LIBRARY}" 
+                "${SFML_GRAPHICS_LIBRARY}"
+                )
+        else (SFML_GRAPHICS_LIBRARY)
+            message(FATAL_ERROR "sfml-graphics library not found")
+        endif (SFML_GRAPHICS_LIBRARY)
     else(SFML_WINDOW_LIBRARY)
         message(FATAL_ERROR "sfml-window library not found")
     endif(SFML_WINDOW_LIBRARY)
