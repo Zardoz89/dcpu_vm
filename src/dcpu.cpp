@@ -16,23 +16,37 @@ namespace cpu {
 #define PUSH (--rsp)    /// Push the stack
 #define POP (rsp++)     /// Pop the stack
 
+#define MBO_SRC(x)  ( ((x)&448) >> 6)
+#define MBO_DST(x)  ( ((x)&56) >> 3)
+#define MBO_BANK(x)   ((x)&7) 
+#define MBO_ADDR(x)   ((x)&0xFE00) 
+
 
 DCPU::DCPU()
 {
-    ram = new uint16_t[RAM_SIZE];
+    //ram = new (uin16_t*)[RAM_BANKS];
+    for(unsigned i=0; i< RAM_BANKS; i++)
+        ram[i] = new uint16_t[RAM_SIZE];
+
     attached_hardware.reserve (100); // Reserve space for some logical small qty
     reset();
 }
 
 DCPU::~DCPU()
 {
-    delete[] ram;
+
+    for(unsigned i=0; i< RAM_BANKS; i++)
+        delete[] ram[i];
 }
 
 void DCPU::reset()
 {
-    std::fill_n (ram, RAM_SIZE, 0);
+    for(unsigned i=0; i< RAM_BANKS; i++)
+        std::fill_n (ram[i], RAM_SIZE, 0);
+
     ra = rb = rc = rx = ry = rz = ri = rj = rex = rsp = ria = rpc = 0;
+    rm = 0;
+    mb = 0;
     
     int_queueing = skipping_flag = on_fire = false;
     wait_cycles = tot_cycles = 0;
@@ -46,7 +60,7 @@ void DCPU::loadProgram (const uint16_t* prog, int size, int offset)
     assert (offset >= 0);
     assert (offset + size < 	UINT16_MAX);
     
-    std::copy_n (prog, size, ram + offset);
+    std::copy_n (prog, size, ram[0] + offset);
     
 }
 
@@ -90,7 +104,7 @@ int DCPU::realStep()
     register uint16_t tmp_a;			// Used by Literal values
     uint_fast16_t old_sp = rsp;
     
-    opword* op = (opword*) (ram + (rpc++) );
+    opword* op = (opword*) (ram[mb] + (rpc++) );
     
     // TODO Move skiing here and use a table to precalculate instrucction 
     //      long for skining
@@ -131,89 +145,89 @@ int DCPU::realStep()
         
         // registers, indirect:
     case PTR_A:
-        a = ram + ra;
+        a = ram[mb] + ra;
         break;
         
     case PTR_B:
-        a = ram + rb;
+        a = ram[mb] + rb;
         break;
         
     case PTR_C:
-        a = ram + rc;
+        a = ram[mb] + rc;
         break;
         
     case PTR_X:
-        a = ram + rx;
+        a = ram[mb] + rx;
         break;
         
     case PTR_Y:
-        a = ram + ry;
+        a = ram[mb] + ry;
         break;
         
     case PTR_Z:
-        a = ram + rz;
+        a = ram[mb] + rz;
         break;
         
     case PTR_I:
-        a = ram + ri;
+        a = ram[mb] + ri;
         break;
         
     case PTR_J:
-        a = ram + rj;
+        a = ram[mb] + rj;
         break;
         
         // registers + next word, indirect:
     case PTR_NW_A:
-        a = ram + ra + ram[ (rpc++)];
+        a = ram[mb] + ra + ram[mb][ (rpc++)];
         cycles++;
         break;
         
     case PTR_NW_B:
-        a = ram + rb + ram[ (rpc++)];
+        a = ram[mb] + rb + ram[mb][ (rpc++)];
         cycles++;
         break;
         
     case PTR_NW_C:
-        a = ram + rc + ram[ (rpc++)];
+        a = ram[mb] + rc + ram[mb][ (rpc++)];
         cycles++;
         break;
         
     case PTR_NW_X:
-        a = ram + rx + ram[ (rpc++)];
+        a = ram[mb] + rx + ram[mb][ (rpc++)];
         cycles++;
         break;
         
     case PTR_NW_Y:
-        a = ram + ry + ram[ (rpc++)];
+        a = ram[mb] + ry + ram[mb][ (rpc++)];
         cycles++;
         break;
         
     case PTR_NW_Z:
-        a = ram + rz + ram[ (rpc++)];
+        a = ram[mb] + rz + ram[mb][ (rpc++)];
         cycles++;
         break;
         
     case PTR_NW_I:
-        a = ram + ri + ram[ (rpc++)];
+        a = ram[mb] + ri + ram[mb][ (rpc++)];
         cycles++;
         break;
         
     case PTR_NW_J:
-        a = ram + rj + ram[ (rpc++)];
+        a = ram[mb] + rj + ram[mb][ (rpc++)];
         cycles++;
         break;
         
         // special registers:
     case STACK:
-        a = ram + (POP);
+        a = ram[mb] + (POP);
         break;  // POP
         
     case PEEK:
-        a = ram + rsp;
+        a = ram[mb] + rsp;
         break;  // PEEK
         
     case PICK:
-        a = ram + ( (uint16_t) (rsp + rpc++) ); // PICK n
+        a = ram[mb] + ( (uint16_t) (rsp + rpc++) ); // PICK n
         cycles++;
         break;
         
@@ -231,13 +245,13 @@ int DCPU::realStep()
         
         // next word, indirect:
     case PTR_NW:
-        a = ram + ram[ (rpc++)];
+        a = ram[mb] + ram[mb][ (rpc++)];
         cycles++;
         break;
         
         // next word, direct (literal):
     case NEXT_WORD:
-        a = ram + (rpc++);
+        a = ram[mb] + (rpc++);
         cycles++;
         break;
         
@@ -285,89 +299,89 @@ int DCPU::realStep()
             
             // registers, indirect:
         case PTR_A:
-            b = ram + ra;
+            b = ram[mb] + ra;
             break;
             
         case PTR_B:
-            b = ram + rb;
+            b = ram[mb] + rb;
             break;
             
         case PTR_C:
-            b = ram + rc;
+            b = ram[mb] + rc;
             break;
             
         case PTR_X:
-            b = ram + rx;
+            b = ram[mb] + rx;
             break;
             
         case PTR_Y:
-            b = ram + ry;
+            b = ram[mb] + ry;
             break;
             
         case PTR_Z:
-            b = ram + rz;
+            b = ram[mb] + rz;
             break;
             
         case PTR_I:
-            b = ram + ri;
+            b = ram[mb] + ri;
             break;
             
         case PTR_J:
-            b = ram + rj;
+            b = ram[mb] + rj;
             break;
             
             // registers + next word, indirect:
         case PTR_NW_A:
-            b = ram + ra + ram[ (rpc++)];
+            b = ram[mb] + ra + ram[mb][ (rpc++)];
             cycles++;
             break;
             
         case PTR_NW_B:
-            b = ram + rb + ram[ (rpc++)];
+            b = ram[mb] + rb + ram[mb][ (rpc++)];
             cycles++;
             break;
             
         case PTR_NW_C:
-            b = ram + rc + ram[ (rpc++)];
+            b = ram[mb] + rc + ram[mb][ (rpc++)];
             cycles++;
             break;
             
         case PTR_NW_X:
-            b = ram + rx + ram[ (rpc++)];
+            b = ram[mb] + rx + ram[mb][ (rpc++)];
             cycles++;
             break;
             
         case PTR_NW_Y:
-            b = ram + ry + ram[ (rpc++)];
+            b = ram[mb] + ry + ram[mb][ (rpc++)];
             cycles++;
             break;
             
         case PTR_NW_Z:
-            b = ram + rz + ram[ (rpc++)];
+            b = ram[mb] + rz + ram[mb][ (rpc++)];
             cycles++;
             break;
             
         case PTR_NW_I:
-            b = ram + ri + ram[ (rpc++)];
+            b = ram[mb] + ri + ram[mb][ (rpc++)];
             cycles++;
             break;
             
         case PTR_NW_J:
-            b = ram + rj + ram[ (rpc++)];
+            b = ram[mb] + rj + ram[mb][ (rpc++)];
             cycles++;
             break;
             
             // special registers:
         case STACK:
-            b = ram + (PUSH);
+            b = ram[mb] + (PUSH);
             break;  // PUSH
             
         case PEEK:
-            b = ram + rsp;
+            b = ram[mb] + rsp;
             break;    // PEEK
             
         case PICK:
-            b = ram + ( (uint16_t) (rsp + rpc++) ); // PICK n
+            b = ram[mb] + ( (uint16_t) (rsp + rpc++) ); // PICK n
             cycles++;
             break;
             
@@ -385,13 +399,13 @@ int DCPU::realStep()
             
             // next word, indirect:
         case PTR_NW:
-            b = ram + ram[ (rpc++)];
+            b = ram[mb] + ram[mb][ (rpc++)];
             cycles++;
             break;
             
             // next word, direct (literal):
         case NEXT_WORD:
-            b = ram + (rpc++);
+            b = ram[mb] + (rpc++);
             cycles++;
             break;
             
@@ -670,11 +684,31 @@ int DCPU::realStep()
         // Special opcode
         switch (op->nonbasic.o) {
         case JSR:
-            ram[PUSH] = rpc;
+            ram[mb][PUSH] = rpc;
             rpc = *a;
             cycles += 3;
             break;
             
+        case MBG: // Gets selected bank
+            *a = mb;
+            cycles++;
+            break;
+
+        case MBO: // Sets selected bank
+            if (MBO_SRC(*a) != MBO_DST(*a)) {
+                // We can copy
+                std::copy_n(ram[MBO_SRC(*a)]+ MBO_ADDR(*a),
+                            RAM_SIZE -  MBO_ADDR(*a),
+                            ram[MBO_DST(*a)]+ MBO_ADDR(*a) );
+                cycles += 64;
+            }
+            if (MBO_BANK(*a) != mb) {
+                mb = MBO_BANK(*a);
+                cycles += 2;
+            }
+            cycles++;
+            break;
+
         case HCF: // FIRE!
             on_fire = true;
             cycles += 9;
@@ -697,8 +731,8 @@ int DCPU::realStep()
             
         case RFI:
             int_queueing = false;
-            ra = ram[POP];
-            rpc = ram[POP];
+            ra = ram[mb][POP];
+            rpc = ram[mb][POP];
             cycles += 3;
             break;
             
@@ -737,7 +771,22 @@ int DCPU::realStep()
             
             cycles += 4;
             break;
+           
+        case GRM:
+            *a = rm;
+            cycles +=2;
+            break;
             
+        case DRM:
+            *a= rm;
+            rm = 1;
+            cycles +=2;
+            break;
+            
+        case SRT: // TODO Implement ring modes
+
+            cycles +=4;
+            break;
             
         default:
             // reserved; Does a NOP
@@ -783,7 +832,16 @@ std::string DCPU::dumpRegisters()
     
     stringstream str;
     str << "PC = 0x";
-    str << hex << setfill ('0') << setw (4) << rpc << "\t";
+    str << hex << setfill ('0') << setw (4) << rpc;
+    str << " SP = 0x";
+    str << hex << setfill ('0') << setw (4) << rsp;
+    str << " IA = 0x";
+    str << hex << setfill ('0') << setw (4) << ria;
+    str << " EX = 0x";
+    str << hex << setfill ('0') << setw (4) << rex << "\t";
+    str << " MB = " << dec << mb;
+    str << " RM = " << dec << rm << endl;
+
     str << " A = 0x";
     str << hex << setfill ('0') << setw (4) << ra;
     str << " B = 0x";
@@ -795,17 +853,11 @@ std::string DCPU::dumpRegisters()
     str << " Y = 0x";
     str << hex << setfill ('0') << setw (4) << ry;
     str << " Z = 0x";
-    str << hex << setfill ('0') << setw (4) << rz << endl;
-    str << "\t\t I = 0x";
+    str << hex << setfill ('0') << setw (4) << rz;
+    str << " I = 0x";
     str << hex << setfill ('0') << setw (4) << ri;
     str << " J = 0x";
     str << hex << setfill ('0') << setw (4) << rj;
-    str << "\t\tSP = 0x";
-    str << hex << setfill ('0') << setw (4) << rsp;
-    str << " IA = 0x";
-    str << hex << setfill ('0') << setw (4) << ria;
-    str << " EX = 0x";
-    str << hex << setfill ('0') << setw (4) << rex;
     
     return str.str();
 }
@@ -832,7 +884,7 @@ std::string DCPU::dumpRam (uint16_t init, uint16_t end)
     for (; i <= bigend ; i++) {
     
         str << "0x";
-        str << hex << setfill ('0') << setw (4) << ram[i] << " ";
+        str << hex << setfill ('0') << setw (4) << ram[mb][i] << " ";
         
         if (wide++ >= 7) {
             wide = 0;
@@ -853,8 +905,8 @@ void DCPU::triggerInterrupt (uint16_t msg)
 {
     if (ria != 0) {
         int_queueing = true;
-        ram[PUSH] = rpc;
-        ram[PUSH] = ra;
+        ram[mb][PUSH] = rpc;
+        ram[mb][PUSH] = ra;
         rpc = ria;
         ra = msg;
     }

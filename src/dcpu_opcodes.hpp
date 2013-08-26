@@ -51,8 +51,8 @@ enum special_opcodes {
     NONS1   = 0x02,
     NONS2   = 0x03,
     NONS3   = 0x04,
-    NONS4   = 0x05,
-    NONS5   = 0x06,
+    MBG     = 0x05,
+    MBO     = 0x06,
     
     HCF	    = 0x07,
     
@@ -62,14 +62,22 @@ enum special_opcodes {
     RFI     = 0x0B,
     IAQ     = 0x0C,
     
-    NONS6   = 0x0D,
-    NONS7   = 0x0E,
-    NONS8   = 0x0F,
+    NONS4   = 0x0D,
+    NONS5   = 0x0E,
+    NONS6   = 0x0F,
     
     
     HWN	    = 0X10,
     HWQ     = 0x11,
     HWI     = 0x12,
+
+    NONS7   = 0x13,
+    NONS8   = 0x14,
+    NONS9   = 0x15,
+
+    GRM     = 0x16,
+    DRM     = 0x17,
+    SRT     = 0x18,
 };
 
 /**
