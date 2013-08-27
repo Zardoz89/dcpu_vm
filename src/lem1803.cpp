@@ -51,11 +51,9 @@ namespace cpu {
         0x0077, 0x0000, 0x4136, 0x0800, 0x0201, 0x0201, 0x0205, 0x0200
    };
 
-   const uint16_t Lem1803::def_palette_map[64] = {    /// Default palette
-    0x0000, 0x0015, 0x02A0, 0x02B5, 0x5400, 0x5415, 0x56A0, 0x56B5, // 000 111 
-    0x000A, 0x001F, 0x02AA, 0x02BF, 0x540A, 0x541F, 0x56AA, 0x56BF, // 001 111
-    0x0140, 0x0155, 0x03E0, 0x03F5,                                 // 010 111
-   };
+    const uint16_t Lem1803::def_palette_map[64] = {    /// Default palette
+#       include "64_palette.inc"
+    };
 
 
     Lem1803::Lem1803() : screen_map (0), font_map (0), palette_map (0),
