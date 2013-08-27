@@ -17,17 +17,10 @@
 #define SET_BORDER_COLOR 3
 #define MEM_DUMP_FONT    4
 #define MEM_DUMP_PALETTE 5
+#define LEGACY_MODE      255
 
 namespace cpu {
 
-const int FPS               = 30;
-const unsigned int WIDTH    = 128;
-const unsigned int HEIGHT   = 96;
-
-const unsigned int ROWS     = 12;
-const unsigned int COLS     = 32;
-
-const uint16_t BLINKRATE    = 10000; // Change Blink state each N ticks
 
 /**
  * @brief LEM1802 that uses SFML
@@ -38,7 +31,7 @@ public:
     virtual ~Lem1803();
     
     static const uint32_t id            = 0x7349f615;
-    static const uint16_t revision      = 0x1802;
+    static const uint16_t revision      = 0x1803;
     static const uint32_t manufacturer  = 0x1c6c8b36;
     virtual uint32_t getId() {
         return id;
@@ -68,8 +61,8 @@ public:
      */
     void setEnable(bool enable);
 
-    const static uint16_t def_palette_map[16];   /// Default palette
-    const static uint16_t def_font_map[128*2];    /// Default fontmap
+    const static uint16_t def_palette_map[64];   /// Default palette
+    const static uint16_t def_font_map[512];     /// Default fontmap
 
 private:
 
