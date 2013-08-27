@@ -12,6 +12,7 @@
 #include "disassembler.hpp"
 #include "fake_lem1802.hpp"
 #include "lem1802.hpp"
+#include "lem1803.hpp"
 
 using namespace cpu;
 
@@ -154,8 +155,12 @@ void benchmark()
 void step() {
     using namespace std;
     auto cpu = make_shared<DCPU>();
-    auto screen = make_shared<Lem1802>();
-    cpu->attachHardware (screen);
+    
+    auto screen1 = std::make_shared<Lem1802>();
+    cpu->attachHardware (screen1);
+    auto screen2 = std::make_shared<Lem1803>();
+    cpu->attachHardware (screen2);
+    
     cpu->reset();
     cpu->loadProgram (data, size);
     
@@ -270,9 +275,11 @@ void one_bench() {
 void run100k() {
 
     auto cpu = std::make_shared<DCPU>();
-    auto screen = std::make_shared<Lem1802>();
-    cpu->attachHardware (screen);
+    auto screen1 = std::make_shared<Lem1802>();
+    cpu->attachHardware (screen1);
     
+    auto screen2 = std::make_shared<Lem1803>();
+    cpu->attachHardware (screen2);
     
     cpu->reset();
     cpu->loadProgram (data, size);
