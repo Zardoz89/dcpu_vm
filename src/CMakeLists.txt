@@ -7,6 +7,7 @@ set(dcpu-vm_SRCS
     main.cpp
     dcpu.cpp
     disassembler.cpp  
+    gclock.cpp
     fake_lem1802.cpp
     lem1802.cpp
     lem1803.cpp
