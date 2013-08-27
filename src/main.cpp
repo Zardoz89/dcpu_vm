@@ -89,7 +89,7 @@ int main (int argc, char **argv)
     
 badchar:
     std::cout << "Select what to do :" << std::endl;
-    std::cout << "\tb -> benchmark  s -> step execution o-> benchmark one VM r-> run 100k cycles";
+    std::cout << "\tb -> benchmark  s -> step execution o-> benchmark one VM r-> run 8888888800k cycles";
     std::cout << std::endl << std::endl;
     char choose;
     std::cin >> choose;
@@ -287,6 +287,7 @@ void run100k() {
     auto screen2 = make_shared<Lem1802>();
     cpu->attachHardware (screen2);
    
+    // FIXME See what fails with clock
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
 
@@ -294,7 +295,7 @@ void run100k() {
     cpu->loadProgram (data, size);
     
     high_resolution_clock::time_point b, e; 
-    for (int i=0; i < 100000; i++) {
+    for (int i=0; i < 800000; i++) {
         b =  high_resolution_clock::now(); 
         cpu->tick();
         e =  high_resolution_clock::now(); 
