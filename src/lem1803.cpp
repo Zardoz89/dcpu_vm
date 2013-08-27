@@ -7,14 +7,6 @@
 
 namespace cpu {
 
-    const int FPS               = 30;
-    const unsigned int WIDTH    = 384;
-    const unsigned int HEIGHT   = 288;
-
-    const unsigned int ROWS     = 36;
-    const unsigned int COLS     = 96;
-
-    const uint16_t BLINKRATE    = 10000; // Change Blink state each N ticks
     
     const uint16_t Lem1803::def_font_map2[512] = {   /// Default font map
         0xb79e, 0x388e, 0x722c, 0x75f4, 0x19bb, 0x7f8f, 0x85f9, 0xb158,
@@ -67,13 +59,13 @@ namespace cpu {
 
         title = "LEM1803 DevId= ";
         title.append( std::to_string(index));
-        //window.create(sf::VideoMode(WIDTH*2 +30, HEIGHT*2 + 30), title, 
-        window.create(sf::VideoMode(128*2 +20, 96*2 + 20), title, 
-                sf::Style::Close | sf::Style::Titlebar);
+        window.create(sf::VideoMode(Lem1802::WIDTH*3 +20, 
+                    Lem1802::HEIGHT*3 + 20), 
+                    title, sf::Style::Close | sf::Style::Titlebar);
         
         window.setFramerateLimit(FPS);
-        texture.create(WIDTH, HEIGHT);
-        sf::Uint8 clear[WIDTH*HEIGHT*4]= {0};
+        texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
+        sf::Uint8 clear[Lem1803::WIDTH*Lem1803::HEIGHT*4]= {0};
         texture.update(clear);
         texture.setSmooth(false);
         texture.setRepeated(false);
@@ -89,7 +81,7 @@ namespace cpu {
         if (cpu->GetA() == LEGACY_MODE) {
             emulation_mode = !emulation_mode;
             font_map = palette_map = screen_map = 0;
-
+/*
             window.close();
             if (emulation_mode) {
                 //window.setSize(sf::Vector2u(128*2 +20, 96*2 +20));
@@ -97,10 +89,11 @@ namespace cpu {
                     sf::Style::Close | sf::Style::Titlebar);
             } else {
                 //window.setSize(sf::Vector2u(WIDTH*2 +30, HEIGHT*2 + 30));
-                window.create(sf::VideoMode(WIDTH*2 +30, HEIGHT*2 + 30), title, 
-                    sf::Style::Close | sf::Style::Titlebar);
+                window.create(sf::VideoMode(Lem1803::WIDTH*2 +30, 
+                            Lem1803::HEIGHT*2 + 30), 
+                            title, sf::Style::Close | sf::Style::Titlebar);
             }
-            window.setFramerateLimit(FPS);
+            window.setFramerateLimit(FPS);*/
             return;
         } 
 
@@ -133,10 +126,10 @@ namespace cpu {
         }
         
         if (screen_map != 0 && enable) { // Update the texture
-            for (unsigned row=0; row < ROWS; row++) {
-                for (unsigned col=0; col < COLS; col++) {
-                    uint16_t pos = screen_map + row * (COLS/2) + (col/2);
-                    uint16_t pos_attr = screen_map + 1728 + row*COLS + col;
+            for (unsigned row=0; row < Lem1803::ROWS; row++) {
+                for (unsigned col=0; col < Lem1803::COLS; col++) {
+                    uint16_t pos = screen_map + row * (Lem1803::COLS/2) + (col/2);
+                    uint16_t pos_attr = screen_map + 1728 + row*Lem1803::COLS + col;
                     // Every word contains two characters
                     unsigned char ascii;
                     if (col%2 == 0) {  
@@ -243,8 +236,12 @@ namespace cpu {
 
             sf::Sprite sprite;
             sprite.setTexture(texture);
-            sprite.setScale(2, 2);
-            sprite.setPosition(15.0, 15.0);
+            if (emulation_mode) { 
+                sprite.setScale(3, 3);
+            } else {
+                sprite.setScale(1, 1);
+            }
+            sprite.setPosition(10.0, 10.0);
            
             // Clear and set the border color
             uint16_t border;

@@ -7,16 +7,6 @@
 
 namespace cpu {
 
-
-    const int FPS               = 30;
-    const unsigned int WIDTH    = 128;
-    const unsigned int HEIGHT   = 96;
-
-    const unsigned int ROWS     = 12;
-    const unsigned int COLS     = 32;
-
-    const uint16_t BLINKRATE    = 10000; // Change Blink state each N ticks
-
     const uint16_t Lem1802::def_font_map[128*2] = {   /// Default font map
         0xb79e, 0x388e, 0x722c, 0x75f4, 0x19bb, 0x7f8f, 0x85f9, 0xb158,
         0x242e, 0x2400, 0x082a, 0x0800, 0x0008, 0x0000, 0x0808, 0x0808,
@@ -70,17 +60,18 @@ namespace cpu {
     void Lem1802::attachTo (DCPU* cpu, size_t index) {
         this->IHardware::attachTo(cpu, index);
 
-        tick_per_refresh = cpu->cpu_clock / FPS;
+        tick_per_refresh = cpu->cpu_clock / Lem1802::FPS;
 
         title = "LEM1802 DevId= ";
         title.append( std::to_string(index));
 
-        window.create(sf::VideoMode(WIDTH*2 +20, HEIGHT*2 + 20), title, 
-                sf::Style::Close | sf::Style::Titlebar);
+        window.create(sf::VideoMode(Lem1802::WIDTH*3 +20, 
+                    Lem1802::HEIGHT*3 + 20), 
+                    title, sf::Style::Close | sf::Style::Titlebar);
         
-        window.setFramerateLimit(FPS);
-        texture.create(WIDTH, HEIGHT);
-        sf::Uint8 clear[WIDTH*HEIGHT*4]= {0};
+        window.setFramerateLimit(Lem1802::FPS);
+        texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
+        sf::Uint8 clear[Lem1802::WIDTH*Lem1802::HEIGHT*4]= {0};
         texture.update(clear);
         texture.setRepeated(false);
         texture.setSmooth(false);
@@ -140,7 +131,7 @@ namespace cpu {
             ticks = 0;
             this->show();
         }
-        if (++blink > BLINKRATE*2)
+        if (++blink > Lem1802::BLINKRATE*2)
             blink = 0;
     }
 
@@ -152,9 +143,9 @@ namespace cpu {
             return;
         
         if (screen_map != 0 && enable) { // Update the texture
-            for (unsigned row=0; row < ROWS; row++) {
-                for (unsigned col=0; col < COLS; col++) {
-                    uint16_t pos = screen_map + row * COLS + col;
+            for (unsigned row=0; row < Lem1802::ROWS; row++) {
+                for (unsigned col=0; col < Lem1802::COLS; col++) {
+                    uint16_t pos = screen_map + row * Lem1802::COLS + col;
                     unsigned char ascii = (unsigned char) (cpu->getMem()[pos] 
                                                             & 0x007F);
                     // Get palette indexes
@@ -171,12 +162,10 @@ namespace cpu {
                     }
                     
                     // Does the blink
-                    if (blink > BLINKRATE &&  
+                    if (blink > Lem1802::BLINKRATE &&  
                            ((cpu->getMem()[pos] & 0x80) > 0) ) {
                         fg_col = bg_col;
                     }
-
-
 
                     // Composes RGBA values from palette colors
                     sf::Uint8 fg[] = {
@@ -257,7 +246,7 @@ namespace cpu {
 
             sf::Sprite sprite;
             sprite.setTexture(texture);
-            sprite.scale(2.0, 2.0);
+            sprite.scale(3.0, 3.0);
             sprite.setPosition(10.0, 10.0);
            
             // Clear and set the border color

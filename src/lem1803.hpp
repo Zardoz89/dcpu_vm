@@ -24,7 +24,14 @@ public:
     Lem1803();
     virtual ~Lem1803();
     
-    static const uint16_t revision2      = 0x1803;
+    static const uint16_t revision2     = 0x1803;
+
+    static const unsigned int WIDTH     = 384;
+    static const unsigned int HEIGHT    = 288;
+
+    static const unsigned int ROWS      = 36;
+    static const unsigned int COLS      = 96;
+
     virtual uint16_t getRevision() {
         return revision2;
     }

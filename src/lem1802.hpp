@@ -31,6 +31,16 @@ public:
     static const uint32_t id            = 0x7349f615;
     static const uint16_t revision      = 0x1802;
     static const uint32_t manufacturer  = 0x1c6c8b36;
+
+    static const int FPS                = 30;
+    static const unsigned int WIDTH     = 128;
+    static const unsigned int HEIGHT    = 96;
+
+    static const unsigned int ROWS      = 12;
+    static const unsigned int COLS      = 32;
+
+    static const uint16_t BLINKRATE    = 10000; // Change Blink state each N ticks
+
     virtual uint32_t getId() {
         return id;
     }
