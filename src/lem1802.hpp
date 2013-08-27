@@ -20,14 +20,7 @@
 
 namespace cpu {
 
-const int FPS               = 30;
-const unsigned int WIDTH    = 128;
-const unsigned int HEIGHT   = 96;
 
-const unsigned int ROWS     = 12;
-const unsigned int COLS     = 32;
-
-const uint16_t BLINKRATE    = 10000; // Change Blink state each N ticks
 
 /**
  * @brief LEM1802 that uses SFML

@@ -7,7 +7,17 @@
 
 namespace cpu {
 
-   const uint16_t Lem1802::def_font_map[128*2] = {   /// Default font map
+
+    const int FPS               = 30;
+    const unsigned int WIDTH    = 128;
+    const unsigned int HEIGHT   = 96;
+
+    const unsigned int ROWS     = 12;
+    const unsigned int COLS     = 32;
+
+    const uint16_t BLINKRATE    = 10000; // Change Blink state each N ticks
+
+    const uint16_t Lem1802::def_font_map[128*2] = {   /// Default font map
         0xb79e, 0x388e, 0x722c, 0x75f4, 0x19bb, 0x7f8f, 0x85f9, 0xb158,
         0x242e, 0x2400, 0x082a, 0x0800, 0x0008, 0x0000, 0x0808, 0x0808,
         0x00ff, 0x0000, 0x00f8, 0x0808, 0x08f8, 0x0000, 0x080f, 0x0000,
@@ -67,6 +77,8 @@ namespace cpu {
         texture.create(WIDTH, HEIGHT);
         sf::Uint8 clear[WIDTH*HEIGHT*4]= {0};
         texture.update(clear);
+        texture.setRepeated(false);
+        texture.setSmooth(false);
     }
 
     void Lem1802::handleInterrupt()
@@ -135,8 +147,8 @@ namespace cpu {
             return;
         
         if (screen_map != 0 && enable) { // Update the texture
-            for (unsigned col=0; col < COLS; col++) {
-                for (unsigned row=0; row < ROWS; row++) {
+            for (unsigned row=0; row < ROWS; row++) {
+                for (unsigned col=0; col < COLS; col++) {
                     uint16_t pos = screen_map + row * COLS + col;
                     unsigned char ascii = (unsigned char) (cpu->getMem()[pos] 
                                                             & 0x007F);
