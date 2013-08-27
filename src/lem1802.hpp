@@ -80,6 +80,7 @@ protected:
     sf::RenderWindow window;        /// SFML window
     sf::Texture texture;            /// SFML texture were to paint
 
+    std::string title;              /// Title window
 
 };
 

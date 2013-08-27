@@ -90,11 +90,17 @@ namespace cpu {
             emulation_mode = !emulation_mode;
             font_map = palette_map = screen_map = 0;
 
+            window.close();
             if (emulation_mode) {
-                window.setSize(sf::Vector2u(128*2 +20, 96*2 +20));
+                //window.setSize(sf::Vector2u(128*2 +20, 96*2 +20));
+                window.create(sf::VideoMode(128*2 +20, 96*2 + 20), title, 
+                    sf::Style::Close | sf::Style::Titlebar);
             } else {
-                window.setSize(sf::Vector2u(WIDTH*2 +30, HEIGHT*2 + 30));
+                //window.setSize(sf::Vector2u(WIDTH*2 +30, HEIGHT*2 + 30));
+                window.create(sf::VideoMode(WIDTH*2 +30, HEIGHT*2 + 30), title, 
+                    sf::Style::Close | sf::Style::Titlebar);
             }
+            window.setFramerateLimit(FPS);
             return;
         } 
 
