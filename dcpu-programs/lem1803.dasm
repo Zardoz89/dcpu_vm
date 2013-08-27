@@ -1,0 +1,49 @@
+:init
+hwn z                 ;  C=?                                    2
+:search
+ifg z, 0              ;  If C=0 skips                         2 or 3
+sub z, 1              ;  C--                                    2
+hwq z                 ;  Get last attached hardware info        4
+
+; Check if is a LEM
+ife a, 0xf615         ;                                       3 or 4
+ife b, 0x7349         ; Looks that is a LEM                   3 or 4
+jsr print             ; Calls to a function                     3
+
+ifg z, 0              ; Keep searching ?                      2 or 3
+set pc, search        ; Loop                                    2
+
+set pc, init          ; Goto 0x0000                             2
+
+:crash
+set pc, crash         ; Something was wrong if reach here
+
+:subrut               ; Subrutine that sets z to 0xBEBE
+set z, 0xBEBE         ;                                         2
+set pc, pop           ; Return 
+
+:print               ; Subrutine that prints on screen
+set a, 0             ; MEM_MAP_SCREEN                           1
+set b, 0x8000        ;                                          2
+hwi z                ;                                          4+
+set a, 3             ; SET_BORDER_COLOR                         1
+set b, 3             ; We try to change border color            1
+hwi z                ;                                          4+
+
+set i, str           ;                                          2
+set j, 0x8000        ;                                          2
+
+sti [j], [i]         ; copy text to screen                      1
+sti [j], [i]         ; copy text to screen                      1
+
+set [0x86C0], 0x11C0
+set [0x86C1], 0x01C1
+set [0x86C2], 0x01C2
+set [0x86C3], 0x01C3
+
+set pc, pop
+
+:str
+.dat 0x6f48, 0x616c
+; "Hola" packed with first char in the LSB
+
