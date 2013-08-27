@@ -40,6 +40,14 @@ set [0x86C1], 0x01C1
 set [0x86C2], 0x01C2
 set [0x86C3], 0x01C3
 
+set j, 0x86C4
+set i, 0
+
+:colors
+sti [j], i
+ifl i, 64
+set pc, colors
+
 set pc, pop
 
 :str
