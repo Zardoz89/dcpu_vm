@@ -65,7 +65,7 @@ namespace cpu {
 
         tick_per_refresh = cpu->cpu_clock / FPS;
 
-        std::string title = "LEM1803 DevId= ";
+        title = "LEM1803 DevId= ";
         title.append( std::to_string(index));
         //window.create(sf::VideoMode(WIDTH*2 +30, HEIGHT*2 + 30), title, 
         window.create(sf::VideoMode(128*2 +20, 96*2 + 20), title, 
