@@ -20,8 +20,6 @@
 
 namespace cpu {
 
-
-
 /**
  * @brief LEM1802 that uses SFML
  */
@@ -54,7 +52,7 @@ public:
     /**
      * @brief Try to show the screen in the terminal
      */
-    void show();
+    virtual void show();
 
     /**
      * @brief Sets if it can display to stdout
@@ -64,7 +62,7 @@ public:
     const static uint16_t def_palette_map[16];   /// Default palette
     const static uint16_t def_font_map[128*2];    /// Default fontmap
 
-private:
+protected:
 
     uint16_t screen_map;            /// Where map VIDEO RAM 
     uint16_t font_map;              /// Where map FONT

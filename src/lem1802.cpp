@@ -61,7 +61,11 @@ namespace cpu {
     Lem1802::Lem1802() : screen_map (0), font_map (0), palette_map (0),
     border_col (0), ticks (0), enable (true), blink(0) { }
 
-    Lem1802::~Lem1802() { }
+    Lem1802::~Lem1802() {
+        if (window.isOpen()) {
+            window.close();
+        }
+    }
 
     void Lem1802::attachTo (DCPU* cpu, size_t index) {
         this->IHardware::attachTo(cpu, index);

@@ -1,4 +1,3 @@
-:init
 hwn z                 ;  C=?                                    2
 :search
 ifg z, 0              ;  If C=0 skips                         2 or 3
@@ -13,16 +12,16 @@ jsr print             ; Calls to a function                     3
 ifg z, 0              ; Keep searching ?                      2 or 3
 set pc, search        ; Loop                                    2
 
-set pc, init          ; Goto 0x0000                             2
-
-:crash
-set pc, crash         ; Something was wrong if reach here
+:loop
+set pc, loop          
 
 :subrut               ; Subrutine that sets z to 0xBEBE
 set z, 0xBEBE         ;                                         2
-set pc, pop           ; Return 
+set pc, pop           ; Return
 
 :print               ; Subrutine that prints on screen
+set a, 255
+hwi z                ; Enforces native mode
 set a, 0             ; MEM_MAP_SCREEN                           1
 set b, 0x8000        ;                                          2
 hwi z                ;                                          4+

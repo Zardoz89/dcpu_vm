@@ -16,7 +16,7 @@ namespace cpu {
 
     const uint16_t BLINKRATE    = 10000; // Change Blink state each N ticks
     
-    const uint16_t Lem1803::def_font_map[512] = {   /// Default font map
+    const uint16_t Lem1803::def_font_map2[512] = {   /// Default font map
         0xb79e, 0x388e, 0x722c, 0x75f4, 0x19bb, 0x7f8f, 0x85f9, 0xb158,
         0x242e, 0x2400, 0x082a, 0x0800, 0x0008, 0x0000, 0x0808, 0x0808,
         0x00ff, 0x0000, 0x00f8, 0x0808, 0x08f8, 0x0000, 0x080f, 0x0000,
@@ -51,13 +51,12 @@ namespace cpu {
         0x0077, 0x0000, 0x4136, 0x0800, 0x0201, 0x0201, 0x0205, 0x0200
    };
 
-    const uint16_t Lem1803::def_palette_map[64] = {    /// Default palette
+    const uint16_t Lem1803::def_palette_map2[64] = {    /// Default palette
 #       include "64_palette.inc"
     };
 
 
-    Lem1803::Lem1803() : screen_map (0), font_map (0), palette_map (0),
-    border_col (0), ticks (0), enable (true), blink(0) { }
+    Lem1803::Lem1803() : emulation_mode(true) { }
 
     Lem1803::~Lem1803() { }
 
@@ -68,7 +67,8 @@ namespace cpu {
 
         std::string title = "LEM1803 DevId= ";
         title.append( std::to_string(index));
-        window.create(sf::VideoMode(WIDTH*2 +30, HEIGHT*2 + 30), title, 
+        //window.create(sf::VideoMode(WIDTH*2 +30, HEIGHT*2 + 30), title, 
+        window.create(sf::VideoMode(128*2 +20, 96*2 + 20), title, 
                 sf::Style::Close | sf::Style::Titlebar);
         
         window.setFramerateLimit(FPS);
@@ -86,68 +86,45 @@ namespace cpu {
 
         size_t s;
 
-        switch (cpu->GetA() ) {
-            case MEM_MAP_SCREEN:
-                screen_map = cpu->GetB();
+        if (cpu->GetA() == LEGACY_MODE) {
+            emulation_mode = !emulation_mode;
+            font_map = palette_map = screen_map = 0;
 
-                if (screen_map != 0)
-                    ticks = tick_per_refresh +1; // Force to do initial print
+            if (emulation_mode) {
+                window.setSize(sf::Vector2u(128*2 +20, 96*2 +20));
+            } else {
+                window.setSize(sf::Vector2u(WIDTH*2 +30, HEIGHT*2 + 30));
+            }
+            return;
+        } 
 
-                break;
-
-            case MEM_MAP_FONT:
-                font_map = cpu->GetB();
-                break;
-
-            case MEM_MAP_PALETTE:
-                palette_map = cpu->GetB();
-                break;
-
-            case SET_BORDER_COLOR:
-                border_col = cpu->GetB() & 0x1F;
-                break;
-
-            case MEM_DUMP_FONT:
+        if (!emulation_mode) { // Only this commands are diferent 
+            if (cpu->GetA() == MEM_DUMP_FONT) {
                 s = RAM_SIZE - 1 - cpu->GetB() < 512 ? 
                         RAM_SIZE - 1 - cpu->GetB() : 512 ;
-                std::copy_n (Lem1803::def_font_map, s, cpu->getMem() + cpu->GetB() );
-                break;
-
-            case MEM_DUMP_PALETTE:
+                std::copy_n (Lem1803::def_font_map2, s, cpu->getMem() + cpu->GetB() );
+                return;
+            } else if (cpu->GetA() == MEM_DUMP_PALETTE) {
                 s = RAM_SIZE - 1 - cpu->GetB() < 64 ?
                         RAM_SIZE - 1 - cpu->GetB() : 64 ;
-                std::copy_n (Lem1803::def_palette_map, s, 
+                std::copy_n (Lem1803::def_palette_map2, s, 
                         cpu->getMem() + cpu->GetB() );
-                break;
-
-            case LEGACY_MODE:
-                font_map = palette_map = screen_map = 0;
-                // TODO Legacy mode and boot in legacy mode on
-                break;
-
-            default:
-                // do nothing
-                break;
+                return;
+            }
         }
-    }
-
-    void Lem1803::tick()
-    {
-        if (++ticks > tick_per_refresh) {
-            // Update screen at 60Hz aprox
-            ticks = 0;
-            this->show();
-        }
-        if (++blink > BLINKRATE*2)
-            blink = 0;
+        Lem1802::handleInterrupt();
     }
 
     void Lem1803::show()
     {
-        using namespace std;
 
         if (this->cpu == NULL)
             return;
+
+        if (emulation_mode) {
+            Lem1802::show();
+            return;
+        }
         
         if (screen_map != 0 && enable) { // Update the texture
             for (unsigned row=0; row < ROWS; row++) {
@@ -168,8 +145,8 @@ namespace cpu {
                     uint16_t fg_col, bg_col;
                     
                     if (palette_map == 0) { // Use default palette
-                        fg_col = Lem1803::def_palette_map[fg_ind];
-                        bg_col = Lem1803::def_palette_map[bg_ind];
+                        fg_col = Lem1803::def_palette_map2[fg_ind];
+                        bg_col = Lem1803::def_palette_map2[bg_ind];
                     } else {
                         fg_col = cpu->getMem()[palette_map+ fg_ind];
                         bg_col = cpu->getMem()[palette_map+ bg_ind];
@@ -177,7 +154,7 @@ namespace cpu {
                     
                     // Does the blink
                     if (blink > BLINKRATE &&  
-                           ((cpu->getMem()[pos+1728] & 0x1000) > 0) ) {
+                           ((cpu->getMem()[pos_attr] & 0x1000) > 0) ) {
                         fg_col = bg_col;
                     }
 
@@ -195,8 +172,8 @@ namespace cpu {
     
                     uint16_t glyph[2];
                     if (font_map == 0) { // Default font
-                        glyph[0] = Lem1803::def_font_map[ascii*2]; 
-                        glyph[1] = Lem1803::def_font_map[ascii*2+1];
+                        glyph[0] = Lem1803::def_font_map2[ascii*2]; 
+                        glyph[1] = Lem1803::def_font_map2[ascii*2+1];
                     } else {
                         glyph[0] = cpu->getMem()[font_map+ (ascii*2)]; 
                         glyph[1] = cpu->getMem()[font_map+ (ascii*2)+1]; 
@@ -280,11 +257,6 @@ namespace cpu {
 
             window.display();
         }
-    }
-
-
-    void Lem1803::setEnable(bool enable) {
-        this->enable = enable;
     }
 
 } // END of NAMESPACE
