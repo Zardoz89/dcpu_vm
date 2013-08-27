@@ -6,10 +6,13 @@
 #include <thread>
 
 #include <stdio.h>
+#include <unistd.h>
 #include <chrono>
 
 #include "dcpu.hpp"
 #include "disassembler.hpp"
+
+#include "gclock.hpp"
 #include "fake_lem1802.hpp"
 #include "lem1802.hpp"
 #include "lem1803.hpp"
@@ -274,24 +277,35 @@ void one_bench() {
 
 void run100k() {
 
-    auto cpu = std::make_shared<DCPU>();
-    auto screen1 = std::make_shared<Lem1802>();
+    using namespace std;
+    using namespace std::chrono;
+    
+    auto cpu = make_shared<DCPU>();
+    auto screen1 = std::make_shared<Lem1803>();
     cpu->attachHardware (screen1);
     
-    auto screen2 = std::make_shared<Lem1803>();
+    auto screen2 = make_shared<Lem1802>();
     cpu->attachHardware (screen2);
-    
+   
+    auto clock = make_shared<Generic_Clock>();
+    cpu->attachHardware (clock);
+
     cpu->reset();
     cpu->loadProgram (data, size);
     
-    
+    high_resolution_clock::time_point b, e; 
     for (int i=0; i < 100000; i++) {
+        b =  high_resolution_clock::now(); 
         cpu->tick();
+        e =  high_resolution_clock::now(); 
+        auto tmp = microseconds(1000000/cpu->cpu_clock) 
+            - duration_cast<chrono::microseconds>(e - b);
+        this_thread::sleep_for(tmp); 
     }
 
-    std::cout << "Finished" << std::endl;
+    cout << "Finished" << std::endl;
     char c;
-    std::cin >> c;
+    cin >> c;
 
 }
 

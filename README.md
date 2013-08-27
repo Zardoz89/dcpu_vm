@@ -29,17 +29,15 @@ you will execute a CPU clock cycle. If you press 'q' followed by enter , you wil
 
 The benchmark setup is coded in some constants at the begin of main.cpp.
 
-In run 100K cycles mode, at the end of the emulation, the program will wait to press any character to finish the execution.
+The "run 100K cycles" exeutes the VM at realtime speed. At the end of the emulation, the program will wait to press any character to finish the execution.
 
-Actually the step and run100k VM have attached a LEM1802 monitor that shows in a window.
-It refresh at 30Hz (~833 cpu cycles), so you will need press a few times any key to see anything in the terminal, in step mode.
+Actually the "step" and "run 100k" modes VM have attached a LEM1802 and LEM1803 monitor that are showed in a window. It refresh at 30Hz (~833 cpu cycles), so you will need press a few times any key to see anything in the terminal, in step mode.
 
 
 TODO
 ----
 
 - Implement more hardware devices
-- Realtime execution at 100KHz
 - A more precise benchmarks
 - make tester.dasm more exhaustive, covering all possibly cases and putting comments about 
   expected results and wait cycle
