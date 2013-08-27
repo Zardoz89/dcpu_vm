@@ -1,0 +1,159 @@
+    ; --------------------------------------------
+    ; Title:   Digital Clock
+    ; Author:  GOLD Computer Solutions
+    ; Date:    6/13/2012
+    ; Version: 1.10
+    ; --------------------------------------------
+     
+    ; [Program Flow]
+    JSR initDevices
+    JSR initClock
+    SET PC, clockLoop
+    SET PC, END
+    ; [/Program Flow]
+     
+    ; [Program Variables]
+    :deviceCount DAT 0
+    :dev_display DAT 0
+    :dev_clock DAT 0
+    :screenRegister DAT 0x8000
+    :clockRegister DAT 0x80ab, 0x80ac, 0x80ae, 0x80af, 0x80b1, 0x80b2, 0x0000   ; Includes breaks between hours/mins/secs
+    :isActive DAT 1
+    :messageOffset DAT 0x0047
+    :message DAT ";GSC Digital Clock", 0x0000
+    :font DAT 0xe000
+    ; [/Program Variables]
+     
+     
+    ; Device Initializer
+    :find_devices
+        HWN [deviceCount]
+        SET I, 0
+    :find_devices_loop
+        HWQ I
+        IFE A, 0xb402   ; Clock
+            SET [dev_clock], I
+        IFE A, 0xf615   ; Display
+            SET [dev_display], I
+        ADD I, 1
+        IFN I, [deviceCount]
+            SET PC, find_devices_loop
+    SET PC, POP
+    :initDevices
+        JSR find_devices   
+        ; Setup Display
+        SET A, 0
+        SET B, [screenRegister]
+        HWI [dev_display]
+        SET A, 3
+        SET B, 0x1
+        HWI [dev_display]
+        ; Setup Clock
+        SET A, 0
+        SET B, 60
+        HWI [dev_clock]
+    SET PC, POP
+     
+     
+    ; Main Clock Program
+    :initClock
+        JSR initClockDisplay
+        JSR RenderString
+        SET A, 2
+        SET B, 1
+        HWI [dev_clock]
+        IAS HandleInterrupts
+    SET PC, POP
+    :HandleInterrupts
+        IFE B, 1
+            JSR secondLoop
+        RFI clockLoop
+    SET PC, POP
+    :secondLoop
+        SET J, [clockRegister+5]
+        ADD [J], 1
+        JSR HandleDigits
+    SET PC, POP
+    :clockLoop
+        IFE [isActive], 1
+            SET PC, clockLoop
+    SET PC, END
+     
+     
+    ; Display Initializer
+    :initClockDisplay
+        SET I, [clockRegister]
+        ADD I, 2
+        SET [I], 0xe0ba   ; Colon
+        ADD I, 3
+        SET [I], 0xe0ba   ; Colon
+        SET I, clockRegister
+    :ClockDisplay
+        SET J, [I]
+        SET [J], 0x7030   ; Ones Second
+        ADD I, 1
+        IFE [I], 0x0000
+            SET PC, POP
+        SET PC, ClockDisplay
+    SET PC, POP
+     
+     
+    ; Digit Handler and Incrementer
+    :HandleDigits
+        IFE [0x80b2], 0x703a   ; Ones Second
+            JSR tenSecond
+        IFE [0x80b1], 0x7036   ; Tens Second
+            JSR oneMinute
+        IFE [0x80af], 0x703a   ; Ones Minute
+            JSR tenMinute
+        IFE [0x80ae], 0x7036   ; Tens Minute
+            JSR oneHour
+        IFE [0x80ac], 0x7034   ; Ones Hour
+            IFE [0x80ab], 0x7032   ; Tens Hour
+                JSR resetClock
+        IFE [0x80ac], 0x703a   ; Ones Hour
+            JSR tenHour
+    SET PC, POP
+    :tenSecond
+        SET [0x80b2], 0x7030   ; Ones Second, Tens Second
+        ADD [0x80b1], 1
+    SET PC, POP
+    :oneMinute
+        SET [0x80b1], 0x7030   ; Tens Second, Ones Minute
+        ADD [0x80af], 1
+    SET PC, POP
+    :tenMinute
+        SET [0x80af], 0x7030   ; Ones Minute, Tens Minute
+        ADD [0x80ae], 1
+    SET PC, POP
+    :oneHour
+        SET [0x80ae], 0x7030   ; Tens Minute, Ones Hour
+        ADD [0x80ac], 1
+    SET PC, POP
+    :tenHour
+        SET [0x80ac], 0x7030   ; Ones Hour, Tens Hour
+        ADD [0x80ab], 1
+    SET PC, POP
+    :resetClock
+        SET [0x80ab], 0x7030   ; Ones Hour, Tens Hour
+        SET [0x80ac], 0x7030
+    SET PC, POP
+     
+    :RenderString
+        SET I, message
+        SET J, [screenRegister]
+        ADD J, [messageOffset]
+    :RenderStringLoop
+        SET A, [I]
+        IFE A, 0x0000
+            SET PC, RenderStringFinished
+        BOR A, [font]
+        STI [J], A
+        SET PC, RenderStringLoop
+    :RenderStringFinished
+    SET PC, POP
+     
+     
+     
+    :END
+

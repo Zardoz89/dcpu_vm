@@ -1,0 +1,63 @@
+    HWN I
+:devloop
+    SUB I, 1
+    HWQ I
+    IFE B, 0x7349
+        IFE A, 0xf615
+            SET [monitor], I
+    IFE B, 0x12d0
+        IFE A, 0xb402
+            SET [clock], I
+    IFG I, 0
+        SET PC, devloop
+
+SET A, 0x0
+SET B, 0x8000
+HWI [monitor]
+
+SET I, 0
+
+SET A, 0
+SET B, 60
+HWI [clock]
+
+SET Z, 0
+
+:print
+    IFE [message + I], 0
+        SET PC, end
+
+    SET A, 1
+    HWI [clock]
+    IFN C, 1
+        SET PC, print
+    SET A, 0
+    SET B, 60
+    HWI [clock]
+    SET [0x8000 + I], [message + I]
+    SET J, 0xf000
+    SET C, I
+    SHL C, 0xC
+    SUB J, C
+    XOR [0x8000 + I], J
+    ADD I, 1
+
+    ; set border color
+    SET A, 3
+    SET B, Z
+    HWI [monitor]
+    ADD Z, 1
+
+    SET PC, print
+
+:end
+    SET PC, end
+
+:message
+.dat "Hello World!", 0
+
+:monitor
+.dat 0x0
+
+:clock
+.dat 0x0
