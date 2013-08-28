@@ -6,7 +6,6 @@
 #include <thread>
 
 #include <stdio.h>
-#include <unistd.h>
 #include <chrono>
 
 #include "dcpu.hpp"
@@ -89,7 +88,7 @@ int main (int argc, char **argv)
     
 badchar:
     std::cout << "Select what to do :" << std::endl;
-    std::cout << "\tb -> benchmark  s -> step execution o-> benchmark one VM r-> run 8888888800k cycles";
+    std::cout << "\tb -> benchmark  s -> step execution o-> benchmark one VM r-> run 800k cycles";
     std::cout << std::endl << std::endl;
     char choose;
     std::cin >> choose;
@@ -294,28 +293,29 @@ void run100k() {
     cpu->reset();
     cpu->loadProgram (data, size);
     
-    high_resolution_clock::time_point b, e; 
-    for (int i=0; i < 800000; i++) {
-        b =  high_resolution_clock::now(); 
-        cpu->tick();
-        e =  high_resolution_clock::now(); 
-        
-        auto delta = duration_cast<chrono::nanoseconds>(e - b);
-        auto rest = nanoseconds(1000000000/cpu->cpu_clock)-delta; 
-
-        if ((i % 50000) == 0) { // Not show running speed every clock tick 
-            double p = nanoseconds(1000000000/cpu->cpu_clock).count() /
-                (double)(delta.count() + rest.count());
-            cerr << "Delta :" << delta.count() << " ns ";
-            cerr << "Rest :" << rest.count() << " ns ";
-            cerr << " Running at "<< p*100.0 << " % speed." << endl;
-        }
-        this_thread::sleep_for(duration_cast<chrono::nanoseconds>(rest)); 
-    }
-
-    cout << "Finished" << std::endl;
+    high_resolution_clock::time_point b, e;
     char c;
-    cin >> c;
+    do {
+        for (int i=0; i < 800000; i++) {
+            b =  high_resolution_clock::now(); 
+            cpu->tick();
+            e =  high_resolution_clock::now(); 
+            
+            auto delta = duration_cast<chrono::nanoseconds>(e - b);
+            auto rest = nanoseconds(1000000000/cpu->cpu_clock)-delta; 
+
+            if ((i % 50000) == 0) { // Not show running speed every clock tick 
+                double p = nanoseconds(1000000000/cpu->cpu_clock).count() /
+                    (double)(delta.count() + rest.count());
+                cerr << "Delta :" << delta.count() << " ns ";
+                cerr << "Rest :" << rest.count() << " ns ";
+                cerr << " Running at "<< p*100.0 << " % speed." << endl;
+            }
+            //this_thread::sleep_for(duration_cast<chrono::nanoseconds>(rest)); 
+        }
+        cout << "Press q to exit. Other key to run more." << std::endl;
+        cin >> c;
+    } while (c != 'q' && c!= 'Q');
 
 }
 
