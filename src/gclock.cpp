@@ -1,12 +1,14 @@
 #include "gclock.hpp"
 
-#include <iostream>
+//#include <iostream>
 
 namespace cpu {
 
+    
     Generic_Clock::Generic_Clock() : 
-        cpu_ticks(0), max_ticks(0), ticks(0), msg(0) 
+        cpu_ticks(0), max_ticks(0), ticks(0), msg(0), trigger(false) 
     { 
+        //e = std::chrono::high_resolution_clock::now();
     }
 
     Generic_Clock::~Generic_Clock() 
@@ -21,7 +23,8 @@ namespace cpu {
         switch (cpu->GetA() ) {
         case 0:
             if (cpu->GetB() > 0) {
-                max_ticks = (cpu->GetB() * cpu->cpu_clock) / 60;
+                max_ticks = (cpu->GetB() * cpu->cpu_clock);
+                max_ticks /= 60;
             } else {
                 max_ticks = 0;
             }
@@ -47,14 +50,23 @@ namespace cpu {
         // We use CPU clock ticks to measure time relative to DCPU core
         if (max_ticks >0 && msg > 0) {
             cpu_ticks++;
+            if (cpu_ticks >= max_ticks) {
+                trigger = true;
+                cpu_ticks -= max_ticks;
+
+            }
         }
     }
 
     bool Generic_Clock::checkInterrupt (uint16_t &msg)
     {
-        if (cpu_ticks >= max_ticks && this->msg > 0) {
-            cpu_ticks -= max_ticks;
-            ticks++;
+        if (trigger && this->msg > 0) {
+            //b = std::chrono::high_resolution_clock::now();
+            //auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(b -e);
+            //std::cerr << delta.count() << " ms" << std::endl;
+            //e = std::chrono::high_resolution_clock::now();
+
+            trigger = false;
             msg = this->msg;
             return true;
         }
