@@ -286,7 +286,6 @@ void run100k() {
     auto screen2 = make_shared<Lem1802>();
     cpu->attachHardware (screen2);
    
-    // FIXME See what fails with clock
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
 
