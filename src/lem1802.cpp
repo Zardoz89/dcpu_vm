@@ -47,6 +47,9 @@ namespace cpu {
         0x0555, 0x055f, 0x05f5, 0x05ff, 0x0f55, 0x0f5f, 0x0ff5, 0x0fff
    };
 
+   // Clears the screen texture
+   const static sf::Uint8 clear[Lem1802::WIDTH*Lem1802::HEIGHT*4]= {0};
+
 
     Lem1802::Lem1802() : screen_map (0), font_map (0), palette_map (0),
     border_col (0), ticks (0), enable (true), blink(0) { }
@@ -55,6 +58,8 @@ namespace cpu {
         if (window.isOpen()) {
             window.close();
         }
+        if (renderguy.joinable())
+            renderguy.join();
     }
 
     void Lem1802::attachTo (DCPU* cpu, size_t index) {
@@ -71,10 +76,14 @@ namespace cpu {
         
         window.setFramerateLimit(Lem1802::FPS);
         texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
-        sf::Uint8 clear[Lem1802::WIDTH*Lem1802::HEIGHT*4]= {0};
         texture.update(clear);
         texture.setRepeated(false);
         texture.setSmooth(false);
+
+        window.setActive(false);
+        renderguy = std::thread(&Lem1802::render, this);
+        renderguy.detach();
+
     }
 
     void Lem1802::handleInterrupt()
@@ -83,7 +92,6 @@ namespace cpu {
             return;
 
         size_t s;
-
         switch (cpu->GetA() ) {
             case MEM_MAP_SCREEN:
                 screen_map = cpu->GetB();
@@ -229,12 +237,23 @@ namespace cpu {
                                     col*4 +3, row*8 +i);
                         }
                     }
-                    
                 }
             }
+        } else {
+            texture.update(clear);
         }
-        
-        if (window.isOpen() ) { // Update the window draw
+    }
+
+
+    void Lem1802::setEnable(bool enable) 
+    {
+        this->enable = enable;
+    }
+
+    
+    void Lem1802::render() 
+    {
+        while (window.isOpen() ) { // Update the window draw
             sf::Event event;
             while (window.pollEvent(event)) {
                 // "close requested" event: we close the window
@@ -266,11 +285,6 @@ namespace cpu {
 
             window.display();
         }
-    }
-
-
-    void Lem1802::setEnable(bool enable) {
-        this->enable = enable;
     }
 
 } // END of NAMESPACE

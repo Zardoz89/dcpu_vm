@@ -1,7 +1,7 @@
 #ifndef _LEM1802_HPP
 #define _LEM1802_HPP
 
-#include <iostream>
+#include <thread>
 #include <cstdint>
 
 #include "dcpu.hpp" // Base class: cpu::IHardware
@@ -70,7 +70,7 @@ public:
     void setEnable(bool enable);
 
     const static uint16_t def_palette_map[16];   /// Default palette
-    const static uint16_t def_font_map[128*2];    /// Default fontmap
+    const static uint16_t def_font_map[128*2];   /// Default fontmap
 
 protected:
 
@@ -91,6 +91,9 @@ protected:
     sf::Texture texture;            /// SFML texture were to paint
 
     std::string title;              /// Title window
+    std::thread renderguy;          /// Rendered thread
+
+    virtual void render();          /// Renders the screen to the window
 
 };
 

@@ -46,7 +46,9 @@ namespace cpu {
     const uint16_t Lem1803::def_palette_map2[64] = {    /// Default palette
 #       include "64_palette.inc"
     };
-
+   
+    // Clears the screen texture
+    const static sf::Uint8 clear[Lem1803::WIDTH*Lem1803::HEIGHT*4]= {0};
 
     Lem1803::Lem1803() : emulation_mode(true) { }
 
@@ -65,10 +67,13 @@ namespace cpu {
         
         window.setFramerateLimit(FPS);
         texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
-        sf::Uint8 clear[Lem1803::WIDTH*Lem1803::HEIGHT*4]= {0};
         texture.update(clear);
         texture.setSmooth(false);
         texture.setRepeated(false);
+
+        window.setActive(false);
+        renderguy = std::thread(&Lem1803::render, this);
+        renderguy.detach();
     }
 
     void Lem1803::handleInterrupt()
@@ -76,27 +81,14 @@ namespace cpu {
         if (this->cpu == NULL)
             return;
 
-        size_t s;
 
         if (cpu->GetA() == LEGACY_MODE) {
             emulation_mode = !emulation_mode;
             font_map = palette_map = screen_map = 0;
-/*
-            window.close();
-            if (emulation_mode) {
-                //window.setSize(sf::Vector2u(128*2 +20, 96*2 +20));
-                window.create(sf::VideoMode(128*2 +20, 96*2 + 20), title, 
-                    sf::Style::Close | sf::Style::Titlebar);
-            } else {
-                //window.setSize(sf::Vector2u(WIDTH*2 +30, HEIGHT*2 + 30));
-                window.create(sf::VideoMode(Lem1803::WIDTH*2 +30, 
-                            Lem1803::HEIGHT*2 + 30), 
-                            title, sf::Style::Close | sf::Style::Titlebar);
-            }
-            window.setFramerateLimit(FPS);*/
             return;
         } 
 
+        size_t s;
         if (!emulation_mode) { // Only this commands are diferent 
             if (cpu->GetA() == MEM_DUMP_FONT) {
                 s = RAM_SIZE - 1 - cpu->GetB() < 512 ? 
@@ -219,12 +211,16 @@ namespace cpu {
                                     col*4 +3, row*8 +i);
                         }
                     }
-                    
                 }
             }
+        } else {
+            texture.update(clear);
         }
-        
-        if (window.isOpen() ) { // Update the window draw
+    }
+
+    void Lem1803::render() 
+    {
+        while (window.isOpen() ) { // Update the window draw
             sf::Event event;
             while (window.pollEvent(event)) {
                 // "close requested" event: we close the window
@@ -260,6 +256,7 @@ namespace cpu {
 
             window.display();
         }
+
     }
 
 } // END of NAMESPACE
