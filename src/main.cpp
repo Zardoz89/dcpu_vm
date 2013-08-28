@@ -299,9 +299,18 @@ void run100k() {
         b =  high_resolution_clock::now(); 
         cpu->tick();
         e =  high_resolution_clock::now(); 
-        auto tmp = microseconds(1000000/cpu->cpu_clock) 
-            - duration_cast<chrono::microseconds>(e - b);
-        this_thread::sleep_for(tmp); 
+        
+        auto delta = duration_cast<chrono::nanoseconds>(e - b);
+        auto rest = nanoseconds(1000000000/cpu->cpu_clock)-delta; 
+
+        if ((i % 50000) == 0) { // Not show running speed every clock tick 
+            double p = nanoseconds(1000000000/cpu->cpu_clock).count() /
+                (double)(delta.count() + rest.count());
+            cerr << "Delta :" << delta.count() << " ns ";
+            cerr << "Rest :" << rest.count() << " ns ";
+            cerr << " Running at "<< p*100.0 << " % speed." << endl;
+        }
+        this_thread::sleep_for(duration_cast<chrono::nanoseconds>(rest)); 
     }
 
     cout << "Finished" << std::endl;
