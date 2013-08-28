@@ -1,5 +1,7 @@
 #include "gclock.hpp"
 
+#include <iostream>
+
 namespace cpu {
 
     Generic_Clock::Generic_Clock() : 
@@ -31,7 +33,7 @@ namespace cpu {
             break;
 
         case 2:
-            msg = cpu->GetB();
+            this->msg = cpu->GetB();
             break;
 
         default:
@@ -43,13 +45,14 @@ namespace cpu {
     void Generic_Clock::tick() 
     {
         // We use CPU clock ticks to measure time relative to DCPU core
-        if (msg >0)
+        if (max_ticks >0 && msg > 0) {
             cpu_ticks++;
+        }
     }
 
     bool Generic_Clock::checkInterrupt (uint16_t &msg)
     {
-        if (cpu_ticks >= max_ticks && msg > 0) {
+        if (cpu_ticks >= max_ticks && this->msg > 0) {
             cpu_ticks -= max_ticks;
             ticks++;
             msg = this->msg;
