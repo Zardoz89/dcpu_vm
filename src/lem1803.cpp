@@ -131,7 +131,7 @@ namespace cpu {
                     }
                     
                     // Get palette indexes
-                    uint16_t fg_ind = (cpu->getMem()[pos_attr] & 0x0FC0) >> 5;
+                    uint16_t fg_ind = (cpu->getMem()[pos_attr] & 0x0FC0) >> 6;
                     uint16_t bg_ind = (cpu->getMem()[pos_attr] & 0x003F);
                     uint16_t fg_col, bg_col;
                     
