@@ -72,7 +72,7 @@ namespace cpu {
         texture.setRepeated(false);
 
         window.setActive(false);
-        renderguy = std::thread(&Lem1803::render, this);
+        renderguy = boost::thread(&Lem1803::render, this);
         renderguy.detach();
     }
 

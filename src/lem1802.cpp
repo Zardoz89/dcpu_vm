@@ -81,7 +81,7 @@ namespace cpu {
         texture.setSmooth(false);
 
         window.setActive(false);
-        renderguy = std::thread(&Lem1802::render, this);
+        renderguy = boost::thread(&Lem1802::render, this);
         renderguy.detach();
 
     }

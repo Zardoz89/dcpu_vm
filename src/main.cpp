@@ -3,10 +3,9 @@
 #include <cstdint>
 #include <algorithm>
 #include <memory>
-#include <thread>
-
-#include <stdio.h>
 #include <chrono>
+
+#include <boost/thread.hpp>
 
 #include "dcpu.hpp"
 #include "disassembler.hpp"
@@ -132,16 +131,16 @@ void benchmark()
         
     }
     
-    std::thread tds[THREADS];
+    boost::thread tds[THREADS];
 
-    printf("Threads %ld\t CPU PerThread %ld\t", THREADS, PERTHREAD);
-    printf("N cpus %ld\n", PERTHREAD * THREADS);
-    printf("Cycles %ld\n", CYCLES);
+    std::cout << "Threads " << THREADS << "\t CPU PerThread " << PERTHREAD;
+    std::cout << "\t N cpus " << PERTHREAD * THREADS << std::endl;
+    std::cout << "Cycles " << CYCLES << std::endl;
     
     auto start = std::chrono::high_resolution_clock::now(); 
     
     for (int i=0; i< THREADS; i++) {
-        tds[i] = std::thread(cpu_in_thread, i);
+        tds[i] = boost::thread(cpu_in_thread, i);
     }
     
     for (int i=0; i< THREADS; i++) {
