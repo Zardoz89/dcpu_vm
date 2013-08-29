@@ -11,6 +11,7 @@ set(dcpu-vm_SRCS
     fake_lem1802.cpp
     lem1802.cpp
     lem1803.cpp
+    cgm.cpp
     )
 
 add_executable(dcpu-vm ${dcpu-vm_SRCS})
