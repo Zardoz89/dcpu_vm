@@ -54,6 +54,15 @@ public:
     bool checkInterrupt (uint16_t &msg) {
         return false;
     }
+	
+	/**
+	 * @Call before render 1 frame to each frames
+	 */
+	inline void prepareRender()
+	{
+		need_render = true;
+	}
+	
     virtual void handleInterrupt();
     virtual void tick();
     
@@ -93,6 +102,8 @@ protected:
     uint16_t blink;                   /// Counter for blinking
    
     sf::Texture texture;              /// SFML screen texture
+	
+	bool need_render;                 ///Do we need a render (Improve the speed)
 	
 	// Threads and windows are not used anymore because 
 	// Win32 portability forbit window event in threads !

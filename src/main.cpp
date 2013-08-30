@@ -138,6 +138,8 @@ int main (int argc, char **argv)
         }
 		
 		///DCPU emulation stuff
+		lem1802->prepareRender();
+		lem1803->prepareRender();
 		const float delta=clock.getElapsedTime().asSeconds();
 		clock.restart();
 	    const int tick_needed=dcpu->cpu_clock/60;//(float)dcpu->cpu_clock*delta;

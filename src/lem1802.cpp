@@ -51,7 +51,7 @@ namespace cpu {
    const static sf::Uint8 clear[Lem1802::WIDTH*Lem1802::HEIGHT*4]= {0};
 
     Lem1802::Lem1802() : screen_map (0), font_map (0), palette_map (0),
-    border_col (0), ticks (0), enable (true), blink(0) 
+    border_col (0), ticks (0), enable (true), blink(0), need_render(false)
     /*#ifdef __NO_THREAD_11__
     , renderguy(NULL)
     #endif*/
@@ -150,9 +150,9 @@ namespace cpu {
     {
         using namespace std;
 
-        if (this->cpu == NULL)
+        if (this->cpu == NULL || !need_render)
             return;
-        
+        need_render = false;
         if (screen_map != 0 && enable) { // Update the texture
             for (unsigned row=0; row < Lem1802::ROWS; row++) {
                 for (unsigned col=0; col < Lem1802::COLS; col++) {

@@ -120,14 +120,14 @@ namespace cpu {
     void Lem1803::show()
     {
 
-        if (this->cpu == NULL)
+        if (this->cpu == NULL || !need_render)
             return;
 
         if (emulation_mode) {
             Lem1802::show();
             return;
         }
-        
+        need_render = false;
         if (screen_map != 0 && enable) { // Update the texture
             for (unsigned row=0; row < Lem1803::ROWS; row++) {
                 for (unsigned col=0; col < Lem1803::COLS; col++) {
