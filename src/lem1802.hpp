@@ -38,7 +38,7 @@ public:
     static const unsigned int ROWS      = 12;
     static const unsigned int COLS      = 32;
 
-    static const uint16_t BLINKPERSECOND = 10;
+    static const uint16_t BLINKPERSECOND = 2;
 
     virtual uint32_t getId() {
         return id;

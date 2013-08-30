@@ -94,7 +94,7 @@ namespace lem {
             ticks = 0;
             this->show(); // Update texture at desired rate
         }
-        if (++blink > Lem1802::BLINKPERSECOND *2)
+        if (++blink > blink_max*2)
             blink = 0;
     }
 
@@ -125,7 +125,7 @@ namespace lem {
                     }
                     
                     // Does the blink
-                    if (blink > Lem1802::BLINKPERSECOND &&  
+                    if (blink > blink_max &&  
                            ((cpu->getMem()[pos] & 0x80) > 0) ) {
                         fg_col = bg_col;
                     }

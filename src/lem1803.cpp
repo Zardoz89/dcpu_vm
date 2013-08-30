@@ -60,8 +60,9 @@ namespace lem {
         this->IHardware::attachTo(cpu, index);
 
         tick_per_refresh = cpu->cpu_clock / FPS;
+        blink_max = cpu->cpu_clock / Lem1802::BLINKPERSECOND;
 
-        texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
+        texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
         texture.update(clear);
         texture.setSmooth(false);
         texture.setRepeated(false);
@@ -76,6 +77,14 @@ namespace lem {
         if (cpu->GetA() == LEGACY_MODE) {
             emulation_mode = !emulation_mode;
             font_map = palette_map = screen_map = 0;
+            if (emulation_mode) {
+                texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
+            } else {
+                texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
+            }
+            texture.update(clear);
+            texture.setRepeated(false);
+            texture.setSmooth(false);
             return;
         } 
 
@@ -97,6 +106,7 @@ namespace lem {
         Lem1802::handleInterrupt();
     }
 
+    
     void Lem1803::show()
     {
 
@@ -135,7 +145,7 @@ namespace lem {
                     }
                     
                     // Does the blink
-                    if (blink > Lem1802::BLINKPERSECOND &&  
+                    if (blink > blink_max &&  
                            ((cpu->getMem()[pos_attr] & 0x1000) > 0) ) {
                         fg_col = bg_col;
                     }
@@ -211,6 +221,9 @@ namespace lem {
 
     sf::Color Lem1803::getBorder()
     {
+        if (emulation_mode)
+            return Lem1802::getBorder();
+
         uint16_t border;
         if (palette_map == 0) { // Use default palette
             border = Lem1803::def_palette_map[border_col];
