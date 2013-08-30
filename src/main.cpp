@@ -5,34 +5,38 @@
 #include <memory>
 #include <chrono>
 
-#include <SFML/System.hpp>
+//#include <SFML/System.hpp>
+#include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/Graphics/Texture.hpp>
 
 #include "dcpu.hpp"
 #include "disassembler.hpp"
 
 #include "gclock.hpp"
-#include "fake_lem1802.hpp"
+//#include "fake_lem1802.hpp"
 #include "lem1802.hpp"
-#include "lem1803.hpp"
+//#include "lem1803.hpp"
 
 using namespace cpu;
 
+/*
 const long TOTALCPUS    = 215*16;
 const long PERTHREAD    = 16;  // At 16 looks that is the ideal for the FX-4100
 #define THREADS           (TOTALCPUS/PERTHREAD)
 const long CYCLES       = 1000*1000;
 
 const int BATCH         = 10;
+*/
 
-
-std::vector<std::vector<std::shared_ptr<DCPU>>> threads;
+//std::vector<std::vector<std::shared_ptr<DCPU>>> threads;
 uint16_t* data;
 size_t size = 0;
 
-void benchmark();
+//void benchmark();
 void step();
-void one_bench();
-void run100k();
+//void one_bench();
+void run();
 
 void cpu_in_thread(int n);
 
@@ -42,9 +46,6 @@ int main (int argc, char **argv)
 
     char* filename;
     std::ifstream binfile;
-    
-   /* std::cout << "cpu " << sizeof(DCPU) << " IHardware " << sizeof(IHardware);
-    std::cout << " fake_LEM1802 " << sizeof(Fake_Lem1802) << std::endl;*/
     
     if (argc <= 1) {
         std::cerr << "Missing input file\n";
@@ -84,22 +85,23 @@ int main (int argc, char **argv)
     
     std::cout << "Readed " << size << " bytes - " << size / 2 << " words\n";
     size /= 2;
-    
+   
 badchar:
     std::cout << "Select what to do :" << std::endl;
-    std::cout << "\tb -> benchmark  s -> step execution o-> benchmark one VM r-> run 800k cycles";
+//    std::cout << "\tb -> benchmark  s -> step execution o-> benchmark one VM r-> run 800k cycles";
+    std::cout << "\ts -> step execution\n\tr-> run";
     std::cout << std::endl << std::endl;
     char choose;
     std::cin >> choose;
     
-    if (choose == 'b' || choose == 'B') {
+/*    if (choose == 'b' || choose == 'B') {
         benchmark();
-    } else if ( choose == 's' || choose == 'S') {
+    } else*/ if ( choose == 's' || choose == 'S') {
         step();
-    } else if ( choose == 'o' || choose == 'O') {
+    } /*else if ( choose == 'o' || choose == 'O') {
         one_bench();
-    } else if ( choose == 'r' || choose == 'R') {
-        run100k();
+    } */else if ( choose == 'r' || choose == 'R') {
+        run();
     } else {
         goto badchar; /// HATE ME!!!!
     }
@@ -109,7 +111,7 @@ badchar:
     return 0;
 }
 
-
+/*
 void benchmark() 
 {
     // Load program to all CPUs
@@ -153,15 +155,15 @@ void benchmark()
 	std::cout << "Measured time: " << dur.count() << "ms" << std::endl;
     
 }
-
+*/
 void step() {
     using namespace std;
     auto cpu = make_shared<DCPU>();
     
-    auto screen1 = std::make_shared<Lem1802>();
+    auto screen1 = std::make_shared<lem::Lem1802>();
     cpu->attachHardware (screen1);
-    auto screen2 = std::make_shared<Lem1803>();
-    cpu->attachHardware (screen2);
+//    auto screen2 = std::make_shared<Lem1803>();
+//    cpu->attachHardware (screen2);
     
     cpu->reset();
     cpu->loadProgram (data, size);
@@ -206,7 +208,7 @@ void step() {
     
 }
 
-
+/*
 void one_bench() {
     using namespace std;
     using namespace std::chrono;
@@ -273,17 +275,22 @@ void one_bench() {
     cout << "\tExecute 10k cycles time "<< d_execute << "us" << endl;
 
 }
-
-void run100k() {
+*/
+void run() {
 
     using namespace std;
     using namespace std::chrono;
+
+    sf::RenderWindow window(sf::VideoMode(
+                lem::Lem1802::WIDTH*3 +20 ,
+                lem::Lem1802::HEIGHT*3 +20),
+                "DCPU-16");
     
     auto cpu = make_shared<DCPU>();
-    auto screen1 = std::make_shared<Lem1803>();
-    cpu->attachHardware (screen1);
+//    auto screen1 = std::make_shared<Lem1803>();
+//    cpu->attachHardware (screen1);
     
-    auto screen2 = make_shared<Lem1802>();
+    auto screen2 = make_shared<lem::Lem1802>();
     cpu->attachHardware (screen2);
    
     auto clock = make_shared<Generic_Clock>();
@@ -292,33 +299,48 @@ void run100k() {
     cpu->reset();
     cpu->loadProgram (data, size);
     
-    high_resolution_clock::time_point b, e;
-    char c;
-    do {
-        for (int i=0; i < 800000; i++) {
-            b =  high_resolution_clock::now(); 
-            cpu->tick();
-            e =  high_resolution_clock::now(); 
-            
-            auto delta = duration_cast<chrono::nanoseconds>(e - b);
-            auto rest = nanoseconds(1000000000/cpu->cpu_clock)-delta; 
-
-            if ((i % 50000) == 0) { // Not show running speed every clock tick 
-                double p = nanoseconds(1000000000/cpu->cpu_clock).count() /
-                    (double)(delta.count() + rest.count());
-                cerr << "Delta :" << delta.count() << " ns ";
-                cerr << "Rest :" << rest.count() << " ns ";
-                cerr << " Running at "<< p*100.0 << " % speed." << endl;
+    high_resolution_clock::time_point t = high_resolution_clock::now();
+    high_resolution_clock::time_point t2; 
+    
+    while (window.isOpen()) {
+        t2 =  high_resolution_clock::now(); 
+        sf::Event event;
+        
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
+                window.close();
             }
-            //this_thread::sleep_for(duration_cast<chrono::nanoseconds>(rest)); 
         }
-        cout << "Press q to exit. Other key to run more." << std::endl;
-        cin >> c;
-    } while (c != 'q' && c!= 'Q');
+        
+        cpu->tick();
+        
+        auto delta = duration_cast<chrono::nanoseconds>(t2 - t);
+        //auto rest = nanoseconds(1000000000/cpu->cpu_clock)-delta; 
+
+        if ((cpu->getTotCycles() % 50000) == 0) { // Not show running speed every clock tick 
+            //double p = nanoseconds(1000000000/cpu->cpu_clock).count() /
+            //    (double)(delta.count() + rest.count());
+            cerr << "Delta :" << delta.count() << " ns " << endl;
+            //cerr << "Rest :" << rest.count() << " ns ";
+            //cerr << " Running at "<< p*100.0 << " % speed." << endl;
+        }
+
+        // Clear and set the border color
+        window.clear(screen2->getBorder());
+
+        sf::Sprite sprite(screen2->getTexture());
+        sprite.scale(3.0, 3.0);
+        sprite.setPosition(10.0, 10.0);
+
+        window.draw(sprite);
+        window.display();
+
+        t = t2;
+    }
 
 }
 
-
+/*
 
 // Runs PERTHREAD cpus, doing CYCLES cycles
 void cpu_in_thread(int n) {
@@ -330,6 +352,6 @@ void cpu_in_thread(int n) {
         }
     }
 }
-
+*/
 
 

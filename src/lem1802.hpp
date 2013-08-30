@@ -5,21 +5,19 @@
 
 #include "dcpu.hpp" // Base class: cpu::IHardware
 
-#include <SFML/System.hpp>
-#include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Texture.hpp>
 
-
-#define MEM_MAP_SCREEN   0
-#define MEM_MAP_FONT     1
-#define MEM_MAP_PALETTE  2
-#define SET_BORDER_COLOR 3
-#define MEM_DUMP_FONT    4
-#define MEM_DUMP_PALETTE 5
-
 namespace cpu {
 
+static const uint16_t MEM_MAP_SCREEN        = 0;
+static const uint16_t MEM_MAP_FONT          = 1;
+static const uint16_t MEM_MAP_PALETTE       = 2;
+static const uint16_t SET_BORDER_COLOR      = 3;
+static const uint16_t MEM_DUMP_FONT         = 4;
+static const uint16_t MEM_DUMP_PALETTE      = 5;
+
+namespace lem {
 /**
  * @brief LEM1802 that uses SFML
  */
@@ -39,7 +37,7 @@ public:
     static const unsigned int ROWS      = 12;
     static const unsigned int COLS      = 32;
 
-    static const uint16_t BLINKRATE    = 10000; // Change Blink state each N ticks
+    static const uint16_t BLINKPERSECOND = 10;
 
     virtual uint32_t getId() {
         return id;
@@ -60,9 +58,22 @@ public:
     virtual void attachTo (DCPU* cpu, size_t index);
     
     /**
-     * @brief Try to show the screen in the terminal
+     * @brief Updates the screen texture
      */
     virtual void show();
+
+    /**
+     * @brief Return the screen texture
+     */
+    sf::Texture& getTexture() 
+    {
+        return this->texture;
+    }
+
+    /**
+     * @brief Return border color
+     */
+    sf::Color getBorder();
 
     /**
      * @brief Sets if it can display to stdout
@@ -86,17 +97,14 @@ protected:
     bool enable;                    /// Can print to stdout ?
 
     uint16_t blink;                 /// Counter for blinking
+    uint32_t blink_max;             /// Max ticks to change blink state
    
-    sf::RenderWindow window;        /// SFML window
     sf::Texture texture;            /// SFML texture were to paint
-
-    std::string title;              /// Title window
-    sf::Thread* renderguy;          /// Rendered thread
-
-    virtual void render();          /// Renders the screen to the window
 
 };
 
-}
+} // end of namespace lem
+
+} // end of namespace cpu
 
 #endif // _LEM1802_HPP
