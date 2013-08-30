@@ -52,14 +52,18 @@ namespace cpu {
 
 
     Lem1802::Lem1802() : screen_map (0), font_map (0), palette_map (0),
-    border_col (0), ticks (0), enable (true), blink(0) { }
+    border_col (0), ticks (0), enable (true), blink(0), renderguy(NULL)
+    { }
 
-    Lem1802::~Lem1802() {
+    Lem1802::~Lem1802() 
+    {
         if (window.isOpen()) {
             window.close();
         }
-        if (renderguy.joinable())
-            renderguy.join();
+        if (renderguy) {
+            delete renderguy;
+            renderguy = NULL;
+        }
     }
 
     void Lem1802::attachTo (DCPU* cpu, size_t index) {
@@ -68,7 +72,9 @@ namespace cpu {
         tick_per_refresh = cpu->cpu_clock / Lem1802::FPS;
 
         title = "LEM1802 DevId= ";
-        title.append( std::to_string(index));
+        char strbuff[33];
+        snprintf(strbuff, 33,"%zu",index);
+        title.append(strbuff);
 
         window.create(sf::VideoMode(Lem1802::WIDTH*3 +20, 
                     Lem1802::HEIGHT*3 + 20), 
@@ -81,8 +87,11 @@ namespace cpu {
         texture.setSmooth(false);
 
         window.setActive(false);
-        renderguy = std::thread(&Lem1802::render, this);
-        renderguy.detach();
+    	if (renderguy)
+		   delete renderguy;
+		renderguy = new sf::Thread(&Lem1802::render,this);
+        renderguy->launch();
+
 
     }
 

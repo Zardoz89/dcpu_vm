@@ -1,8 +1,9 @@
 #include "lem1803.hpp"
 
 #include <algorithm>
-#include <cctype>
 #include <string>
+#include <cctype>
+#include <cstdio>
 
 
 namespace cpu {
@@ -60,7 +61,10 @@ namespace cpu {
         tick_per_refresh = cpu->cpu_clock / FPS;
 
         title = "LEM1803 DevId= ";
-        title.append( std::to_string(index));
+        char strbuff[33];
+        snprintf(strbuff, 33,"%zu",index);
+        title.append(strbuff);
+        
         window.create(sf::VideoMode(Lem1802::WIDTH*3 +20, 
                     Lem1802::HEIGHT*3 + 20), 
                     title, sf::Style::Close | sf::Style::Titlebar);
@@ -72,8 +76,10 @@ namespace cpu {
         texture.setRepeated(false);
 
         window.setActive(false);
-        renderguy = std::thread(&Lem1803::render, this);
-        renderguy.detach();
+    	if (renderguy)
+		   delete renderguy;
+		renderguy = new sf::Thread(&Lem1803::render,this);
+        renderguy->launch();
     }
 
     void Lem1803::handleInterrupt()
@@ -131,7 +137,7 @@ namespace cpu {
                     }
                     
                     // Get palette indexes
-                    uint16_t fg_ind = (cpu->getMem()[pos_attr] & 0x0FC0) >> 5;
+                    uint16_t fg_ind = (cpu->getMem()[pos_attr] & 0x0FC0) >> 6;
                     uint16_t bg_ind = (cpu->getMem()[pos_attr] & 0x003F);
                     uint16_t fg_col, bg_col;
                     
