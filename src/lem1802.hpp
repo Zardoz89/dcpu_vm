@@ -76,6 +76,16 @@ public:
      */
     virtual sf::Color getBorder();
 
+    static const int scaleX         = 3;
+    static const int scaleY         = 3;
+    static const int videoWidth     = Lem1802::WIDTH*3;
+    static const int videoHeight    = Lem1802::HEIGHT*3;
+
+    virtual int getScaleX()     {return scaleX;}
+    virtual int getScaleY()     {return scaleY;}
+    virtual int getVideWidth()  {return videoWidth;}
+    virtual int getVideHeight() {return videoHeight;}
+
     /**
      * @brief Sets if it can display to stdout
      */

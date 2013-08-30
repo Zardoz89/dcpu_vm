@@ -281,10 +281,6 @@ void run() {
     using namespace std;
     using namespace std::chrono;
 
-    sf::RenderWindow window(sf::VideoMode(
-                lem::Lem1802::WIDTH*3 +20 ,
-                lem::Lem1802::HEIGHT*3 +20),
-                "DCPU-16");
     
     auto cpu = make_shared<DCPU>();
 //    auto screen1 = std::make_shared<Lem1803>();
@@ -293,6 +289,11 @@ void run() {
     auto screen2 = make_shared<lem::Lem1803>();
     cpu->attachHardware (screen2);
    
+    sf::RenderWindow window(sf::VideoMode(
+                                screen2->getVideWidth()  +20 ,
+                                screen2->getVideHeight() +20),
+                            "DCPU-16");
+    
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
 
@@ -329,7 +330,7 @@ void run() {
         window.clear(screen2->getBorder());
 
         sf::Sprite sprite(screen2->getTexture());
-        sprite.scale(1.0, 1.0);
+        sprite.scale(screen2->getScaleX(), screen2->getScaleY());
         sprite.setPosition(10.0, 10.0);
 
         window.draw(sprite);

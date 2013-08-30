@@ -41,9 +41,19 @@ public:
     virtual void show();
 
     virtual sf::Color getBorder();
-    
-    const static uint16_t def_palette_map2[64];   /// Default palette
-    const static uint16_t def_font_map2[512];     /// Default fontmap
+
+    static const int scaleX         = 1;
+    static const int scaleY         = 1;
+    static const int videoWidth     = Lem1803::WIDTH;
+    static const int videoHeight    = Lem1803::HEIGHT;
+   
+    virtual int getScaleX()     {return scaleX;}
+    virtual int getScaleY()     {return scaleY;}
+    virtual int getVideWidth()  {return videoWidth;}
+    virtual int getVideHeight() {return videoHeight;}
+
+    static const uint16_t def_palette_map2[64];   /// Default palette
+    static const uint16_t def_font_map2[512];     /// Default fontmap
 
 protected:
     bool emulation_mode;
