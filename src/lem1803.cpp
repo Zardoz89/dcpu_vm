@@ -72,8 +72,10 @@ namespace cpu {
         texture.setRepeated(false);
 
         window.setActive(false);
-        renderguy = boost::thread(&Lem1803::render, this);
-        renderguy.detach();
+    	if (renderguy)
+		   delete renderguy;
+		renderguy = new sf::Thread(&Lem1803::render,this);
+        renderguy->launch();
     }
 
     void Lem1803::handleInterrupt()

@@ -5,7 +5,7 @@
 #include <memory>
 #include <chrono>
 
-#include <boost/thread.hpp>
+#include <SFML/System.hpp>
 
 #include "dcpu.hpp"
 #include "disassembler.hpp"
@@ -131,7 +131,7 @@ void benchmark()
         
     }
     
-    boost::thread tds[THREADS];
+    sf::Thread* tds[THREADS];
 
     std::cout << "Threads " << THREADS << "\t CPU PerThread " << PERTHREAD;
     std::cout << "\t N cpus " << PERTHREAD * THREADS << std::endl;
@@ -140,11 +140,12 @@ void benchmark()
     auto start = std::chrono::high_resolution_clock::now(); 
     
     for (int i=0; i< THREADS; i++) {
-        tds[i] = boost::thread(cpu_in_thread, i);
+        tds[i] = new sf::Thread(cpu_in_thread, i);
+        tds[i]->launch();
     }
     
     for (int i=0; i< THREADS; i++) {
-        tds[i].join();
+        delete tds[i]; //wait() is automatically called
     }
 
 	auto end = std::chrono::high_resolution_clock::now();
