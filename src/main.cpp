@@ -3,9 +3,12 @@
 #include <cstdint>
 #include <algorithm>
 #include <memory>
+#include <stdio.h>
 #include <chrono>
 
-#include <boost/thread.hpp>
+#include "config.hpp"
+#include <chrono>
+
 
 #include "dcpu.hpp"
 #include "disassembler.hpp"
@@ -101,7 +104,7 @@ badchar:
     } else if ( choose == 'r' || choose == 'R') {
         run100k();
     } else {
-        goto badchar; /// HATE ME!!!!
+        goto badchar; /// HATE ME!!!! Yes i hate you !
     }
 
     delete[] data;
@@ -130,8 +133,11 @@ void benchmark()
         threads.push_back(cpus);
         
     }
-    
-    boost::thread tds[THREADS];
+    #ifndef __NO_THREAD_11__
+    std::thread tds[THREADS];
+    #else
+    sf::Thread* tds[THREADS];
+    #endif
 
     std::cout << "Threads " << THREADS << "\t CPU PerThread " << PERTHREAD;
     std::cout << "\t N cpus " << PERTHREAD * THREADS << std::endl;
@@ -140,16 +146,25 @@ void benchmark()
     auto start = std::chrono::high_resolution_clock::now(); 
     
     for (int i=0; i< THREADS; i++) {
-        tds[i] = boost::thread(cpu_in_thread, i);
+        #ifndef __NO_THREAD_11__
+        tds[i] = std::thread(cpu_in_thread, i);
+        #else
+        tds[i] = new sf::Thread(cpu_in_thread, i);
+        tds[i]->launch();
+        #endif
     }
     
     for (int i=0; i< THREADS; i++) {
+        #ifndef __NO_THREAD_11__
         tds[i].join();
+        #else
+        delete tds[i]; //wait() is automatically called
+        #endif
     }
 
-	auto end = std::chrono::high_resolution_clock::now();
+    auto end = std::chrono::high_resolution_clock::now();
     auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - start); 
-	std::cout << "Measured time: " << dur.count() << "ms" << std::endl;
+    std::cout << "Measured time: " << dur.count() << "ms" << std::endl;
     
 }
 

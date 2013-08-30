@@ -1,7 +1,7 @@
 #ifndef _LEM1802_HPP
 #define _LEM1802_HPP
+#include "config.hpp"
 
-#include <boost/thread.hpp>
 #include <cstdint>
 
 #include "dcpu.hpp" // Base class: cpu::IHardware
@@ -91,7 +91,12 @@ protected:
     sf::Texture texture;            /// SFML texture were to paint
 
     std::string title;              /// Title window
-    boost::thread renderguy;          /// Rendered thread
+	
+    #ifdef __NO_THREAD_11__
+    sf::Thread* renderguy;           ///Rendered thread for mingw 4.7
+    #else
+    std::thread renderguy;          /// Rendered thread
+    #endif
 
     virtual void render();          /// Renders the screen to the window
 

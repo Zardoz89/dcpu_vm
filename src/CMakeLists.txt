@@ -2,7 +2,6 @@
 include(SFML)
 
 #FIND_PACKAGE(Threads)
-FIND_PACKAGE( Boost 1.40 COMPONENTS thread REQUIRED )
 
 
 set(dcpu-vm_SRCS

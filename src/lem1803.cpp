@@ -60,7 +60,13 @@ namespace cpu {
         tick_per_refresh = cpu->cpu_clock / FPS;
 
         title = "LEM1803 DevId= ";
+        #ifndef __NO_TOSTRING_11__
         title.append( std::to_string(index));
+        #else
+        char strbuff[33];
+        sprintf(strbuff,"%d",index);
+        title.append(strbuff);
+        #endif
         window.create(sf::VideoMode(Lem1802::WIDTH*3 +20, 
                     Lem1802::HEIGHT*3 + 20), 
                     title, sf::Style::Close | sf::Style::Titlebar);
@@ -72,8 +78,17 @@ namespace cpu {
         texture.setRepeated(false);
 
         window.setActive(false);
+		
+        #ifndef __NO_THREAD_11__
+        renderguy = std::thread(&Lem1803::render, this);
         renderguy = boost::thread(&Lem1803::render, this);
         renderguy.detach();
+        #else
+		if (renderguy)
+		   delete renderguy;
+		renderguy = new sf::Thread(&Lem1803::render,this);
+        renderguy->launch();
+        #endif
     }
 
     void Lem1803::handleInterrupt()
