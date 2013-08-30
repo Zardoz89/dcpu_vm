@@ -47,7 +47,7 @@ public:
      * @brief Does a DCPU clock tick
      * @return True if executed an instrucction
      */
-    bool tick();
+    bool tick(unsigned int n=1);
     
     /**
      * @brief Load a program to the DCPU RAM

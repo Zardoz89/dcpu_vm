@@ -56,20 +56,23 @@ bool DCPU::loadProgram (const uint16_t* prog,unsigned int size,unsigned int offs
     return true;
 }
 
-bool DCPU::tick()
+bool DCPU::tick(unsigned int n)
 {
-
-    tot_cycles++;
-    if (wait_cycles <= 0) {
-        wait_cycles = realStep();
-        tickHardware();
-        return true;
-    }
-    
-    wait_cycles--;
-    
-    tickHardware();
-    return false;
+    bool yes = false;
+    for (unsigned int i = 0; i < n;i++)
+	{
+		tot_cycles++;
+		if (wait_cycles <= 0) {
+			wait_cycles = realStep();
+			tickHardware();
+			yes = true;
+		}
+		
+		wait_cycles--;
+		
+		tickHardware();
+	}
+    return yes;
 }
 
 int DCPU::step() {

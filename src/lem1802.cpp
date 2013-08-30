@@ -69,7 +69,6 @@ namespace cpu {
 
     void Lem1802::attachTo (DCPU* cpu, size_t index) {
         this->IHardware::attachTo(cpu, index);
-        std::cout << "Lem1802 attached !" << std::endl;
         tick_per_refresh = cpu->cpu_clock / Lem1802::FPS;
 
         texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
