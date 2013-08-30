@@ -160,10 +160,16 @@ void step() {
     using namespace std;
     auto cpu = make_shared<DCPU>();
     
-    auto screen1 = std::make_shared<lem::Lem1802>();
-    cpu->attachHardware (screen1);
-//    auto screen2 = std::make_shared<Lem1803>();
-//    cpu->attachHardware (screen2);
+    auto screen = make_shared<lem::Lem1803>();
+    cpu->attachHardware (screen);
+   
+    sf::RenderWindow window(sf::VideoMode(
+                                screen->getVideWidth()  +20 ,
+                                screen->getVideHeight() +20),
+                            "DCPU-16");
+    
+    auto clock = make_shared<Generic_Clock>();
+    cpu->attachHardware (clock);
     
     cpu->reset();
     cpu->loadProgram (data, size);
@@ -176,7 +182,7 @@ void step() {
             break;
     }
     
-    while (c != 'q') {
+    while (c != 'q' && window.isOpen()) {
    
         cout << cpu->dumpRegisters() << endl;
         cout << "T cycles " << dec << cpu->getTotCycles() << endl;
@@ -196,7 +202,16 @@ void step() {
         }
         cout << endl;
             
-        
+        // Clear and set the border color
+        window.clear(screen->getBorder());
+
+        sf::Sprite sprite(screen->getTexture());
+        sprite.scale(screen->getScaleX(), screen->getScaleY());
+        sprite.setPosition(10.0, 10.0);
+
+        window.draw(sprite);
+        window.display();
+
         
         while (1) {
             c = getchar();
