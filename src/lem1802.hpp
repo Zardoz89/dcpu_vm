@@ -71,35 +71,40 @@ public:
 
     const static uint16_t def_palette_map[16];   /// Default palette
     const static uint16_t def_font_map[128*2];   /// Default fontmap
+	
+	virtual inline const sf::Texture& getTexture()
+	{
+	   return texture;
+	}
 
 protected:
 
-    uint16_t screen_map;            /// Where map VIDEO RAM 
-    uint16_t font_map;              /// Where map FONT
-    uint16_t palette_map;           /// Where map PALETTE
+    uint16_t screen_map;              /// Where map VIDEO RAM 
+    uint16_t font_map;                /// Where map FONT
+    uint16_t palette_map;             /// Where map PALETTE
     
-    uint8_t border_col;             /// Border color (unused)
-    uint32_t ticks;                 /// CPU clock ticks (for timing)
+    uint8_t border_col;               /// Border color (unused)
+    uint32_t ticks;                   /// CPU clock ticks (for timing)
     
-    uint32_t tick_per_refresh;      /// How many ticks before refresh
+    uint32_t tick_per_refresh;        /// How many ticks before refresh
 
-    bool enable;                    /// Can print to stdout ?
+    bool enable;                      /// Can print to stdout ?
 
-    uint16_t blink;                 /// Counter for blinking
+    uint16_t blink;                   /// Counter for blinking
    
-    sf::RenderWindow window;        /// SFML window
-    sf::Texture texture;            /// SFML texture were to paint
-
-    std::string title;              /// Title window
+    sf::Texture texture;              /// SFML screen texture
 	
+	// Threads and windows are not used anymore because 
+	// Win32 portability forbit window event in threads !
+	// It more logical that the following class just create the texture...
+	
+	/*
     #ifdef __NO_THREAD_11__
-    sf::Thread* renderguy;           ///Rendered thread for mingw 4.7
+    sf::Thread* renderguy;            /// Rendered thread for mingw 4.7
     #else
-    std::thread renderguy;          /// Rendered thread
+    std::thread renderguy;            /// Rendered thread
     #endif
-
-    virtual void render();          /// Renders the screen to the window
-
+    */
 };
 
 }

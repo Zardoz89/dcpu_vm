@@ -48,8 +48,6 @@ public:
 protected:
     bool emulation_mode;
 
-    virtual void render();          /// Renders the screen to the window
-
 };
 
 }

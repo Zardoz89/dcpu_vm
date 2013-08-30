@@ -44,7 +44,7 @@ namespace cpu {
    };
 
     const uint16_t Lem1803::def_palette_map2[64] = {    /// Default palette
-#       include "64_palette.inc"
+#include "64_palette.inc" //External file 
     };
    
     // Clears the screen texture
@@ -59,36 +59,32 @@ namespace cpu {
 
         tick_per_refresh = cpu->cpu_clock / FPS;
 
-        title = "LEM1803 DevId= ";
-        #ifndef __NO_TOSTRING_11__
+		//No need title -> no more window
+        /*title = "LEM1803 DevId= ";
+        
+		#ifndef __NO_TOSTRING_11__
         title.append( std::to_string(index));
         #else
         char strbuff[33];
         sprintf(strbuff,"%d",index);
         title.append(strbuff);
         #endif
-        window.create(sf::VideoMode(Lem1802::WIDTH*3 +20, 
-                    Lem1802::HEIGHT*3 + 20), 
-                    title, sf::Style::Close | sf::Style::Titlebar);
-        
-        window.setFramerateLimit(FPS);
+        */
         texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
         texture.update(clear);
         texture.setSmooth(false);
         texture.setRepeated(false);
 
-        window.setActive(false);
-		
+		/*
         #ifndef __NO_THREAD_11__
         renderguy = std::thread(&Lem1803::render, this);
-        renderguy = boost::thread(&Lem1803::render, this);
         renderguy.detach();
         #else
 		if (renderguy)
 		   delete renderguy;
 		renderguy = new sf::Thread(&Lem1803::render,this);
         renderguy->launch();
-        #endif
+        #endif*/
     }
 
     void Lem1803::handleInterrupt()
@@ -231,47 +227,6 @@ namespace cpu {
         } else {
             texture.update(clear);
         }
-    }
-
-    void Lem1803::render() 
-    {
-        while (window.isOpen() ) { // Update the window draw
-            sf::Event event;
-            while (window.pollEvent(event)) {
-                // "close requested" event: we close the window
-                if (event.type == sf::Event::Closed) {
-                    window.close();
-                    return;
-                }
-            }
-
-            sf::Sprite sprite;
-            sprite.setTexture(texture);
-            if (emulation_mode) { 
-                sprite.setScale(3, 3);
-            } else {
-                sprite.setScale(1, 1);
-            }
-            sprite.setPosition(10.0, 10.0);
-           
-            // Clear and set the border color
-            uint16_t border;
-            if (palette_map == 0) { // Use default palette
-                border = Lem1803::def_palette_map[border_col];
-            } else {
-                border = cpu->getMem()[palette_map+ border_col];
-            }
-            window.clear(sf::Color(
-                        (sf::Uint8)(((border & 0x7C00)>> 10) *8),
-                        (sf::Uint8)(((border & 0x03E0)>> 5) *8),
-                        (sf::Uint8)( (border & 0x001F)      *8),
-                        0xFF ));
-            
-            window.draw(sprite);
-
-            window.display();
-        }
-
     }
 
 } // END of NAMESPACE

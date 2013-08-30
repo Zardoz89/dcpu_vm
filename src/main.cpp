@@ -20,6 +20,7 @@
 
 using namespace cpu;
 
+/*
 const long TOTALCPUS    = 215*16;
 const long PERTHREAD    = 16;  // At 16 looks that is the ideal for the FX-4100
 #define THREADS           (TOTALCPUS/PERTHREAD)
@@ -38,12 +39,14 @@ void one_bench();
 void run100k();
 
 void cpu_in_thread(int n);
-
+*/
 
 int main (int argc, char **argv)
 {
 
     char* filename;
+	size_t size = 0;
+	uint16_t* data;
     std::ifstream binfile;
     
    /* std::cout << "cpu " << sizeof(DCPU) << " IHardware " << sizeof(IHardware);
@@ -74,7 +77,8 @@ int main (int argc, char **argv)
     
     int i = 0;
     
-    while (! binfile.eof() ) {
+    /// Why reverse endian / files have not same endianess ?
+    while (! binfile.eof() ) { 
         uint16_t word = 0;
         binfile.read ( (char*) &word, 2);
         unsigned char tmp = ( (word & 0xFF00) >> 8) & 0x00FF;
@@ -88,6 +92,53 @@ int main (int argc, char **argv)
     std::cout << "Readed " << size << " bytes - " << size / 2 << " words\n";
     size /= 2;
     
+    //Try win32 compatible emulation code
+    sf::RenderWindow window;
+    window.create(sf::VideoMode(Lem1802::WIDTH, Lem1802::HEIGHT),"dcpu wm");
+    window.setFramerateLimit(30);
+	
+    auto dcpu = std::make_shared<DCPU>();
+    auto lem = std::make_shared<Lem1802>();
+    dcpu->attachHardware (lem);
+    dcpu->reset();
+    dcpu->loadProgram (data, size);
+	
+	sf::Sprite sprite; //sprite of the screen
+	sprite.setTexture(lem->getTexture(),true);
+	sf::Clock clock; 
+	
+    while (window.isOpen()) //Because non mainthread event are forbidden in OSX
+    {
+        // Process events
+        sf::Event event;
+        while (window.pollEvent(event)) 
+        {
+            // Close window : exit
+            if (event.type == sf::Event::Closed)
+                window.close();
+        }
+		
+		///DCPU emulation stuff
+		const float delta=clock.getElapsedTime().asSeconds();
+		clock.restart();
+	    const int tick_needed=(float)dcpu->cpu_clock*delta;
+		
+		for (int i = 0; i < tick_needed; i++)
+		   dcpu->tick();
+		
+		///Update screen stuff
+		
+        // Clear screen
+        window.clear();
+        // Draw the sprite
+        window.draw(sprite);
+        // Update the window
+        window.display();
+    }
+    
+    
+    //Old code not supported yet 
+    /*
 badchar:
     std::cout << "Select what to do :" << std::endl;
     std::cout << "\tb -> benchmark  s -> step execution o-> benchmark one VM r-> run 800k cycles";
@@ -107,12 +158,12 @@ badchar:
         goto badchar; /// HATE ME!!!! Yes i hate you !
     }
 
-    delete[] data;
+    delete[] data;*/
 
     return 0;
 }
 
-
+/*
 void benchmark() 
 {
     // Load program to all CPUs
@@ -344,6 +395,6 @@ void cpu_in_thread(int n) {
         }
     }
 }
-
+*/
 
 

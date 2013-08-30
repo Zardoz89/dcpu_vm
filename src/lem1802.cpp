@@ -50,25 +50,21 @@ namespace cpu {
    // Clears the screen texture
    const static sf::Uint8 clear[Lem1802::WIDTH*Lem1802::HEIGHT*4]= {0};
 
-
     Lem1802::Lem1802() : screen_map (0), font_map (0), palette_map (0),
     border_col (0), ticks (0), enable (true), blink(0) 
-    #ifdef __NO_THREAD_11__
+    /*#ifdef __NO_THREAD_11__
     , renderguy(NULL)
-    #endif
+    #endif*/
     { }
 
     Lem1802::~Lem1802() {
-        if (window.isOpen()) {
-            window.close();
-        }
-        #ifdef __NO_THREAD_11__
+       /* #ifdef __NO_THREAD_11__
 		if (renderguy)
 		   delete renderguy; //SFML call wait function when thread is destroyed
         #else
         if (renderguy.joinable())
             renderguy.join();
-        #endif
+        #endif*/
     }
 
     void Lem1802::attachTo (DCPU* cpu, size_t index) {
@@ -76,26 +72,11 @@ namespace cpu {
 
         tick_per_refresh = cpu->cpu_clock / Lem1802::FPS;
 
-        title = "LEM1802 DevId= ";
-        #ifndef __NO_TOSTRING_11__
-        title.append( std::to_string(index));
-        #else
-        char strbuff[33];
-        sprintf(strbuff,"%d",index);
-        title.append(strbuff);
-        #endif
-
-        window.create(sf::VideoMode(Lem1802::WIDTH*3 +20, 
-                    Lem1802::HEIGHT*3 + 20), 
-                    title, sf::Style::Close | sf::Style::Titlebar);
-        
-        window.setFramerateLimit(Lem1802::FPS);
         texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
-        texture.update(clear);
+		texture.update(clear);
         texture.setRepeated(false);
-        texture.setSmooth(false);
-
-        window.setActive(false);
+        texture.setSmooth(false); //Pixel style
+		/*
         #ifdef __NO_THREAD_11__
 		if (renderguy)
 		   delete renderguy;
@@ -103,9 +84,8 @@ namespace cpu {
         renderguy->launch();
         #else
         renderguy = std::thread(&Lem1802::render, this);
-        renderguy = boost::thread(&Lem1802::render, this);
         renderguy.detach();
-        #endif
+        #endif*/
 
     }
 
@@ -194,7 +174,7 @@ namespace cpu {
                     
                     // Does the blink
                     if (blink > Lem1802::BLINKRATE &&  
-                           ((cpu->getMem()[pos] & 0x80) > 0) ) {
+                           (cpu->getMem()[pos] & 0x80) ) {
                         fg_col = bg_col;
                     }
 
@@ -271,43 +251,6 @@ namespace cpu {
     void Lem1802::setEnable(bool enable) 
     {
         this->enable = enable;
-    }
-
-    
-    void Lem1802::render() 
-    {
-        while (window.isOpen() ) { // Update the window draw
-            sf::Event event;
-            while (window.pollEvent(event)) {
-                // "close requested" event: we close the window
-                if (event.type == sf::Event::Closed) {
-                    window.close();
-                    return;
-                }
-            }
-
-            sf::Sprite sprite;
-            sprite.setTexture(texture);
-            sprite.scale(3.0, 3.0);
-            sprite.setPosition(10.0, 10.0);
-           
-            // Clear and set the border color
-            uint16_t border;
-            if (palette_map == 0) { // Use default palette
-                border = Lem1802::def_palette_map[border_col];
-            } else {
-                border = cpu->getMem()[palette_map+ border_col];
-            }
-            window.clear(sf::Color(
-                        ((border &0x0F00) >> 8) *0x11 ,
-                        ((border &0x00F0) >> 4) *0x11 ,
-                        ((border &0x000F)     ) *0x11 ,
-                        0xFF ));
-            
-            window.draw(sprite);
-
-            window.display();
-        }
     }
 
 } // END of NAMESPACE
