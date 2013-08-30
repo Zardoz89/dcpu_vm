@@ -11,7 +11,6 @@
 #include <SFML/Graphics/Texture.hpp>
 
 
-#define LEGACY_MODE      255
 
 namespace cpu {
 

@@ -9,7 +9,7 @@ namespace cpu {
 
 namespace cgm {
 
-    const uint16_t CGM::font_maps[256*2 + 256*4] = {  /// Font maps
+    const uint16_t CGM::def_fonts[256*2 + 256*4] = {  /// Font maps
         0xb79e, 0x388e, 0x722c, 0x75f4, 0x19bb, 0x7f8f, 0x85f9, 0xb158,
         0x242e, 0x2400, 0x082a, 0x0800, 0x0008, 0x0000, 0x0808, 0x0808,
         0x00ff, 0x0000, 0x00f8, 0x0808, 0x08f8, 0x0000, 0x080f, 0x0000,
@@ -48,16 +48,16 @@ namespace cgm {
 #       include "64_palette.inc"
     };
    
-    const unsigned int CGM::ROWS[3] = {24, 24, 192};
-    const unsigned int CGM::COLS[3] = {64, 32, 16};
+    const unsigned int CGM::ROWS[3] = {24, 24, 96};
+    const unsigned int CGM::COLS[3] = {64, 32, 32};
 
     // Clears the screen texture
     const static sf::Uint8 clear[CGM::WIDTH*CGM::HEIGHT*4]= {0};
 
 
     CGM::CGM() : 
-        bitfield_map (0), attribute_map (0), palette_map (0), videomode(0),
-        border_col (0), ticks (0), enable (true), blink(0) 
+        bitfield_map (0), attribute_map (0), palette_map (0), font_map (0),
+        videomode(0), border_col (0), ticks (0), enable (true), blink(0) 
     { }
 
     CGM::~CGM() 
@@ -65,8 +65,8 @@ namespace cgm {
         if (window.isOpen()) {
             window.close();
         }
-        if (renderguy.joinable())
-            renderguy.join();
+        if (renderguy != NULL)
+            delete renderguy;
     }
 
     void CGM::attachTo (DCPU* cpu, size_t index) 
@@ -77,12 +77,19 @@ namespace cgm {
         blink_max = cpu->cpu_clock / BLINKTIME;
 
         title = "CGM 1084 DevId= ";
-        title.append( std::to_string(index));
+        char strbuff[33];
+        snprintf(strbuff, 33,"%zu",index);
+        title.append(strbuff);
 
         videomode = 0; // Mode 0
 
-        window.create(sf::VideoMode(CGM::WIDTH +20, 
-                    CGM::HEIGHT + 20), 
+        //window.create(sf::VideoMode(CGM::WIDTH +20, 
+        //            CGM::HEIGHT + 20), 
+        //            title, sf::Style::Close | sf::Style::Titlebar);
+                    
+        // Set same size that LEM1802/3 screens
+        window.create(sf::VideoMode((CGM::WIDTH/2)*3 +20, 
+                    (CGM::HEIGHT/2)*3 + 20), 
                     title, sf::Style::Close | sf::Style::Titlebar);
         
         window.setFramerateLimit(CGM::FPS);
@@ -92,8 +99,10 @@ namespace cgm {
         texture.setSmooth(false);
 
         window.setActive(false);
-        renderguy = std::thread(&CGM::render, this);
-        renderguy.detach();
+    	if (renderguy)
+		   delete renderguy;
+        renderguy = new sf::Thread(&CGM::render, this);
+        renderguy->launch();
 
     }
 
@@ -143,25 +152,22 @@ namespace cgm {
                     cpu->getMem() + cpu->GetB() );
             break;
         
-        case MEM_DUMP_ASCII_FONT:
-            switch (cpu->GetC() == 0) {
-            case 0:
+        case MEM_DUMP_FONT:
+            if (videomode == 4) {       // 4x8 fonts
                 s = RAM_SIZE - 1 - cpu->GetB() < 512 ? 
                     RAM_SIZE - 1 - cpu->GetB() : 512 ;
-                std::copy_n (CGM::font_maps, s, 
+                std::copy_n (CGM::def_fonts, s, 
                         cpu->getMem() + cpu->GetB() );
-                break;
-
-            case 1:
+            } else if (videomode == 5) { // 8x8 fonts
                 s = RAM_SIZE - 1 - cpu->GetB() < 512*2 ? 
                     RAM_SIZE - 1 - cpu->GetB() : 512*2 ;
-                std::copy_n (&CGM::font_maps[512], s, 
+                std::copy_n (&CGM::def_fonts[512], s, 
                         cpu->getMem() + cpu->GetB() );
-                break;
-            
-            default:
-                ;
             }
+            break;
+
+        case MEM_MAP_FONT:
+            font_map = cpu->GetB();
             break;
 
         default:
@@ -173,7 +179,7 @@ namespace cgm {
     void CGM::tick()
     {
         if (++ticks > tick_per_refresh) {
-            // Update screen at 60Hz aprox
+            // Update screen at desired FPS
             ticks = 0;
             this->show();
         }
@@ -201,8 +207,6 @@ namespace cgm {
                         uint16_t fg_ind = (cpu->getMem()[attr_pos] & 0x0FC0) 
                             >> 6;
                         uint16_t bg_ind = (cpu->getMem()[attr_pos] & 0x003F);
-                        bool blinkf = (cpu->getMem()[attr_pos] & 0x1000) > 0;
-                        bool underf = (cpu->getMem()[attr_pos] & 0x2000) > 0;
 
 
                         uint16_t fg_col, bg_col;
@@ -213,9 +217,6 @@ namespace cgm {
                             fg_col = cpu->getMem()[palette_map+ fg_ind];
                             bg_col = cpu->getMem()[palette_map+ bg_ind];
                         }
-
-                        if (blink > blink_max && blinkf)
-                            fg_col = bg_col;
 
                         // Composes RGBA values from palette colors
                         sf::Uint8 fg[] = {
@@ -270,14 +271,12 @@ namespace cgm {
                                 texture.update(bg, 1, 1, col*4+3, row*8 +bit-8);
                             }
                         }
-
-                        //TODO Implement underline
                     }
                 }
                 break;
 
             case 1: // 256x192-32x24 cells of 8x8 pixels. 64 colors
-                // TODO Implement Mode 1, 2 and 3
+                // TODO Implement the rest modes
                 break;
 
             case 2: // 256x192-16x192 cells of 16x1 pixels. 16 colors
@@ -286,6 +285,114 @@ namespace cgm {
             case 3: // 256x192 B&W. 2 colors
                 break;
 
+            case 4: // 256x192 4x8 font Text mode
+                for (unsigned row=0; row < CGM::ROWS[0]; row++) {
+                    for (unsigned col=0; col < CGM::COLS[0]; col++) {
+                        uint16_t pos = row * (CGM::COLS[0]/2) + (col/2);
+                        pos += bitfield_map;
+                        uint16_t attr_pos = row * CGM::COLS[0] + row;
+                        attr_pos += attribute_map;
+
+                        // Get palette indexes and other attributes
+                        uint16_t fg_ind = (cpu->getMem()[attr_pos] & 0x0FC0) 
+                            >> 6;
+                        uint16_t bg_ind = (cpu->getMem()[attr_pos] & 0x003F);
+                        bool blinkf = (cpu->getMem()[attr_pos] & 0x1000) > 0;
+                        bool underf = (cpu->getMem()[attr_pos] & 0x2000) > 0;
+
+                        uint16_t fg_col, bg_col;
+                        if (palette_map == 0) { // Use default palette
+                            fg_col = CGM::def_palette_map[fg_ind];
+                            bg_col = CGM::def_palette_map[bg_ind];
+                        } else {
+                            fg_col = cpu->getMem()[palette_map+ fg_ind];
+                            bg_col = cpu->getMem()[palette_map+ bg_ind];
+                        }
+
+                        if (blink > blink_max && blinkf)
+                            fg_col = bg_col;
+
+                        // Composes RGBA values from palette colors
+                        sf::Uint8 fg[] = {
+                            (sf::Uint8)(((fg_col & 0x7C00)>> 10) *8),
+                            (sf::Uint8)(((fg_col & 0x03E0)>> 5) *8),
+                            (sf::Uint8)( (fg_col & 0x001F)      *8),
+                            0xFF };
+                        sf::Uint8 bg[] = {
+                            (sf::Uint8)(((bg_col & 0x7C00)>> 10) *8),
+                            (sf::Uint8)(((bg_col & 0x03E0)>> 5) *8),
+                            (sf::Uint8)( (bg_col & 0x001F)      *8),
+                            0xFF };
+
+                        // Every word contains two characters
+                        unsigned char ascii;
+                        if (col%2 == 0) {  
+                            ascii = (unsigned char) (cpu->getMem()[pos] & 0x00FF);
+                        } else {
+                            ascii = (unsigned char) ((cpu->getMem()[pos] & 0xFF00) >> 8);
+                        }
+                        
+                        uint16_t glyph[2];
+                        if (font_map == 0) { // Default font
+                            glyph[0] = CGM::def_fonts[ascii*2]; 
+                            glyph[1] = CGM::def_fonts[ascii*2+1];
+                        } else {
+                            glyph[0] = cpu->getMem()[font_map+ (ascii*2)]; 
+                            glyph[1] = cpu->getMem()[font_map+ (ascii*2)+1]; 
+                        }
+
+                        // Display it
+                        for (int i=0; i< 8; i++) { 
+                            // ***** MSB 
+                            // First word 
+                            bool pixel = ((1<<(i+8)) & glyph[0]) > 0;
+                            if (pixel) {
+                                texture.update(fg, 1, 1, 
+                                        col*4, row*8 +i);
+                            } else {
+                                texture.update(bg, 1, 1, 
+                                        col*4, row*8 +i);
+                            }
+                            // Second word
+                            pixel = ((1<<(i+8)) & glyph[1]) > 0;
+                            if (pixel) {
+                                texture.update(fg, 1, 1, 
+                                        col*4 +2, row*8 +i);
+                            } else {
+                                texture.update(bg, 1, 1, 
+                                        col*4 +2, row*8 +i);
+                            }
+
+                            // ***** LSB
+                            // First word 
+                            pixel = ((1<<i) & glyph[0]) >0;
+                            if (pixel) {
+                                texture.update(fg, 1, 1, 
+                                        col*4 +1, row*8 +i);
+                            } else {
+                                texture.update(bg, 1, 1, 
+                                        col*4 +1, row*8 +i);
+                            }
+                            // Secodn word
+                            pixel = ((1<<i) & glyph[1]) > 0;
+                            if (pixel) {
+                                texture.update(fg, 1, 1, 
+                                        col*4 +3, row*8 +i);
+                            } else {
+                                texture.update(bg, 1, 1, 
+                                        col*4 +3, row*8 +i);
+                            }
+                        }
+
+                        for (int i=0; i< 8; i++) {
+                        }
+
+                    }
+                }
+                break;
+            
+            case 5: // 256x192 8x8 font Text mode
+                break;
             default:
                 ; 
             }
@@ -318,7 +425,7 @@ namespace cgm {
 
             sf::Sprite sprite;
             sprite.setTexture(texture);
-            sprite.scale(1.0, 1.0);
+            sprite.scale(1.5, 1.5);
             sprite.setPosition(10.0, 10.0);
            
             // Clear and set the border color

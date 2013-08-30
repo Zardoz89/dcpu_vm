@@ -5,6 +5,12 @@
 
 namespace cpu {
 
+#define MEM_MAP_SCREEN   0
+#define MEM_MAP_FONT     1
+#define MEM_MAP_PALETTE  2
+#define SET_BORDER_COLOR 3
+#define MEM_DUMP_FONT    4
+#define MEM_DUMP_PALETTE 5
    const uint16_t Fake_Lem1802::def_font_map[128*2] = {   /// Default font map
         0xb79e, 0x388e, 0x722c, 0x75f4, 0x19bb, 0x7f8f, 0x85f9, 0xb158,
         0x242e, 0x2400, 0x082a, 0x0800, 0x0008, 0x0000, 0x0808, 0x0808,

@@ -8,6 +8,13 @@
 
 namespace cpu {
 
+#define MEM_MAP_SCREEN   0
+#define MEM_MAP_FONT     1
+#define MEM_MAP_PALETTE  2
+#define SET_BORDER_COLOR 3
+#define MEM_DUMP_FONT    4
+#define MEM_DUMP_PALETTE 5
+#define LEGACY_MODE      255
     
     const uint16_t Lem1803::def_font_map2[512] = {   /// Default font map
         0xb79e, 0x388e, 0x722c, 0x75f4, 0x19bb, 0x7f8f, 0x85f9, 0xb158,

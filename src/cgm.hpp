@@ -1,11 +1,11 @@
 #ifndef _CGM_HPP
 #define _CGM_HPP
 
-#include <thread>
 #include <cstdint>
 
 #include "dcpu.hpp" // Base class: cpu::IHardware
 
+#include <SFML/System.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Texture.hpp>
@@ -14,7 +14,7 @@ namespace cpu {
 
 namespace cgm {
 
-enum COMMANDS {
+enum COMMANDS { /// A register commands
     MEM_BITPLANE_SCREEN,
     MEM_ATTRIBUTE_SCREEN,
     MEM_MAP_PALETTE,
@@ -22,7 +22,8 @@ enum COMMANDS {
     SET_VIDEO_MODE,
     GET_VIDEO_MODE,
     MEM_DUMP_PALETTE,
-    MEM_DUMP_ASCII_FONT,
+    MEM_DUMP_FONT,
+    MEM_MAP_FONT,
 };
 
 /**
@@ -33,7 +34,7 @@ public:
     CGM();
     virtual ~CGM();
                                           
-    static const uint32_t id            = 0x0340043c;
+    static const uint32_t id            = 0x7349043C;
     static const uint16_t revision      = 0x1084;
     static const uint32_t manufacturer  = 0x0ca0fe84;
 
@@ -71,25 +72,26 @@ public:
     virtual void show();
 
     /**
-     * @brief Sets if it can display to stdout
+     * @brief Sets if it can display
      */
     void setEnable(bool enable);
 
     const static uint16_t def_palette_map[64];          /// Default palette
-    const static uint16_t font_maps[256*2 + 256*4];  /// Font maps
+    const static uint16_t def_fonts[256*2 + 256*4];     /// Font maps
 
 protected:
 
     uint16_t bitfield_map;          /// Where map BIT-FIELD 
     uint16_t attribute_map;         /// Where map ATTRIBUTE CELLS 
     uint16_t palette_map;           /// Where map PALETTE
+    uint16_t font_map;              /// Where map FONT in text modex
     uint16_t videomode;             /// Video mode
 
     
     uint8_t border_col;             /// Border color (unused)
-    uint_fast32_t ticks;                 /// CPU clock ticks (for timing)
+    uint_fast32_t ticks;            /// CPU clock ticks (for timing)
     
-    uint_fast32_t tick_per_refresh;      /// How many ticks before refresh
+    uint_fast32_t tick_per_refresh; /// How many ticks before refresh
 
     bool enable;                    /// Can print to stdout ?
 
@@ -100,7 +102,7 @@ protected:
     sf::Texture texture;            /// SFML texture were to paint
 
     std::string title;              /// Title window
-    std::thread renderguy;          /// Rendered thread
+    sf::Thread* renderguy;          /// Rendered thread
 
     virtual void render();          /// Renders the screen to the window
 
