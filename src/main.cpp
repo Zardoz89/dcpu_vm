@@ -298,15 +298,13 @@ void run() {
 
     
     auto cpu = make_shared<DCPU>();
-//    auto screen1 = std::make_shared<Lem1803>();
-//    cpu->attachHardware (screen1);
     
-    auto screen2 = make_shared<lem::Lem1803>();
-    cpu->attachHardware (screen2);
+    auto screen = make_shared<lem::Lem1803>();
+    cpu->attachHardware (screen);
    
     sf::RenderWindow window(sf::VideoMode(
-                                screen2->getVideWidth()  +20 ,
-                                screen2->getVideHeight() +20),
+                                screen->getVideWidth()  +20 ,
+                                screen->getVideHeight() +20),
                             "DCPU-16");
     
     auto clock = make_shared<Generic_Clock>();
@@ -342,10 +340,10 @@ void run() {
         }
 
         // Clear and set the border color
-        window.clear(screen2->getBorder());
+        window.clear(screen->getBorder());
 
-        sf::Sprite sprite(screen2->getTexture());
-        sprite.scale(screen2->getScaleX(), screen2->getScaleY());
+        sf::Sprite sprite(screen->getTexture());
+        sprite.scale(screen->getScaleX(), screen->getScaleY());
         sprite.setPosition(10.0, 10.0);
 
         window.draw(sprite);
@@ -353,6 +351,8 @@ void run() {
 
         t = t2;
     }
+
+    cout << "Finish" << endl;
 
 }
 
