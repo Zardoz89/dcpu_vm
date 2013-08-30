@@ -224,6 +224,15 @@ namespace lem {
                     0xFF );
     }
 
+    int Lem1803::getScaleX()     
+    {
+        return (emulation_mode) ? Lem1802::getScaleX() : scaleX;
+    }
+    int Lem1803::getScaleY()     
+    {
+        return (emulation_mode) ? Lem1802::getScaleY() : scaleY;
+    }
+
 } // END OF NAMESPACE lem
 
 } // END of NAMESPACE cpu

@@ -47,8 +47,8 @@ public:
     static const int videoWidth     = Lem1803::WIDTH;
     static const int videoHeight    = Lem1803::HEIGHT;
    
-    virtual int getScaleX()     {return scaleX;}
-    virtual int getScaleY()     {return scaleY;}
+    virtual int getScaleX();
+    virtual int getScaleY();
     virtual int getVideWidth()  {return videoWidth;}
     virtual int getVideHeight() {return videoHeight;}
 
