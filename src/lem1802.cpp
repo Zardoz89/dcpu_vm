@@ -1,5 +1,5 @@
 #include "lem1802.hpp"
-
+#include <iostream>
 #include <algorithm>
 #include <cctype>
 #include <string>
@@ -242,6 +242,7 @@ namespace cpu {
                     }
                 }
             }
+			std::cout << "screen update" << std::endl;
         } else {
             texture.update(clear);
         }

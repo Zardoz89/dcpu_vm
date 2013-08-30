@@ -77,7 +77,6 @@ int main (int argc, char **argv)
     
     int i = 0;
     
-    /// Why reverse endian / files have not same endianess ?
     while (! binfile.eof() ) { 
         uint16_t word = 0;
         binfile.read ( (char*) &word, 2);
@@ -125,9 +124,11 @@ int main (int argc, char **argv)
 		
 		for (int i = 0; i < tick_needed; i++)
 		   dcpu->tick();
+		   
+		std::cout << "ticked :" << tick_needed << std::endl;
 		
 		///Update screen stuff
-		
+		sprite.setTexture(lem->getTexture(),true);
         // Clear screen
         window.clear();
         // Draw the sprite

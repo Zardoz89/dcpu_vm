@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <iostream>
 #include <iomanip>
 
 #include <assert.h>
@@ -662,6 +663,7 @@ int DCPU::realStep()
             
         default:
             // reserved; Act like a NOP
+			std::cout << "error instruction" << std::endl;
             cycles++;
             break;
         }
@@ -741,6 +743,7 @@ int DCPU::realStep()
             
         default:
             // reserved; Does a NOP
+			std::cout << "error special instruction" << std::endl;
             cycles++;
             break;
         }
