@@ -103,49 +103,70 @@ int main (int argc, char **argv)
     size /= 2;
     
     //Try win32 compatible emulation code
-    sf::RenderWindow window;
-    window.create(sf::VideoMode(Lem1802::WIDTH, Lem1802::HEIGHT),"dcpu wm");
-    window.setFramerateLimit(60);
+    sf::RenderWindow window1802;
+	sf::RenderWindow window1803;
+    window1802.create(sf::VideoMode(Lem1802::WIDTH, Lem1802::HEIGHT),"Lem 1802");
+    window1803.setFramerateLimit(60);
+	window1803.create(sf::VideoMode(Lem1803::WIDTH, Lem1803::HEIGHT),"Lem 1803");
 	
     auto dcpu = std::make_shared<DCPU>();
-    auto lem = std::make_shared<Lem1802>();
-    dcpu->attachHardware (lem);
+    auto lem1802 = std::make_shared<Lem1802>();
+	auto lem1803 = std::make_shared<Lem1803>();
+    dcpu->attachHardware (lem1802);
+	dcpu->attachHardware (lem1803);
     dcpu->reset();
     dcpu->loadProgram (data, size);
 	
 	sf::Sprite sprite; //sprite of the screen
-	sprite.setTexture(lem->getTexture(),true);
 	sf::Clock clock; 
 	
-    while (window.isOpen()) //Because non mainthread event are forbidden in OSX
+    while (window1802.isOpen() && window1803.isOpen()) //Because non mainthread event are forbidden in OSX
     {
         // Process events
         sf::Event event;
-        while (window.pollEvent(event)) 
+        while (window1802.pollEvent(event)) 
         {
             // Close window : exit
             if (event.type == sf::Event::Closed)
-                window.close();
+                window1802.close();
+        }
+		while (window1803.pollEvent(event)) 
+        {
+            // Close window : exit
+            if (event.type == sf::Event::Closed)
+                window1803.close();
         }
 		
 		///DCPU emulation stuff
 		const float delta=clock.getElapsedTime().asSeconds();
 		clock.restart();
 	    const int tick_needed=dcpu->cpu_clock/60;//(float)dcpu->cpu_clock*delta;
-		std::cout << "ticked :" << tick_needed << std::endl;
+		//std::cout << "ticked :" << tick_needed << std::endl;
 		for (int i = 0; i < tick_needed; i++)
 		   dcpu->tick();
 		   
 		
-		
-		///Update screen stuff
-		sprite.setTexture(lem->getTexture(),true);
+		window1802.setActive(true);
+		///Update 1802 screen stuff
+		sprite.setTexture(lem1802->getTexture(),true);
         // Clear screen
-        window.clear();
+        window1802.clear();
         // Draw the sprite
-        window.draw(sprite);
+        window1802.draw(sprite);
         // Update the window
-        window.display();
+        window1802.display();
+		window1802.setActive(false);
+		
+		window1803.setActive(true);
+		///Update 1803 screen stuff
+		sprite.setTexture(lem1803->getTexture(),true);
+        // Clear screen
+        window1803.clear();
+        // Draw the sprite
+        window1803.draw(sprite);
+        // Update the window
+        window1803.display();
+		window1803.setActive(false);
     }
     
     
