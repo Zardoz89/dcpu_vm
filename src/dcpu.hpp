@@ -55,7 +55,9 @@ public:
      * @param size Data program size in 16 bit words
      * @param offset Offset to place the program in DCPU RAM
      */
-    void loadProgram (const uint16_t* prog, int size, int offset = 0);
+    bool loadProgram (const uint16_t* prog,
+	                  unsigned int size,
+					  unsigned int offset = 0);
     
     /**
      * @brief Attach a Hardware device to the DCPU

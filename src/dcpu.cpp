@@ -1,9 +1,9 @@
 #include "dcpu.hpp"
 #include "dcpu_opcodes.hpp"
-
+#include <iostream>
 #include <algorithm>
 #include <sstream>
-#include <iostream>
+#include <cstdio>
 #include <iomanip>
 
 #include <assert.h>
@@ -40,15 +40,20 @@ void DCPU::reset()
     
 }
 
-void DCPU::loadProgram (const uint16_t* prog, int size, int offset)
+bool DCPU::loadProgram (const uint16_t* prog,unsigned int size,unsigned int offset)
 {
     assert (prog != NULL);
     assert (size > 0);
     assert (offset >= 0);
     assert (offset + size < 	UINT16_MAX);
+	if (RAM_SIZE < offset + size)
+	{
+		std::cout << "Cannot load the program not enough ram !" << std::endl;
+		return false;
+	}
     
     std::copy_n (prog, size, ram + offset);
-    
+    return true;
 }
 
 bool DCPU::tick()
@@ -91,12 +96,12 @@ int DCPU::realStep()
     register uint16_t tmp_a;			// Used by Literal values
     uint_fast16_t old_sp = rsp;
     
-    opword* op = (opword*) (ram + (rpc++) );
+    uint16_t op = *(ram + (rpc++));
     
     // TODO Move skiing here and use a table to precalculate instrucction 
     //      long for skining
     
-    switch (op->basic.a) {
+    switch (WOPGET_A(op)) {
         // registers, direct:
     case REG_A:
         a = &ra;
@@ -244,13 +249,13 @@ int DCPU::realStep()
         
         // literal value:
     default:
-        tmp_a = op->basic.a - LIT_B - 1; // (-1 to 30)
+        tmp_a = WOPGET_A(op) - LIT_B - 1; // (-1 to 30)
         a = &tmp_a;
         break;
     }
     
-    if (op->basic.o != SPECIAL ) {
-        switch (op->basic.b) {
+    if (WOPGET_OP(op) != SPECIAL ) {
+        switch (WOPGET_B(op)) {
             // registers, direct:
         case REG_A:
             b = &ra;
@@ -406,7 +411,7 @@ int DCPU::realStep()
         cycles = 0;
         // do not execute instruction when skipping
         // stop skipping when non-branch instruction is encountered
-        if (!IS_CONDITIONAL (op->basic.o) ) {
+        if (!IS_CONDITIONAL (WOPGET_OP(op)) ) {
             skipping_flag = false;
         } else {
             cycles = 1;
@@ -416,10 +421,10 @@ int DCPU::realStep()
         rsp = old_sp;
         
         // Decode OpCodes and execute
-    } else if (op->basic.o != SPECIAL) {
+    } else if (WOPGET_OP(op) != SPECIAL) {
         // Basic opcode
         
-        switch (op->basic.o) {
+        switch (WOPGET_OP(op)) {
         case SET:
             *b = *a;
             cycles++;
@@ -663,14 +668,15 @@ int DCPU::realStep()
             
         default:
             // reserved; Act like a NOP
-			std::cout << "error instruction" << std::endl;
+			/*printf("Error op Ox%x a 0x%x b 0x%x\n",WOPGET_OP(op),
+			                                     WOPGET_A(op),WOPGET_B(op));*/
             cycles++;
             break;
         }
         
     } else {
         // Special opcode
-        switch (op->nonbasic.o) {
+        switch (WOPGET_SPECIAL_OP(op)) {
         case JSR:
             ram[PUSH] = rpc;
             rpc = *a;
@@ -743,7 +749,8 @@ int DCPU::realStep()
             
         default:
             // reserved; Does a NOP
-			std::cout << "error special instruction" << std::endl;
+			/*printf("Error spec zeros Ox%x a 0x%x op 0x%x\n",WOPGET_OP(op),
+			                                     WOPGET_SPECIAL_A(op),WOPGET_SPECIAL_OP(op));*/
             cycles++;
             break;
         }

@@ -77,31 +77,31 @@ enum special_opcodes {
  */
 enum operator_type {
     REG_A = 0x00,
-    REG_B,
-    REG_C,
-    REG_X,
-    REG_Y,
-    REG_Z,
-    REG_I,
-    REG_J,
+    REG_B = 0x01,
+    REG_C = 0x02,
+    REG_X = 0x03,
+    REG_Y = 0x04,
+    REG_Z = 0x05,
+    REG_I = 0x06,
+    REG_J = 0x07,
     
     PTR_A = 0x08,
-    PTR_B,
-    PTR_C,
-    PTR_X,
-    PTR_Y,
-    PTR_Z,
-    PTR_I,
-    PTR_J,
+    PTR_B = 0x09,
+    PTR_C = 0x0A,
+    PTR_X = 0x0B,
+    PTR_Y = 0x0C,
+    PTR_Z = 0x0D,
+    PTR_I = 0x0E,
+    PTR_J = 0x0F,
     
     PTR_NW_A = 0x10,
-    PTR_NW_B,
-    PTR_NW_C,
-    PTR_NW_X,
-    PTR_NW_Y,
-    PTR_NW_Z,
-    PTR_NW_I,
-    PTR_NW_J,
+    PTR_NW_B = 0x11,
+    PTR_NW_C = 0x12,
+    PTR_NW_X = 0x13,
+    PTR_NW_Y = 0x14,
+    PTR_NW_Z = 0x15,
+    PTR_NW_I = 0x16,
+    PTR_NW_J = 0x17,
     
     STACK = 0x18,
     PEEK = 0x19,
@@ -118,10 +118,17 @@ enum operator_type {
     LIT_E = 0x3F
 };
 
+#define WOPGET_OP(word) (word & 0x1F)
+#define WOPGET_A(word) (word >> 10)
+#define WOPGET_B(word) ((word >> 5) & 0x1F)
+#define WOPGET_SPECIAL_OP(word) ((word >> 5) & 0x1F)
+#define WOPGET_SPECIAL_A(word) (word >> 10)
+
 /**
  * Instrucction extraction
  * Take directly from Benedeck code
  */
+/*  Union not working on my config... Unknow reason
 union opword {
     uint16_t raw;
     struct {
@@ -134,7 +141,7 @@ union opword {
         uint8_t o     : 5;
         uint8_t a     : 6;
     } __attribute__ ( (__packed__) ) nonbasic;
-};
+};**/
 
 } // END OF namespace
 

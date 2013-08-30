@@ -9,7 +9,7 @@
 #include "config.hpp"
 #include <chrono>
 
-
+#include "dcpu_opcodes.hpp"
 #include "dcpu.hpp"
 #include "disassembler.hpp"
 
@@ -44,7 +44,7 @@ void cpu_in_thread(int n);
 int main (int argc, char **argv)
 {
 
-    char* filename;
+    std::string filename;
 	size_t size = 0;
 	uint16_t* data;
     std::ifstream binfile;
@@ -60,13 +60,13 @@ int main (int argc, char **argv)
     filename = argv[1];
     std::cout <<  "Input BIN File : " << filename << "\n";
     
-    binfile.open (filename, std::ios::in | std::ios::binary );
+    binfile.open (filename.c_str(), std::ios::in | std::ios::binary );
     
     if (!binfile) {
         std::cerr << "ERROR: I can open file\n";
         exit (1);
     }
-    
+	
     // get length of file:
     binfile.seekg (0, binfile.end);
     size = binfile.tellg();
@@ -76,17 +76,28 @@ int main (int argc, char **argv)
     std::fill_n (data, size / 2, 0); // Clean it
     
     int i = 0;
+	std::cout << "Reading " << filename << " size : " << size << "bytes\n";
     
     while (! binfile.eof() ) { 
         uint16_t word = 0;
         binfile.read ( (char*) &word, 2);
-        unsigned char tmp = ( (word & 0xFF00) >> 8) & 0x00FF;
+        uint16_t tmp = ( (word & 0xFF00) >> 8) & 0x00FF;
         word = ( (word & 0x00FF) << 8) | tmp;
         data[i] = word;
+		printf("Word 0x%x op Ox%x a 0x%x b 0x%x\n",word, word & 0x1F, word >> 10, (word >> 5) & 0x1F);
         i++;
     }
     
     binfile.close();
+	
+	/*std::string disassembled = disassembly(data,size / 2);
+	std::ofstream dfile;
+	filename += ".asm";
+	dfile.open(filename.c_str(), std::ios::out);
+	dfile << disassembled;
+	dfile.close();*/
+	
+	
     
     std::cout << "Readed " << size << " bytes - " << size / 2 << " words\n";
     size /= 2;
@@ -94,7 +105,7 @@ int main (int argc, char **argv)
     //Try win32 compatible emulation code
     sf::RenderWindow window;
     window.create(sf::VideoMode(Lem1802::WIDTH, Lem1802::HEIGHT),"dcpu wm");
-    window.setFramerateLimit(30);
+    window.setFramerateLimit(60);
 	
     auto dcpu = std::make_shared<DCPU>();
     auto lem = std::make_shared<Lem1802>();
@@ -120,12 +131,12 @@ int main (int argc, char **argv)
 		///DCPU emulation stuff
 		const float delta=clock.getElapsedTime().asSeconds();
 		clock.restart();
-	    const int tick_needed=(float)dcpu->cpu_clock*delta;
-		
+	    const int tick_needed=dcpu->cpu_clock/60;//(float)dcpu->cpu_clock*delta;
+		std::cout << "ticked :" << tick_needed << std::endl;
 		for (int i = 0; i < tick_needed; i++)
 		   dcpu->tick();
 		   
-		std::cout << "ticked :" << tick_needed << std::endl;
+		
 		
 		///Update screen stuff
 		sprite.setTexture(lem->getTexture(),true);
