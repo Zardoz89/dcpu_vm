@@ -12,7 +12,7 @@ set(dcpu-vm_SRCS
     gclock.cpp
 #    fake_lem1802.cpp
     lem1802.cpp
-#    lem1803.cpp
+    lem1803.cpp
     )
 
 add_executable(dcpu-vm ${dcpu-vm_SRCS})

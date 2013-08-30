@@ -16,7 +16,7 @@
 #include "gclock.hpp"
 //#include "fake_lem1802.hpp"
 #include "lem1802.hpp"
-//#include "lem1803.hpp"
+#include "lem1803.hpp"
 
 using namespace cpu;
 
@@ -290,7 +290,7 @@ void run() {
 //    auto screen1 = std::make_shared<Lem1803>();
 //    cpu->attachHardware (screen1);
     
-    auto screen2 = make_shared<lem::Lem1802>();
+    auto screen2 = make_shared<lem::Lem1803>();
     cpu->attachHardware (screen2);
    
     auto clock = make_shared<Generic_Clock>();
@@ -329,7 +329,7 @@ void run() {
         window.clear(screen2->getBorder());
 
         sf::Sprite sprite(screen2->getTexture());
-        sprite.scale(3.0, 3.0);
+        sprite.scale(1.0, 1.0);
         sprite.setPosition(10.0, 10.0);
 
         window.draw(sprite);

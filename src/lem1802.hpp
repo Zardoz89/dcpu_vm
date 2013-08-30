@@ -10,6 +10,8 @@
 
 namespace cpu {
 
+namespace lem {
+
 static const uint16_t MEM_MAP_SCREEN        = 0;
 static const uint16_t MEM_MAP_FONT          = 1;
 static const uint16_t MEM_MAP_PALETTE       = 2;
@@ -17,7 +19,6 @@ static const uint16_t SET_BORDER_COLOR      = 3;
 static const uint16_t MEM_DUMP_FONT         = 4;
 static const uint16_t MEM_DUMP_PALETTE      = 5;
 
-namespace lem {
 /**
  * @brief LEM1802 that uses SFML
  */
@@ -73,7 +74,7 @@ public:
     /**
      * @brief Return border color
      */
-    sf::Color getBorder();
+    virtual sf::Color getBorder();
 
     /**
      * @brief Sets if it can display to stdout

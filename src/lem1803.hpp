@@ -1,20 +1,18 @@
 #ifndef _LEM1803_HPP
 #define _LEM1803_HPP
 
-#include <iostream>
 #include <cstdint>
 
 #include "lem1802.hpp"
 
-#include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Texture.hpp>
 
-
-#define LEGACY_MODE      255
-
 namespace cpu {
 
+namespace lem {
+
+static const uint16_t LEGACY_MODE = 255;
 
 /**
  * @brief LEM1802 that uses SFML
@@ -41,6 +39,8 @@ public:
     virtual void attachTo (DCPU* cpu, size_t index);
 
     virtual void show();
+
+    virtual sf::Color getBorder();
     
     const static uint16_t def_palette_map2[64];   /// Default palette
     const static uint16_t def_font_map2[512];     /// Default fontmap
@@ -48,10 +48,11 @@ public:
 protected:
     bool emulation_mode;
 
-    virtual void render();          /// Renders the screen to the window
 
 };
 
-}
+} // end of namespace len
+
+} // end of namespace cpu
 
 #endif // _LEM1802_HPP

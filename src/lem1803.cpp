@@ -8,6 +8,7 @@
 
 namespace cpu {
 
+namespace lem {
     
     const uint16_t Lem1803::def_font_map2[512] = {   /// Default font map
         0xb79e, 0x388e, 0x722c, 0x75f4, 0x19bb, 0x7f8f, 0x85f9, 0xb158,
@@ -60,26 +61,10 @@ namespace cpu {
 
         tick_per_refresh = cpu->cpu_clock / FPS;
 
-        title = "LEM1803 DevId= ";
-        char strbuff[33];
-        snprintf(strbuff, 33,"%zu",index);
-        title.append(strbuff);
-        
-        window.create(sf::VideoMode(Lem1802::WIDTH*3 +20, 
-                    Lem1802::HEIGHT*3 + 20), 
-                    title, sf::Style::Close | sf::Style::Titlebar);
-        
-        window.setFramerateLimit(FPS);
         texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
         texture.update(clear);
         texture.setSmooth(false);
         texture.setRepeated(false);
-
-        window.setActive(false);
-    	if (renderguy)
-		   delete renderguy;
-		renderguy = new sf::Thread(&Lem1803::render,this);
-        renderguy->launch();
     }
 
     void Lem1803::handleInterrupt()
@@ -150,11 +135,11 @@ namespace cpu {
                     }
                     
                     // Does the blink
-                    if (blink > BLINKRATE &&  
+                    if (blink > Lem1802::BLINKPERSECOND &&  
                            ((cpu->getMem()[pos_attr] & 0x1000) > 0) ) {
                         fg_col = bg_col;
                     }
-
+                    
                     // Composes RGBA values from palette colors
                     sf::Uint8 fg[] = {
                         (sf::Uint8)(((fg_col & 0x7C00)>> 10) *8),
@@ -224,45 +209,21 @@ namespace cpu {
         }
     }
 
-    void Lem1803::render() 
+    sf::Color Lem1803::getBorder()
     {
-        while (window.isOpen() ) { // Update the window draw
-            sf::Event event;
-            while (window.pollEvent(event)) {
-                // "close requested" event: we close the window
-                if (event.type == sf::Event::Closed) {
-                    window.close();
-                    return;
-                }
-            }
-
-            sf::Sprite sprite;
-            sprite.setTexture(texture);
-            if (emulation_mode) { 
-                sprite.setScale(3, 3);
-            } else {
-                sprite.setScale(1, 1);
-            }
-            sprite.setPosition(10.0, 10.0);
-           
-            // Clear and set the border color
-            uint16_t border;
-            if (palette_map == 0) { // Use default palette
-                border = Lem1803::def_palette_map[border_col];
-            } else {
-                border = cpu->getMem()[palette_map+ border_col];
-            }
-            window.clear(sf::Color(
-                        (sf::Uint8)(((border & 0x7C00)>> 10) *8),
-                        (sf::Uint8)(((border & 0x03E0)>> 5) *8),
-                        (sf::Uint8)( (border & 0x001F)      *8),
-                        0xFF ));
-            
-            window.draw(sprite);
-
-            window.display();
+        uint16_t border;
+        if (palette_map == 0) { // Use default palette
+            border = Lem1803::def_palette_map[border_col];
+        } else {
+            border = cpu->getMem()[palette_map+ border_col];
         }
-
+        return sf::Color(
+                    (sf::Uint8)(((border & 0x7C00)>> 10) *8),
+                    (sf::Uint8)(((border & 0x03E0)>> 5)  *8),
+                    (sf::Uint8)( (border & 0x001F)       *8),
+                    0xFF );
     }
 
-} // END of NAMESPACE
+} // END OF NAMESPACE lem
+
+} // END of NAMESPACE cpu
