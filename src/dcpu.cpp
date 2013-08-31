@@ -22,6 +22,19 @@ DCPU::DCPU()
 {
     ram = new uint16_t[RAM_SIZE];
     attached_hardware.reserve (100); // Reserve space for some logical small qty
+	register_table[REG_A] = &ra;
+	register_table[REG_B] = &rb; 
+	register_table[REG_C] = &rc; 
+	register_table[REG_X] = &rx; 
+	register_table[REG_Y] = &ry; 
+	register_table[REG_Z] = &rz; 
+	register_table[REG_I] = &ri; 
+	register_table[REG_J] = &rj; 
+	
+	register_table[REG_SP] = &rsp; 
+	register_table[REG_PC] = &rpc; 
+	register_table[REG_EX] = &rex; 
+	
     reset();
 }
 
@@ -104,9 +117,23 @@ int DCPU::realStep()
     // TODO Move skiing here and use a table to precalculate instrucction 
     //      long for skining
     
-    switch (WOPGET_A(op)) {
+	const uint16_t op_a = WOPGET_A(op);
+	const uint16_t op_b = WOPGET_B(op);
+	const uint16_t op_spo = WOPGET_SPECIAL_OP(op);
+	const uint16_t op_o = WOPGET_OP(op);
+	const bool special = (op_o == SPECIAL);
+	
+	if (op_a <= REG_J || (op_a >= REG_SP && op_a <= REG_EX))
+	  a=register_table[op_a];
+	else if (op_a >=PTR_A && op_a <= PTR_J)
+	  a=ram + *(register_table[op_a-PTR_A]);
+	else if (op_a >=PTR_NW_A && op_a <=PTR_NW_J)
+	  a=ram + *(register_table[op_a-PTR_NW_A]) + ram[(rpc++)];
+	  
+	else {
+    switch (op_a) {
         // registers, direct:
-    case REG_A:
+    /*case REG_A: 
         a = &ra;
         break;
         
@@ -211,7 +238,7 @@ int DCPU::realStep()
         a = ram + rj + ram[ (rpc++)];
         cycles++;
         break;
-        
+        */
         // special registers:
     case STACK:
         a = ram + (POP);
@@ -226,7 +253,7 @@ int DCPU::realStep()
         cycles++;
         break;
         
-    case REG_SP:
+    /*case REG_SP:
         a = &rsp;
         break;
         
@@ -236,7 +263,7 @@ int DCPU::realStep()
         
     case REG_EX:
         a = &rex;
-        break;
+        break;*/
         
         // next word, indirect:
     case PTR_NW:
@@ -252,15 +279,24 @@ int DCPU::realStep()
         
         // literal value:
     default:
-        tmp_a = WOPGET_A(op) - LIT_B - 1; // (-1 to 30)
+        tmp_a = op_a - LIT_B - 1; // (-1 to 30)
         a = &tmp_a;
         break;
     }
+	}
     
-    if (WOPGET_OP(op) != SPECIAL ) {
-        switch (WOPGET_B(op)) {
+    if (!special) {
+	    if (op_b <= REG_J || (op_b >= REG_SP && op_b <= REG_EX))
+		  b=register_table[op_b];
+		else if (op_b >=PTR_A && op_b <=PTR_J)
+		  b=ram + *(register_table[op_b-PTR_A]);
+		else if (op_b >=PTR_NW_A && op_b <=PTR_NW_J)
+		  b=ram + *(register_table[op_b-PTR_NW_A]) + ram[ (rpc++)];
+		  
+		else {
+        switch (op_b) {
             // registers, direct:
-        case REG_A:
+        /*case REG_A:
             b = &ra;
             break;
             
@@ -364,7 +400,7 @@ int DCPU::realStep()
         case PTR_NW_J:
             b = ram + rj + ram[ (rpc++)];
             cycles++;
-            break;
+            break;*/
             
             // special registers:
         case STACK:
@@ -379,7 +415,7 @@ int DCPU::realStep()
             b = ram + ( (uint16_t) (rsp + rpc++) ); // PICK n
             cycles++;
             break;
-            
+            /*
         case REG_SP:
             b = &rsp;
             break;
@@ -390,7 +426,7 @@ int DCPU::realStep()
             
         case REG_EX:
             b = &rex;
-            break;
+            break;*/
             
             // next word, indirect:
         case PTR_NW:
@@ -405,7 +441,8 @@ int DCPU::realStep()
             break;
             
         }
-    }
+        }
+	}
     
     assert (a != NULL); // a and b must point to something at this point
     // assert( (op->basic.o != SPECIAL && b != NULL) || op->basic.o == SPECIAL);
@@ -414,7 +451,7 @@ int DCPU::realStep()
         cycles = 0;
         // do not execute instruction when skipping
         // stop skipping when non-branch instruction is encountered
-        if (!IS_CONDITIONAL (WOPGET_OP(op)) ) {
+        if (!IS_CONDITIONAL (op_o)) {
             skipping_flag = false;
         } else {
             cycles = 1;
@@ -424,10 +461,10 @@ int DCPU::realStep()
         rsp = old_sp;
         
         // Decode OpCodes and execute
-    } else if (WOPGET_OP(op) != SPECIAL) {
+    } else if (!special) {
         // Basic opcode
         
-        switch (WOPGET_OP(op)) {
+        switch (op_o) {
         case SET:
             *b = *a;
             cycles++;
@@ -679,7 +716,7 @@ int DCPU::realStep()
         
     } else {
         // Special opcode
-        switch (WOPGET_SPECIAL_OP(op)) {
+        switch (op_spo) {
         case JSR:
             ram[PUSH] = rpc;
             rpc = *a;

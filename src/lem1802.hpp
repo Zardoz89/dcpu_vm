@@ -56,6 +56,17 @@ public:
     }
 	
 	/**
+	 * @The screen must at least size WIDTH*HEIGHT*4 rgba
+	 */
+	virtual void initScreen()
+	{
+	  
+	  if (screen)
+	    delete screen;
+	  screen = new uint8_t[WIDTH*HEIGHT*4];
+	}
+	
+	/**
 	 * @Call before render 1 frame to each frames
 	 */
 	inline void prepareRender()
@@ -116,6 +127,7 @@ protected:
     std::thread renderguy;            /// Rendered thread
     #endif
     */
+    uint8_t* screen;
 };
 
 }

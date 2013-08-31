@@ -209,6 +209,9 @@ public:
     
 private:
     uint16_t* ram; /// RAM
+	
+	uint16_t* register_table[0x1E];
+	
     
     inline int realStep();
     

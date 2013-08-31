@@ -70,7 +70,10 @@ namespace cpu {
         title.append(strbuff);
         #endif
         */
-        texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
+		if (emulation_mode)
+			texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
+		else
+			texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
         texture.update(clear);
         texture.setSmooth(false);
         texture.setRepeated(false);
@@ -96,11 +99,16 @@ namespace cpu {
         if (cpu->GetA() == LEGACY_MODE) {
             emulation_mode = !emulation_mode;
             font_map = palette_map = screen_map = 0;
+			if (emulation_mode)
+			    texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
+			else
+				texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
             return;
         } 
 
         size_t s;
         if (!emulation_mode) { // Only this commands are diferent 
+		    
             if (cpu->GetA() == MEM_DUMP_FONT) {
                 s = RAM_SIZE - 1 - cpu->GetB() < 512 ? 
                         RAM_SIZE - 1 - cpu->GetB() : 512 ;

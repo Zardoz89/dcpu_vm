@@ -84,7 +84,7 @@ int main (int argc, char **argv)
         uint16_t tmp = ( (word & 0xFF00) >> 8) & 0x00FF;
         word = ( (word & 0x00FF) << 8) | tmp;
         data[i] = word;
-		printf("Word 0x%x op Ox%x a 0x%x b 0x%x\n",word, word & 0x1F, word >> 10, (word >> 5) & 0x1F);
+		//printf("Word 0x%x op Ox%x a 0x%x b 0x%x\n",word, word & 0x1F, word >> 10, (word >> 5) & 0x1F);
         i++;
     }
     
@@ -104,17 +104,17 @@ int main (int argc, char **argv)
     
     //Try win32 compatible emulation code
     sf::RenderWindow window1802;
-	sf::RenderWindow window1803;
+	//sf::RenderWindow window1803;
     window1802.create(sf::VideoMode(Lem1802::WIDTH, Lem1802::HEIGHT),"Lem 1802");
-    window1803.setFramerateLimit(60);
-	window1803.create(sf::VideoMode(Lem1803::WIDTH, Lem1803::HEIGHT),"Lem 1803");
+    window1802.setFramerateLimit(60);
+	//window1803.create(sf::VideoMode(Lem1803::WIDTH, Lem1803::HEIGHT),"Lem 1803");
 	
     auto dcpu = std::make_shared<DCPU>();
     auto lem1802 = std::make_shared<Lem1802>();
-	auto lem1803 = std::make_shared<Lem1803>();
+	//auto lem1803 = std::make_shared<Lem1803>();
 	auto gclock = std::make_shared<Generic_Clock>();
     dcpu->attachHardware (lem1802);
-	dcpu->attachHardware (lem1803);
+	//dcpu->attachHardware (lem1803);
 	dcpu->attachHardware (gclock);
     dcpu->reset();
     dcpu->loadProgram (data, size);
@@ -123,29 +123,39 @@ int main (int argc, char **argv)
 	sf::Clock clock; 
 	
 	
-    while (window1802.isOpen() && window1803.isOpen()) //Because non mainthread event are forbidden in OSX
+    while (window1802.isOpen()/* || window1803.isOpen()*/) //Because non mainthread event are forbidden in OSX
     {
         // Process events
         sf::Event event;
         while (window1802.pollEvent(event)) 
         {
             // Close window : exit
-            if (event.type == sf::Event::Closed)
+            if (event.type == sf::Event::Closed) {
                 window1802.close();
+				//dcpu->detachHardware (0);
+				//dcpu->reset();
+				//dcpu->loadProgram (data, size);
+			}
         }
-		while (window1803.pollEvent(event)) 
+		/*while (window1803.pollEvent(event)) 
         {
             // Close window : exit
-            if (event.type == sf::Event::Closed)
+            if (event.type == sf::Event::Closed) {
                 window1803.close();
-        }
+				//dcpu->detachHardware (1);
+				//dcpu->reset();
+				//dcpu->loadProgram (data, size);
+		    }
+        }*/
 		
 		///DCPU emulation stuff
 		lem1802->prepareRender();
-		lem1803->prepareRender();
+		//lem1803->prepareRender();
 		const float delta=clock.getElapsedTime().asSeconds();
 		clock.restart();
-	    const int tick_needed=dcpu->cpu_clock/60;//(float)dcpu->cpu_clock*delta;
+	    int tick_needed=(float)dcpu->cpu_clock*delta;
+		if (tick_needed > dcpu->cpu_clock/60)
+		   tick_needed = dcpu->cpu_clock/60;
 		//std::cout << "ticked :" << tick_needed << std::endl;
 		dcpu->tick(tick_needed);
 		   
@@ -160,7 +170,7 @@ int main (int argc, char **argv)
         // Update the window
         window1802.display();
 		window1802.setActive(false);
-		
+		/*
 		window1803.setActive(true);
 		///Update 1803 screen stuff
 		sprite.setTexture(lem1803->getTexture(),true);
@@ -170,7 +180,7 @@ int main (int argc, char **argv)
         window1803.draw(sprite);
         // Update the window
         window1803.display();
-		window1803.setActive(false);
+		window1803.setActive(false);*/
     }
     
     
