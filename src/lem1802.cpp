@@ -162,7 +162,6 @@ namespace cpu {
             for (unsigned row=0; row < Lem1802::ROWS; row++) {
 			    pixel_pos=screen + row*row_pixel_size_8;
                 for (unsigned col=0; col < Lem1802::COLS; col++) {
-				    std::cout << "col " << col << std::endl;
                     uint16_t pos = screen_map + row * Lem1802::COLS + col;
                     unsigned char ascii = (unsigned char) (cpu->getMem()[pos] 
                                                             & 0x007F);
