@@ -84,18 +84,23 @@ int DCPU::realStep()
 {
     int cycles = 0;
     
+    uint16_t op_word, a_word, b_word, special_op;
+    uint16_t pos;
     register uint16_t *a = NULL, *b = NULL;
     register int16_t sa, sb;   	// Signed versions
     register uint_fast32_t tmp_result;
     register uint16_t tmp_a;			// Used by Literal values
     uint_fast16_t old_sp = rsp;
     
-    opword* op = (opword*) (ram + (rpc++) );
+    //opword* op = (opword*) (ram + (rpc++) );
+    op_word = GET_OPCODE(ram[rpc]);
+    a_word = GET_A (ram[rpc]);
+    special_op = b_word = GET_B(ram[rpc++]);
     
     // TODO Move skiing here and use a table to precalculate instrucction 
     //      long for skining
     
-    switch (op->basic.a) {
+    switch (a_word) {
         // registers, direct:
     case REG_A:
         a = &ra;
@@ -164,42 +169,50 @@ int DCPU::realStep()
         
         // registers + next word, indirect:
     case PTR_NW_A:
-        a = ram + ra + ram[ (rpc++)];
+        pos = ra + ram[ (rpc++)];
+        a = ram + pos;
         cycles++;
         break;
         
     case PTR_NW_B:
-        a = ram + rb + ram[ (rpc++)];
+        pos = rb + ram[ (rpc++)];
+        a = ram + pos;
         cycles++;
         break;
         
     case PTR_NW_C:
-        a = ram + rc + ram[ (rpc++)];
+        pos = rc + ram[ (rpc++)];
+        a = ram + pos;
         cycles++;
         break;
         
     case PTR_NW_X:
-        a = ram + rx + ram[ (rpc++)];
+        pos = rx + ram[ (rpc++)];
+        a = ram + pos;
         cycles++;
         break;
         
     case PTR_NW_Y:
-        a = ram + ry + ram[ (rpc++)];
+        pos = ry + ram[ (rpc++)];
+        a = ram + pos;
         cycles++;
         break;
         
     case PTR_NW_Z:
-        a = ram + rz + ram[ (rpc++)];
+        pos = rz + ram[ (rpc++)];
+        a = ram + pos;
         cycles++;
         break;
         
     case PTR_NW_I:
-        a = ram + ri + ram[ (rpc++)];
+        pos = ri + ram[ (rpc++)];
+        a = ram + pos;
         cycles++;
         break;
         
     case PTR_NW_J:
-        a = ram + rj + ram[ (rpc++)];
+        pos = rj + ram[ (rpc++)];
+        a = ram + pos;
         cycles++;
         break;
         
@@ -243,13 +256,13 @@ int DCPU::realStep()
         
         // literal value:
     default:
-        tmp_a = op->basic.a - LIT_B - 1; // (-1 to 30)
+        tmp_a = a_word - LIT_B - 1; // (-1 to 30)
         a = &tmp_a;
         break;
     }
     
-    if (op->basic.o != SPECIAL ) {
-        switch (op->basic.b) {
+    if (op_word != SPECIAL ) {
+        switch (b_word) {
             // registers, direct:
         case REG_A:
             b = &ra;
@@ -318,42 +331,50 @@ int DCPU::realStep()
             
             // registers + next word, indirect:
         case PTR_NW_A:
-            b = ram + ra + ram[ (rpc++)];
+            pos = ra + ram[ (rpc++)];
+            b = ram + pos;
             cycles++;
             break;
             
         case PTR_NW_B:
-            b = ram + rb + ram[ (rpc++)];
+            pos = rb + ram[ (rpc++)];
+            b = ram + pos;
             cycles++;
             break;
             
         case PTR_NW_C:
-            b = ram + rc + ram[ (rpc++)];
+            pos = rc + ram[ (rpc++)];
+            b = ram + pos;
             cycles++;
             break;
             
         case PTR_NW_X:
-            b = ram + rx + ram[ (rpc++)];
+            pos = rx + ram[ (rpc++)];
+            b = ram + pos;
             cycles++;
             break;
             
         case PTR_NW_Y:
-            b = ram + ry + ram[ (rpc++)];
+            pos = ry + ram[ (rpc++)];
+            b = ram + pos;
             cycles++;
             break;
             
         case PTR_NW_Z:
-            b = ram + rz + ram[ (rpc++)];
+            pos = rz + ram[ (rpc++)];
+            b = ram + pos;
             cycles++;
             break;
             
         case PTR_NW_I:
-            b = ram + ri + ram[ (rpc++)];
+            pos = ri + ram[ (rpc++)];
+            b = ram + pos;
             cycles++;
             break;
             
         case PTR_NW_J:
-            b = ram + rj + ram[ (rpc++)];
+            pos = rj + ram[ (rpc++)];
+            b = ram + pos;
             cycles++;
             break;
             
@@ -405,7 +426,7 @@ int DCPU::realStep()
         cycles = 0;
         // do not execute instruction when skipping
         // stop skipping when non-branch instruction is encountered
-        if (!IS_CONDITIONAL (op->basic.o) ) {
+        if (!IS_CONDITIONAL (op_word) ) {
             skipping_flag = false;
         } else {
             cycles = 1;
@@ -415,10 +436,10 @@ int DCPU::realStep()
         rsp = old_sp;
         
         // Decode OpCodes and execute
-    } else if (op->basic.o != SPECIAL) {
+    } else if (op_word != SPECIAL) {
         // Basic opcode
         
-        switch (op->basic.o) {
+        switch (op_word) {
         case SET:
             *b = *a;
             cycles++;
@@ -668,7 +689,7 @@ int DCPU::realStep()
         
     } else {
         // Special opcode
-        switch (op->nonbasic.o) {
+        switch (special_op) {
         case JSR:
             ram[PUSH] = rpc;
             rpc = *a;

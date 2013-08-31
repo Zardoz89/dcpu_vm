@@ -136,6 +136,12 @@ union opword {
     } __attribute__ ( (__packed__) ) nonbasic;
 };
 
+#define GET_OPCODE(x)       ((x)&0x1F)
+#define GET_SPECIAL_OP(x)   (((x)&0x03EF)>> 5)
+
+#define GET_A(x)            (((x)&0xFC00)>> 10)
+#define GET_B(x)            (((x)&0x03EF)>> 5)
+
 } // END OF namespace
 
 #endif // DCPU_OPCODES_HPP

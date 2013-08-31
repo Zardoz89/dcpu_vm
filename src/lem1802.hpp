@@ -5,13 +5,18 @@
 
 #include "dcpu.hpp" // Base class: cpu::IHardware
 
-#include <SFML/System.hpp>
-#include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Texture.hpp>
-
+#include <SFML/Graphics/Image.hpp>
 
 namespace cpu {
+
+namespace lem {
+static const uint16_t MEM_MAP_SCREEN        = 0;
+static const uint16_t MEM_MAP_FONT          = 1;
+static const uint16_t MEM_MAP_PALETTE       = 2;
+static const uint16_t SET_BORDER_COLOR      = 3;
+static const uint16_t MEM_DUMP_FONT         = 4;
+static const uint16_t MEM_DUMP_PALETTE      = 5;
 
 /**
  * @brief LEM1802 that uses SFML
@@ -21,18 +26,20 @@ public:
     Lem1802();
     virtual ~Lem1802();
     
-    static const uint32_t id            = 0x7349f615;
-    static const uint16_t revision      = 0x1802;
-    static const uint32_t manufacturer  = 0x1c6c8b36;
+    static const uint32_t id                = 0x7349f615;
+    static const uint16_t revision          = 0x1802;
+    static const uint32_t manufacturer      = 0x1c6c8b36;
 
-    static const int FPS                = 30;
-    static const unsigned int WIDTH     = 128;
-    static const unsigned int HEIGHT    = 96;
+    static const unsigned int WIDTH         = 128;
+    static const unsigned int HEIGHT        = 96;
 
-    static const unsigned int ROWS      = 12;
-    static const unsigned int COLS      = 32;
+    static const unsigned int ROWS          = 12;
+    static const unsigned int COLS          = 32;
 
-    static const uint16_t BLINKRATE    = 10000; // Change Blink state each N ticks
+    static const unsigned int BORDER_SIZE   = 10;
+
+    static const int FPS                    = 30;
+    static const uint16_t BLINKPERSECOND    = 2;
 
     virtual uint32_t getId() {
         return id;
@@ -53,9 +60,35 @@ public:
     virtual void attachTo (DCPU* cpu, size_t index);
     
     /**
-     * @brief Try to show the screen in the terminal
+     * @brief Updates the screen texture
      */
     virtual void show();
+
+    /**
+     * @brief Return the screen array representation
+     */
+    const sf::Image& getScreen() const
+    {
+        return this->screen;
+    }
+
+    /**
+     * @brief Return border color
+     */
+    virtual sf::Color getBorder();
+
+    static const int scaleX = 3;
+    static const int scaleY = 3;
+    static const int videoWidth = Lem1802::WIDTH * scaleX;
+    static const int videoHeight = Lem1802::HEIGHT * scaleY;
+
+    virtual int getScaleX() {return scaleX;}
+    virtual int getScaleY() {return scaleY;}
+    virtual int getVideoWidth() {return videoWidth + BORDER_SIZE*2;}
+    virtual int getVideoHeight() {return videoHeight + BORDER_SIZE*2;}
+    virtual int getWidth() {return HEIGHT;}
+    virtual int getHeight() {return WIDTH;}
+    int getBorderSize() {return BORDER_SIZE;}
 
     /**
      * @brief Sets if it can display to stdout
@@ -79,17 +112,14 @@ protected:
     bool enable;                    /// Can print to stdout ?
 
     uint16_t blink;                 /// Counter for blinking
-   
-    sf::RenderWindow window;        /// SFML window
-    sf::Texture texture;            /// SFML texture were to paint
-
-    std::string title;              /// Title window
-    sf::Thread* renderguy;          /// Rendered thread
-
-    virtual void render();          /// Renders the screen to the window
+    uint32_t blink_max;             /// Max ticks to change blink state
+  
+    sf::Image screen;       /// SFML compatible array representation of screen
 
 };
 
-}
+} // end of namespace lem
+
+} // end of namespace cpu
 
 #endif // _LEM1802_HPP
