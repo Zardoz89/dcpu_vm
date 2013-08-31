@@ -39,7 +39,7 @@ public:
     static const unsigned int ROWS      = 12;
     static const unsigned int COLS      = 32;
 
-    static const uint16_t BLINKRATE    = 10000; // Change Blink state each N ticks
+    static const uint16_t BLINKRATE    = 20000; // Change Blink state each N ticks
 
     virtual uint32_t getId() {
         return id;
@@ -63,7 +63,7 @@ public:
 	  
 	  if (screen)
 	    delete screen;
-	  screen = new uint8_t[WIDTH*HEIGHT*4];
+	  screen = new uint8_t[Lem1802::WIDTH*Lem1802::HEIGHT*4];
 	}
 	
 	/**

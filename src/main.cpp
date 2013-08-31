@@ -20,27 +20,6 @@
 
 using namespace cpu;
 
-/*
-const long TOTALCPUS    = 215*16;
-const long PERTHREAD    = 16;  // At 16 looks that is the ideal for the FX-4100
-#define THREADS           (TOTALCPUS/PERTHREAD)
-const long CYCLES       = 1000*1000;
-
-const int BATCH         = 10;
-
-
-std::vector<std::vector<std::shared_ptr<DCPU>>> threads;
-uint16_t* data;
-size_t size = 0;
-
-void benchmark();
-void step();
-void one_bench();
-void run100k();
-
-void cpu_in_thread(int n);
-*/
-
 int main (int argc, char **argv)
 {
 
@@ -49,8 +28,6 @@ int main (int argc, char **argv)
 	uint16_t* data;
     std::ifstream binfile;
     
-   /* std::cout << "cpu " << sizeof(DCPU) << " IHardware " << sizeof(IHardware);
-    std::cout << " fake_LEM1802 " << sizeof(Fake_Lem1802) << std::endl;*/
     
     if (argc <= 1) {
         std::cerr << "Missing input file\n";
@@ -103,18 +80,18 @@ int main (int argc, char **argv)
     size /= 2;
     
     //Try win32 compatible emulation code
-    sf::RenderWindow window1802;
-	//sf::RenderWindow window1803;
-    window1802.create(sf::VideoMode(Lem1802::WIDTH, Lem1802::HEIGHT),"Lem 1802");
-    window1802.setFramerateLimit(60);
-	//window1803.create(sf::VideoMode(Lem1803::WIDTH, Lem1803::HEIGHT),"Lem 1803");
+    //sf::RenderWindow window1802;
+	sf::RenderWindow window1803;
+    //window1802.create(sf::VideoMode(Lem1802::WIDTH, Lem1802::HEIGHT),"Lem 1802");
+    window1803.setFramerateLimit(60);
+	window1803.create(sf::VideoMode(Lem1803::WIDTH, Lem1803::HEIGHT),"Lem 1803");
 	
     auto dcpu = std::make_shared<DCPU>();
-    auto lem1802 = std::make_shared<Lem1802>();
-	//auto lem1803 = std::make_shared<Lem1803>();
+    //auto lem1802 = std::make_shared<Lem1802>();
+	auto lem1803 = std::make_shared<Lem1803>();
 	auto gclock = std::make_shared<Generic_Clock>();
-    dcpu->attachHardware (lem1802);
-	//dcpu->attachHardware (lem1803);
+    //dcpu->attachHardware (lem1802);
+	dcpu->attachHardware (lem1803);
 	dcpu->attachHardware (gclock);
     dcpu->reset();
     dcpu->loadProgram (data, size);
@@ -123,11 +100,11 @@ int main (int argc, char **argv)
 	sf::Clock clock; 
 	
 	
-    while (window1802.isOpen()/* || window1803.isOpen()*/) //Because non mainthread event are forbidden in OSX
+    while (/*window1802.isOpen() || */window1803.isOpen()) //Because non mainthread event are forbidden in OSX
     {
         // Process events
         sf::Event event;
-        while (window1802.pollEvent(event)) 
+        /*while (window1802.pollEvent(event)) 
         {
             // Close window : exit
             if (event.type == sf::Event::Closed) {
@@ -136,8 +113,8 @@ int main (int argc, char **argv)
 				//dcpu->reset();
 				//dcpu->loadProgram (data, size);
 			}
-        }
-		/*while (window1803.pollEvent(event)) 
+        }*/
+		while (window1803.pollEvent(event)) 
         {
             // Close window : exit
             if (event.type == sf::Event::Closed) {
@@ -146,21 +123,21 @@ int main (int argc, char **argv)
 				//dcpu->reset();
 				//dcpu->loadProgram (data, size);
 		    }
-        }*/
+        }
 		
 		///DCPU emulation stuff
-		lem1802->prepareRender();
-		//lem1803->prepareRender();
+		//lem1802->prepareRender();
+		lem1803->prepareRender();
 		const float delta=clock.getElapsedTime().asSeconds();
 		clock.restart();
-	    int tick_needed=(float)dcpu->cpu_clock*delta;
+	    unsigned int tick_needed=(float)dcpu->cpu_clock*delta;
 		if (tick_needed > dcpu->cpu_clock/60)
 		   tick_needed = dcpu->cpu_clock/60;
 		//std::cout << "ticked :" << tick_needed << std::endl;
 		dcpu->tick(tick_needed);
 		   
 		
-		window1802.setActive(true);
+		/*window1802.setActive(true);
 		///Update 1802 screen stuff
 		sprite.setTexture(lem1802->getTexture(),true);
         // Clear screen
@@ -169,8 +146,13 @@ int main (int argc, char **argv)
         window1802.draw(sprite);
         // Update the window
         window1802.display();
-		window1802.setActive(false);
-		/*
+		window1802.setActive(false);*/
+		
+		//For emulation mode
+		sf::FloatRect r(0,0,lem1803->getTexture().getSize().x,
+				            lem1803->getTexture().getSize().y);
+		window1803.setView(sf::View(r));
+		
 		window1803.setActive(true);
 		///Update 1803 screen stuff
 		sprite.setTexture(lem1803->getTexture(),true);
@@ -180,268 +162,9 @@ int main (int argc, char **argv)
         window1803.draw(sprite);
         // Update the window
         window1803.display();
-		window1803.setActive(false);*/
+		window1803.setActive(false);
     }
-    
-    
-    //Old code not supported yet 
-    /*
-badchar:
-    std::cout << "Select what to do :" << std::endl;
-    std::cout << "\tb -> benchmark  s -> step execution o-> benchmark one VM r-> run 800k cycles";
-    std::cout << std::endl << std::endl;
-    char choose;
-    std::cin >> choose;
-    
-    if (choose == 'b' || choose == 'B') {
-        benchmark();
-    } else if ( choose == 's' || choose == 'S') {
-        step();
-    } else if ( choose == 'o' || choose == 'O') {
-        one_bench();
-    } else if ( choose == 'r' || choose == 'R') {
-        run100k();
-    } else {
-        goto badchar; /// HATE ME!!!! Yes i hate you !
-    }
-
-    delete[] data;*/
-
     return 0;
 }
-
-/*
-void benchmark() 
-{
-    // Load program to all CPUs
-    for (int u=0; u< THREADS; u++) {
-        std::vector<std::shared_ptr<DCPU>> cpus;
-        cpus.reserve (PERTHREAD);
-        for (int i = 0; i< PERTHREAD; i++) {
-            auto cpu = std::make_shared<DCPU>();   
-            //auto screen = std::make_shared<Fake_Lem1802>();
-            //screen->setEnable(false); // We not desire to write to stdout
-            //cpu->attachHardware (screen);
-            cpu->reset();
-            cpu->loadProgram (data, size);
-            
-            cpus.push_back(cpu);
-        }
-
-        threads.push_back(cpus);
-        
-    }
-    #ifndef __NO_THREAD_11__
-    std::thread tds[THREADS];
-    #else
-    sf::Thread* tds[THREADS];
-    #endif
-
-    std::cout << "Threads " << THREADS << "\t CPU PerThread " << PERTHREAD;
-    std::cout << "\t N cpus " << PERTHREAD * THREADS << std::endl;
-    std::cout << "Cycles " << CYCLES << std::endl;
-    
-    auto start = std::chrono::high_resolution_clock::now(); 
-    
-    for (int i=0; i< THREADS; i++) {
-        #ifndef __NO_THREAD_11__
-        tds[i] = std::thread(cpu_in_thread, i);
-        #else
-        tds[i] = new sf::Thread(cpu_in_thread, i);
-        tds[i]->launch();
-        #endif
-    }
-    
-    for (int i=0; i< THREADS; i++) {
-        #ifndef __NO_THREAD_11__
-        tds[i].join();
-        #else
-        delete tds[i]; //wait() is automatically called
-        #endif
-    }
-
-    auto end = std::chrono::high_resolution_clock::now();
-    auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - start); 
-    std::cout << "Measured time: " << dur.count() << "ms" << std::endl;
-    
-}
-
-void step() {
-    using namespace std;
-    auto cpu = make_shared<DCPU>();
-    
-    auto screen1 = std::make_shared<Lem1802>();
-    cpu->attachHardware (screen1);
-    auto screen2 = std::make_shared<Lem1803>();
-    cpu->attachHardware (screen2);
-    
-    cpu->reset();
-    cpu->loadProgram (data, size);
-    
-    
-    char c = getchar();
-    while (1) {
-        c = getchar();
-        if (c == 'f' || c == 'q' || c == '\n' )
-            break;
-    }
-    
-    while (c != 'q') {
-   
-        cout << cpu->dumpRegisters() << endl;
-        cout << "T cycles " << dec << cpu->getTotCycles() << endl;
-        cout << "> " << cpu->dumpRam() << " - ";
-        string s = disassembly(cpu->getMem() + cpu->GetPC(), 3);
-        cout << s << endl;
-        
-        if (cpu->GetSP() != 0x0000)
-            cout << "STACK : "<< cpu->dumpRam(cpu->GetSP(), 0xFFFF) << endl;
-        
-        if (c == 'f') {
-            for (int i = 0; i < 100; i++)
-                cpu->tick();
-        } else {
-            if (cpu->tick())
-                cout << "Execute! ";
-        }
-        cout << endl;
-            
-        
-        
-        while (1) {
-            c = getchar();
-            if (c == 'f' || c == 'q' || c == '\n' )
-                break;
-        }
-        
-    }
-    
-}
-
-
-void one_bench() {
-    using namespace std;
-    using namespace std::chrono;
-    
-    const int times = 200;
-
-    high_resolution_clock::time_point  starts[times];
-    high_resolution_clock::time_point  creates[times];
-    high_resolution_clock::time_point  loadstarts[times];
-    high_resolution_clock::time_point  loads[times];
-    high_resolution_clock::time_point  finishs[times];
-   
-    for (int x=0; x < times; x++) {
-        using namespace std::chrono;
-        starts[x] = high_resolution_clock::now(); 
-        auto cpu = make_shared<DCPU>();
-
-        creates[x] = high_resolution_clock::now(); 
-        
-        auto screen = make_shared<Fake_Lem1802>();
-        screen->setEnable(false); // We not desire to write to stdout
-        cpu->attachHardware (screen);
-        
-        loadstarts[x] = high_resolution_clock::now(); 
-        
-        cpu->reset();
-        cpu->loadProgram (data, size);
-        
-        loads[x] = high_resolution_clock::now(); 
-        
-        for (int i=0; i < 10000; i++) {
-            cpu->tick();
-        }
-        finishs[x] = high_resolution_clock::now(); 
-    }
-
-
-    double d_create, d_load, d_execute;
-    d_create = d_load = d_execute = 0;
-    
-    for (int x=0; x < times; x++) {
-
-        auto tmp = duration_cast<chrono::microseconds> 
-            (creates[x] - starts[x]);
-        d_create += tmp.count();
-        
-        tmp = duration_cast<chrono::microseconds> 
-            (loads[x] - loadstarts[x]); 
-        d_load += tmp.count();
-        
-        tmp = duration_cast<chrono::microseconds> 
-            (finishs[x] - loads[x]); 
-        
-        d_execute += tmp.count();
-        
-    }
-    d_create /= times;
-    d_load /= times;
-    d_execute /= times;
-
-    cout << "Measured time: " << endl;
-    cout << "\tCreating time "<< d_create << "us" << endl;
-    cout << "\tLoad time "<< d_load << "us" << endl;
-    cout << "\tExecute 10k cycles time "<< d_execute << "us" << endl;
-
-}
-
-void run100k() {
-
-    using namespace std;
-    using namespace std::chrono;
-    
-    auto cpu = make_shared<DCPU>();
-    auto screen1 = std::make_shared<Lem1803>();
-    cpu->attachHardware (screen1);
-    
-    auto screen2 = make_shared<Lem1802>();
-    cpu->attachHardware (screen2);
-   
-    auto clock = make_shared<Generic_Clock>();
-    cpu->attachHardware (clock);
-
-    cpu->reset();
-    cpu->loadProgram (data, size);
-    
-    high_resolution_clock::time_point b, e;
-    char c;
-    do {
-        for (int i=0; i < 800000; i++) {
-            b =  high_resolution_clock::now(); 
-            cpu->tick();
-            e =  high_resolution_clock::now(); 
-            
-            auto delta = duration_cast<chrono::nanoseconds>(e - b);
-            auto rest = nanoseconds(1000000000/cpu->cpu_clock)-delta; 
-
-            if ((i % 50000) == 0) { // Not show running speed every clock tick 
-                double p = nanoseconds(1000000000/cpu->cpu_clock).count() /
-                    (double)(delta.count() + rest.count());
-                cerr << "Delta :" << delta.count() << " ns ";
-                cerr << "Rest :" << rest.count() << " ns ";
-                cerr << " Running at "<< p*100.0 << " % speed." << endl;
-            }
-            //this_thread::sleep_for(duration_cast<chrono::nanoseconds>(rest)); 
-        }
-        cout << "Press q to exit. Other key to run more." << std::endl;
-        cin >> c;
-    } while (c != 'q' && c!= 'Q');
-
-}
-
-
-
-// Runs PERTHREAD cpus, doing CYCLES cycles
-void cpu_in_thread(int n) {
-    auto cpus = threads[n];
-    for (long i=0; i < CYCLES; i+= BATCH) {
-        for (auto c = cpus.begin(); c != cpus.end(); c++) {
-            for ( int j=0; j < BATCH; j++)
-                (*c)->tick();
-        }
-    }
-}
-*/
 
 

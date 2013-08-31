@@ -58,18 +58,6 @@ namespace cpu {
         this->IHardware::attachTo(cpu, index);
 
         tick_per_refresh = cpu->cpu_clock / FPS;
-
-		//No need title -> no more window
-        /*title = "LEM1803 DevId= ";
-        
-		#ifndef __NO_TOSTRING_11__
-        title.append( std::to_string(index));
-        #else
-        char strbuff[33];
-        sprintf(strbuff,"%d",index);
-        title.append(strbuff);
-        #endif
-        */
 		if (emulation_mode)
 			texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
 		else
@@ -77,17 +65,6 @@ namespace cpu {
         texture.update(clear);
         texture.setSmooth(false);
         texture.setRepeated(false);
-
-		/*
-        #ifndef __NO_THREAD_11__
-        renderguy = std::thread(&Lem1803::render, this);
-        renderguy.detach();
-        #else
-		if (renderguy)
-		   delete renderguy;
-		renderguy = new sf::Thread(&Lem1803::render,this);
-        renderguy->launch();
-        #endif*/
     }
 
     void Lem1803::handleInterrupt()
@@ -137,8 +114,13 @@ namespace cpu {
         }
         need_render = false;
         if (screen_map != 0 && enable) { // Update the texture
+		    uint8_t* pixel_pos = screen;
+			//4 pixel per col 4 value per pixels
+			const unsigned row_pixel_size = Lem1803::WIDTH*4; 
+			const unsigned row_pixel_size_8 = row_pixel_size*8; 
             for (unsigned row=0; row < Lem1803::ROWS; row++) {
                 for (unsigned col=0; col < Lem1803::COLS; col++) {
+				    pixel_pos=screen + row*row_pixel_size_8;
                     uint16_t pos = screen_map + row * (Lem1803::COLS/2) + (col/2);
                     uint16_t pos_attr = screen_map + 1728 + row*Lem1803::COLS + col;
                     // Every word contains two characters
@@ -189,49 +171,71 @@ namespace cpu {
                         glyph[1] = cpu->getMem()[font_map+ (ascii*2)+1]; 
                     }
                     
+                    uint8_t* current_pixel_pos = pixel_pos;
                     for (int i=8; i< 16; i++) { // Puts MSB of Words
                         // First word 
                         bool pixel = ((1<<i) & glyph[0]) > 0;
                         if (pixel) {
-                            texture.update(fg, 1, 1, 
-                                    col*4, row*8 +i-8);
+							*(current_pixel_pos+0) = fg[0];
+							*(current_pixel_pos+1) = fg[1];
+							*(current_pixel_pos+2) = fg[2];
+							*(current_pixel_pos+3) = fg[3];
                         } else {
-                            texture.update(bg, 1, 1, 
-                                    col*4, row*8 +i-8);
+						    *(current_pixel_pos+0) = bg[0];
+							*(current_pixel_pos+1) = bg[1];
+							*(current_pixel_pos+2) = bg[2];
+							*(current_pixel_pos+3) = bg[3];
                         }
-                        // Secodn word
+                        // Second word
                         pixel = ((1<<i) & glyph[1]) > 0;
                         if (pixel) {
-                            texture.update(fg, 1, 1, 
-                                    col*4 +2, row*8 +i-8);
+						    *(current_pixel_pos+0+2*4) = fg[0];
+							*(current_pixel_pos+1+2*4) = fg[1];
+							*(current_pixel_pos+2+2*4) = fg[2];
+							*(current_pixel_pos+3+2*4) = fg[3];
                         } else {
-                            texture.update(bg, 1, 1, 
-                                    col*4 +2, row*8 +i-8);
+							*(current_pixel_pos+0+2*4) = bg[0];
+							*(current_pixel_pos+1+2*4) = bg[1];
+							*(current_pixel_pos+2+2*4) = bg[2];
+							*(current_pixel_pos+3+2*4) = bg[3];
                         }
+						current_pixel_pos += row_pixel_size;
                     }
+					current_pixel_pos = pixel_pos;
 
                     for (int i=0; i< 8; i++) { // Puts LSB of Words
                         // First word 
                         bool pixel = ((1<<i) & glyph[0]) >0;
                         if (pixel) {
-                            texture.update(fg, 1, 1, 
-                                    col*4 +1, row*8 +i);
+							*(current_pixel_pos+0+1*4) = fg[0];
+							*(current_pixel_pos+1+1*4) = fg[1];
+							*(current_pixel_pos+2+1*4) = fg[2];
+							*(current_pixel_pos+3+1*4) = fg[3];
                         } else {
-                            texture.update(bg, 1, 1, 
-                                    col*4 +1, row*8 +i);
+							*(current_pixel_pos+0+1*4) = bg[0];
+							*(current_pixel_pos+1+1*4) = bg[1];
+							*(current_pixel_pos+2+1*4) = bg[2];
+							*(current_pixel_pos+3+1*4) = bg[3];
                         }
                         // Secodn word
                         pixel = ((1<<i) & glyph[1]) > 0;
                         if (pixel) {
-                            texture.update(fg, 1, 1, 
-                                    col*4 +3, row*8 +i);
+							*(current_pixel_pos+0+3*4) = fg[0];
+							*(current_pixel_pos+1+3*4) = fg[1];
+							*(current_pixel_pos+2+3*4) = fg[2];
+							*(current_pixel_pos+3+3*4) = fg[3];
                         } else {
-                            texture.update(bg, 1, 1, 
-                                    col*4 +3, row*8 +i);
+							*(current_pixel_pos+0+3*4) = bg[0];
+							*(current_pixel_pos+1+3*4) = bg[1];
+							*(current_pixel_pos+2+3*4) = bg[2];
+							*(current_pixel_pos+3+3*4) = bg[3];
                         }
+						current_pixel_pos += row_pixel_size;
                     }
+					pixel_pos+=16;
                 }
             }
+			texture.update(screen);
         } else {
             texture.update(clear);
         }

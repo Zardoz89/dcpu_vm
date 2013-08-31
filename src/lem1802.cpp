@@ -150,6 +150,7 @@ namespace cpu {
 
     void Lem1802::show()
     {
+	    //TODO use uint32_t to fast copy the color into the buffer
         using namespace std;
 
         if (this->cpu == NULL || !need_render)
@@ -205,59 +206,33 @@ namespace cpu {
                         glyph[0] = cpu->getMem()[font_map+ (ascii*2)]; 
                         glyph[1] = cpu->getMem()[font_map+ (ascii*2)+1]; 
                     }
-					const unsigned col_4 = col*4;
-					const unsigned row_8 = row*8;
                     uint8_t* current_pixel_pos = pixel_pos;
                     for (int i=8; i< 16; i++) { // Puts MSB of Words
                         // First word 
                         bool pixel = ((1<<i) & glyph[0]) > 0;
                         if (pixel) {
-                            //texture.update(fg, 1, 1, 
-                            //        col_4, row_8 +i-8);
 							*(current_pixel_pos+0) = fg[0];
 							*(current_pixel_pos+1) = fg[1];
 							*(current_pixel_pos+2) = fg[2];
-							*(current_pixel_pos+3) = fg[3];/*
-							screen[col_4+0+(row_8+i-8)*row_pixel_size]=fg[0];
-							screen[col_4+1+(row_8+i-8)*row_pixel_size]=fg[1];
-							screen[col_4+2+(row_8+i-8)*row_pixel_size]=fg[2];
-							screen[col_4+3+(row_8+i-8)*row_pixel_size]=fg[3];*/
+							*(current_pixel_pos+3) = fg[3];
                         } else {
 						    *(current_pixel_pos+0) = bg[0];
 							*(current_pixel_pos+1) = bg[1];
 							*(current_pixel_pos+2) = bg[2];
-							*(current_pixel_pos+3) = bg[3];/*
-							screen[col_4+0+(row_8+i-8)*row_pixel_size]=bg[0];
-							screen[col_4+1+(row_8+i-8)*row_pixel_size]=bg[1];
-							screen[col_4+2+(row_8+i-8)*row_pixel_size]=bg[2];
-							screen[col_4+3+(row_8+i-8)*row_pixel_size]=bg[3];*/
-                            //texture.update(bg, 1, 1, 
-                            //        col_4, row_8 +i-8);
+							*(current_pixel_pos+3) = bg[3];
                         }
-                        // Secodn word
+                        // Second word
                         pixel = ((1<<i) & glyph[1]) > 0;
                         if (pixel) {
-                            //texture.update(fg, 1, 1, 
-                            //        col_4 +2, row_8 +i-8);
 						    *(current_pixel_pos+0+2*4) = fg[0];
 							*(current_pixel_pos+1+2*4) = fg[1];
 							*(current_pixel_pos+2+2*4) = fg[2];
-							*(current_pixel_pos+3+2*4) = fg[3];/*
-							screen[col_4+0+2*4+(row_8+i-8)*row_pixel_size]=fg[0];
-							screen[col_4+1+2*4+(row_8+i-8)*row_pixel_size]=fg[1];
-							screen[col_4+2+2*4+(row_8+i-8)*row_pixel_size]=fg[2];
-							screen[col_4+3+2*4+(row_8+i-8)*row_pixel_size]=fg[3];*/
+							*(current_pixel_pos+3+2*4) = fg[3];
                         } else {
-                            //texture.update(bg, 1, 1, 
-                            //        col_4 +2, row_8 +i-8);
 							*(current_pixel_pos+0+2*4) = bg[0];
 							*(current_pixel_pos+1+2*4) = bg[1];
 							*(current_pixel_pos+2+2*4) = bg[2];
-							*(current_pixel_pos+3+2*4) = bg[3];/*
-							screen[col_4+0+2*4+(row_8+i-8)*row_pixel_size]=bg[0];
-							screen[col_4+1+2*4+(row_8+i-8)*row_pixel_size]=bg[1];
-							screen[col_4+2+2*4+(row_8+i-8)*row_pixel_size]=bg[2];
-							screen[col_4+3+2*4+(row_8+i-8)*row_pixel_size]=bg[3];*/
+							*(current_pixel_pos+3+2*4) = bg[3];
                         }
 						current_pixel_pos += row_pixel_size;
                     }
@@ -267,23 +242,11 @@ namespace cpu {
                         // First word 
                         bool pixel = ((1<<i) & glyph[0]) >0;
                         if (pixel) {
-                            //texture.update(fg, 1, 1, 
-                            //        col_4 +1, row_8 +i);
-                            /*screen[col_4+0+1*4+(row_8+i)*row_pixel_size]=fg[0];
-							screen[col_4+1+1*4+(row_8+i)*row_pixel_size]=fg[1];
-							screen[col_4+2+1*4+(row_8+i)*row_pixel_size]=fg[2];
-							screen[col_4+3+1*4+(row_8+i)*row_pixel_size]=fg[3];*/
 							*(current_pixel_pos+0+1*4) = fg[0];
 							*(current_pixel_pos+1+1*4) = fg[1];
 							*(current_pixel_pos+2+1*4) = fg[2];
 							*(current_pixel_pos+3+1*4) = fg[3];
                         } else {
-                            //texture.update(bg, 1, 1, 
-                            //        col_4 +1, row_8 +i);
-							/*screen[col_4+0+1*4+(row_8+i)*row_pixel_size]=bg[0];
-							screen[col_4+1+1*4+(row_8+i)*row_pixel_size]=bg[1];
-							screen[col_4+2+1*4+(row_8+i)*row_pixel_size]=bg[2];
-							screen[col_4+3+1*4+(row_8+i)*row_pixel_size]=bg[3];*/
 							*(current_pixel_pos+0+1*4) = bg[0];
 							*(current_pixel_pos+1+1*4) = bg[1];
 							*(current_pixel_pos+2+1*4) = bg[2];
@@ -292,23 +255,11 @@ namespace cpu {
                         // Secodn word
                         pixel = ((1<<i) & glyph[1]) > 0;
                         if (pixel) {
-                            //texture.update(fg, 1, 1, 
-                            //        col_4 +3, row_8 +i);
-							/*screen[col_4+0+3*4+(row_8+i)*row_pixel_size]=fg[0];
-							screen[col_4+1+3*4+(row_8+i)*row_pixel_size]=fg[1];
-							screen[col_4+2+3*4+(row_8+i)*row_pixel_size]=fg[2];
-							screen[col_4+3+3*4+(row_8+i)*row_pixel_size]=fg[3];*/
 							*(current_pixel_pos+0+3*4) = fg[0];
 							*(current_pixel_pos+1+3*4) = fg[1];
 							*(current_pixel_pos+2+3*4) = fg[2];
 							*(current_pixel_pos+3+3*4) = fg[3];
                         } else {
-                            //texture.update(bg, 1, 1, 
-                             //       col_4 +3, row_8 +i);
-							/*screen[col_4+0+3*4+(row_8+i)*row_pixel_size]=bg[0];
-							screen[col_4+1+3*4+(row_8+i)*row_pixel_size]=bg[1];
-							screen[col_4+2+3*4+(row_8+i)*row_pixel_size]=bg[2];
-							screen[col_4+3+3*4+(row_8+i)*row_pixel_size]=bg[3];*/
 							*(current_pixel_pos+0+3*4) = bg[0];
 							*(current_pixel_pos+1+3*4) = bg[1];
 							*(current_pixel_pos+2+3*4) = bg[2];
