@@ -10,6 +10,8 @@ namespace cpu {
 
 namespace lem {
 
+#define PIXEL(x, y)   ((y)*Lem1802::WIDTH + (x)) 
+
     const uint16_t Lem1802::def_font_map[128*2] = {   /// Default font map
 #       include "lem1802_font.inc"
     };
@@ -17,9 +19,6 @@ namespace lem {
     const uint16_t Lem1802::def_palette_map[16] = {    /// Default palette
 #       include "lem1802_palette.inc"
     };
-
-    // Clears the screen texture
-    const static sf::Uint8 clear[Lem1802::WIDTH*Lem1802::HEIGHT*4]= {0};
 
 
     Lem1802::Lem1802() : screen_map (0), font_map (0), palette_map (0),
@@ -36,10 +35,7 @@ namespace lem {
         tick_per_refresh = cpu->cpu_clock / Lem1802::FPS;
         blink_max = cpu->cpu_clock / Lem1802::BLINKPERSECOND;
 
-        texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
-        texture.update(clear);
-        texture.setRepeated(false);
-        texture.setSmooth(false);
+        screen.create(Lem1802::WIDTH, Lem1802::HEIGHT, sf::Color::Black);
     }
 
     void Lem1802::handleInterrupt()
@@ -131,16 +127,16 @@ namespace lem {
                     }
 
                     // Composes RGBA values from palette colors
-                    sf::Uint8 fg[] = {
-                        (sf::Uint8)(((fg_col & 0xF00)>> 8) *0x11),
-                        (sf::Uint8)(((fg_col & 0x0F0)>> 4) *0x11),
-                        (sf::Uint8)( (fg_col & 0x00F)      *0x11),
-                        0xFF };
-                    sf::Uint8 bg[] = {
-                        (sf::Uint8)(((bg_col & 0xF00)>> 8) *0x11),
-                        (sf::Uint8)(((bg_col & 0x0F0)>> 4) *0x11),
-                        (sf::Uint8)( (bg_col & 0x00F)      *0x11),
-                        0xFF };
+                    sf::Color fg (
+                            ((fg_col & 0xF00)>> 8) *0x11,
+                            ((fg_col & 0x0F0)>> 4) *0x11,
+                             (fg_col & 0x00F)      *0x11,
+                            0xFF );
+                    sf::Color bg (
+                            ((bg_col & 0xF00)>> 8) *0x11,
+                            ((bg_col & 0x0F0)>> 4) *0x11,
+                             (bg_col & 0x00F)      *0x11,
+                            0xFF );
     
                     uint16_t glyph[2];
                     if (font_map == 0) { // Default font
@@ -155,20 +151,16 @@ namespace lem {
                         // First word 
                         bool pixel = ((1<<i) & glyph[0]) > 0;
                         if (pixel) {
-                            texture.update(fg, 1, 1, 
-                                    col*4, row*8 +i-8);
+                            screen.setPixel (col*4, row*8 +i-8, fg);
                         } else {
-                            texture.update(bg, 1, 1, 
-                                    col*4, row*8 +i-8);
+                            screen.setPixel (col*4, row*8 +i-8, bg);
                         }
-                        // Secodn word
+                        // Second word
                         pixel = ((1<<i) & glyph[1]) > 0;
                         if (pixel) {
-                            texture.update(fg, 1, 1, 
-                                    col*4 +2, row*8 +i-8);
+                            screen.setPixel (col*4 +2, row*8 +i-8, fg);
                         } else {
-                            texture.update(bg, 1, 1, 
-                                    col*4 +2, row*8 +i-8);
+                            screen.setPixel (col*4 +2, row*8 +i-8, bg);
                         }
                     }
 
@@ -176,26 +168,22 @@ namespace lem {
                         // First word 
                         bool pixel = ((1<<i) & glyph[0]) >0;
                         if (pixel) {
-                            texture.update(fg, 1, 1, 
-                                    col*4 +1, row*8 +i);
+                            screen.setPixel (col*4 +1, row*8 +i, fg);
                         } else {
-                            texture.update(bg, 1, 1, 
-                                    col*4 +1, row*8 +i);
+                            screen.setPixel (col*4 +1, row*8 +i, bg);
                         }
                         // Secodn word
                         pixel = ((1<<i) & glyph[1]) > 0;
                         if (pixel) {
-                            texture.update(fg, 1, 1, 
-                                    col*4 +3, row*8 +i);
+                            screen.setPixel (col*4 +3, row*8 +i, fg);
                         } else {
-                            texture.update(bg, 1, 1, 
-                                    col*4 +3, row*8 +i);
+                            screen.setPixel (col*4 +3, row*8 +i, bg);
                         }
                     }
                 }
             }
         } else {
-            texture.update(clear);
+            screen.create(Lem1802::WIDTH, Lem1802::HEIGHT, sf::Color::Black);
         }
     }
 

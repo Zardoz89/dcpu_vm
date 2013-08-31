@@ -161,12 +161,15 @@ void step() {
     auto cpu = make_shared<DCPU>();
     
     auto screen = make_shared<lem::Lem1803>();
-    cpu->attachHardware (screen);
+    //cpu->attachHardware (screen);
    
     sf::RenderWindow window(sf::VideoMode(
-                                screen->getVideWidth()  +20 ,
-                                screen->getVideHeight() +20),
+                                screen->getVideoWidth(),
+                                screen->getVideoHeight()),
                             "DCPU-16");
+    
+    sf::Texture texture;
+    texture.create(screen->getWidth(), screen->getHeight());
     
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
@@ -205,7 +208,8 @@ void step() {
         // Clear and set the border color
         window.clear(screen->getBorder());
 
-        sf::Sprite sprite(screen->getTexture());
+        texture.loadFromImage(screen->getScreen());
+        sf::Sprite sprite(texture);
         sprite.scale(screen->getScaleX(), screen->getScaleY());
         sprite.setPosition(10.0, 10.0);
 
@@ -303,10 +307,13 @@ void run() {
     cpu->attachHardware (screen);
    
     sf::RenderWindow window(sf::VideoMode(
-                                screen->getVideWidth()  +20 ,
-                                screen->getVideHeight() +20),
+                                screen->getVideoWidth(),
+                                screen->getVideoHeight()),
                             "DCPU-16");
-    
+   
+    sf::Texture texture;
+    texture.create(screen->getWidth(), screen->getHeight());
+
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
 
@@ -328,10 +335,10 @@ void run() {
         
         cpu->tick();
         
-        auto delta = duration_cast<chrono::nanoseconds>(t2 - t);
         //auto rest = nanoseconds(1000000000/cpu->cpu_clock)-delta; 
 
         if ((cpu->getTotCycles() % 50000) == 0) { // Not show running speed every clock tick 
+            auto delta = duration_cast<chrono::nanoseconds>(t2 - t);
             //double p = nanoseconds(1000000000/cpu->cpu_clock).count() /
             //    (double)(delta.count() + rest.count());
             cerr << "Delta :" << delta.count() << " ns " << endl;
@@ -342,7 +349,8 @@ void run() {
         // Clear and set the border color
         window.clear(screen->getBorder());
 
-        sf::Sprite sprite(screen->getTexture());
+        texture.loadFromImage(screen->getScreen());
+        sf::Sprite sprite(texture);
         sprite.scale(screen->getScaleX(), screen->getScaleY());
         sprite.setPosition(10.0, 10.0);
 
