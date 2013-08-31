@@ -131,10 +131,13 @@ int main (int argc, char **argv)
 		const float delta=clock.getElapsedTime().asSeconds();
 		clock.restart();
 	    unsigned int tick_needed=(float)dcpu->cpu_clock*delta;
+		//std::cout << disassembly(dcpu->getMem() + dcpu->rpc,3) << std::endl;
+		
 		if (tick_needed > dcpu->cpu_clock/60)
 		   tick_needed = dcpu->cpu_clock/60;
 		//std::cout << "ticked :" << tick_needed << std::endl;
 		dcpu->tick(tick_needed);
+		//dcpu->step();
 		   
 		
 		/*window1802.setActive(true);

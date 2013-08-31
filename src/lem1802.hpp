@@ -60,7 +60,6 @@ public:
 	 */
 	virtual void initScreen()
 	{
-	  
 	  if (screen)
 	    delete screen;
 	  screen = new uint8_t[Lem1802::WIDTH*Lem1802::HEIGHT*4];

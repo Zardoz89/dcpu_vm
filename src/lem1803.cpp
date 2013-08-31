@@ -58,6 +58,7 @@ namespace cpu {
         this->IHardware::attachTo(cpu, index);
 
         tick_per_refresh = cpu->cpu_clock / FPS;
+		initScreen();
 		if (emulation_mode)
 			texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
 		else
@@ -76,6 +77,7 @@ namespace cpu {
         if (cpu->GetA() == LEGACY_MODE) {
             emulation_mode = !emulation_mode;
             font_map = palette_map = screen_map = 0;
+			initScreen();
 			if (emulation_mode)
 			    texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
 			else
@@ -107,20 +109,20 @@ namespace cpu {
 
         if (this->cpu == NULL || !need_render)
             return;
-
         if (emulation_mode) {
             Lem1802::show();
             return;
         }
         need_render = false;
         if (screen_map != 0 && enable) { // Update the texture
+		    
 		    uint8_t* pixel_pos = screen;
 			//4 pixel per col 4 value per pixels
 			const unsigned row_pixel_size = Lem1803::WIDTH*4; 
 			const unsigned row_pixel_size_8 = row_pixel_size*8; 
             for (unsigned row=0; row < Lem1803::ROWS; row++) {
+			    pixel_pos=screen + row*row_pixel_size_8;
                 for (unsigned col=0; col < Lem1803::COLS; col++) {
-				    pixel_pos=screen + row*row_pixel_size_8;
                     uint16_t pos = screen_map + row * (Lem1803::COLS/2) + (col/2);
                     uint16_t pos_attr = screen_map + 1728 + row*Lem1803::COLS + col;
                     // Every word contains two characters

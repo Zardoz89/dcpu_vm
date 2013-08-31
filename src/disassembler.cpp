@@ -24,9 +24,9 @@ std::string disassembly(const uint16_t* data, size_t size)
 
     const uint16_t* ptr = data;
     
-	for (unsigned int i=0; i <size;i++)
-	{
-	    uint16_t w = data[i];
+	//for (unsigned int i=0; i <size;i++)
+	//{
+	    uint16_t w = *data;//[i];
 		switch (WOPGET_A(w)) {
 		case REG_A:
 			a = "A";
@@ -612,8 +612,8 @@ std::string disassembly(const uint16_t* data, size_t size)
 			
 			str << op << " " << a;
 		}
-		str << std::endl;
-    }
+		//str << std::endl;
+    //}
     return str.str();
 }
 

@@ -56,7 +56,6 @@ namespace cpu {
     , renderguy(NULL)
     #endif*/
     { 
-	   initScreen();
 	}
 
     Lem1802::~Lem1802() {
@@ -73,7 +72,7 @@ namespace cpu {
     void Lem1802::attachTo (DCPU* cpu, size_t index) {
         this->IHardware::attachTo(cpu, index);
         tick_per_refresh = cpu->cpu_clock / Lem1802::FPS;
-
+        initScreen();
         texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
 		//texture.update(clear);
         texture.setRepeated(false);
@@ -95,7 +94,7 @@ namespace cpu {
     {
         if (this->cpu == NULL)
             return;
-
+        
         size_t s;
         switch (cpu->GetA() ) {
             case MEM_MAP_SCREEN:
@@ -103,7 +102,6 @@ namespace cpu {
 
                 if (screen_map != 0)
                     ticks = tick_per_refresh +1; // Force to do initial print
-
                 break;
 
             case MEM_MAP_FONT:
@@ -121,7 +119,7 @@ namespace cpu {
             case MEM_DUMP_FONT:
                 s = RAM_SIZE - 1 - cpu->GetB() < 256 ? 
                         RAM_SIZE - 1 - cpu->GetB() : 256 ;
-                std::copy_n (Lem1802::def_font_map, s, cpu->getMem() + cpu->GetB() );
+                std::copy_n (Lem1802::def_font_map,s,cpu->getMem()+cpu->GetB());
                 break;
 
             case MEM_DUMP_PALETTE:
@@ -164,6 +162,7 @@ namespace cpu {
             for (unsigned row=0; row < Lem1802::ROWS; row++) {
 			    pixel_pos=screen + row*row_pixel_size_8;
                 for (unsigned col=0; col < Lem1802::COLS; col++) {
+				    std::cout << "col " << col << std::endl;
                     uint16_t pos = screen_map + row * Lem1802::COLS + col;
                     unsigned char ascii = (unsigned char) (cpu->getMem()[pos] 
                                                             & 0x007F);
