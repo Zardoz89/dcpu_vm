@@ -17,8 +17,6 @@ namespace cpu {
 
 namespace lem {
 
-#define PIXEL(x, y)   ((y)*Lem1802::WIDTH + (x)) 
-
     const uint16_t Lem1802::def_font_map[128*2] = {   /// Default font map
 #       include "lem1802_font.inc"
     };
@@ -103,8 +101,6 @@ namespace lem {
 
     void Lem1802::show()
     {
-        using namespace std;
-
         if (this->cpu == NULL)
             return;
         

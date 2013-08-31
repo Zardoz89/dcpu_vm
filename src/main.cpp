@@ -17,6 +17,7 @@
 //#include "fake_lem1802.hpp"
 #include "lem1802.hpp"
 #include "lem1803.hpp"
+#include "cgm.hpp"
 
 using namespace cpu;
 
@@ -306,13 +307,26 @@ void run() {
     auto screen = make_shared<lem::Lem1803>();
     cpu->attachHardware (screen);
    
-    sf::RenderWindow window(sf::VideoMode(
+    sf::RenderWindow winlem(sf::VideoMode(
                                 screen->getVideoWidth(),
                                 screen->getVideoHeight()),
-                            "DCPU-16");
+                            "DCPU-16 LEM");
    
-    sf::Texture texture;
-    texture.create(screen->getWidth(), screen->getHeight());
+    sf::Texture texture_lem;
+    texture_lem.create(screen->getWidth(), screen->getHeight());
+
+
+    auto screen2 = make_shared<cgm::CGM>();
+    cpu->attachHardware (screen2);
+    
+    sf::RenderWindow wincgm(sf::VideoMode(
+                                screen2->getVideoWidth(),
+                                screen2->getVideoHeight()),
+                            "DCPU-16 CGM");
+   
+    sf::Texture texture_cgm;
+    texture_cgm.create(screen2->getWidth(), screen2->getHeight());
+
 
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
@@ -323,13 +337,19 @@ void run() {
     high_resolution_clock::time_point t = high_resolution_clock::now();
     high_resolution_clock::time_point t2; 
     
-    while (window.isOpen()) {
+    while (winlem.isOpen() && wincgm.isOpen()) {
         t2 =  high_resolution_clock::now(); 
         sf::Event event;
         
-        while (window.pollEvent(event)) {
+        while (winlem.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
-                window.close();
+                winlem.close();
+            }
+        }
+        
+        while (wincgm.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
+                wincgm.close();
             }
         }
         
@@ -346,17 +366,27 @@ void run() {
             //cerr << " Running at "<< p*100.0 << " % speed." << endl;
         }
 
-        // Clear and set the border color
-        window.clear(screen->getBorder());
+        // Clear and set the border color - LEM180X
+        winlem.clear(screen->getBorder());
 
-        texture.loadFromImage(screen->getScreen());
-        sf::Sprite sprite(texture);
-        sprite.scale(screen->getScaleX(), screen->getScaleY());
-        sprite.setPosition(10.0, 10.0);
+        texture_lem.loadFromImage(screen->getScreen());
+        sf::Sprite sprite_lem(texture_lem);
+        sprite_lem.scale(screen->getScaleX(), screen->getScaleY());
+        sprite_lem.setPosition(10.0, 10.0);
 
-        window.draw(sprite);
-        window.display();
+        winlem.draw(sprite_lem);
+        winlem.display();
 
+        // Clear and set the border color - CGM
+        wincgm.clear(screen->getBorder());
+
+        texture_cgm.loadFromImage(screen2->getScreen());
+        sf::Sprite sprite_cgm(texture_cgm);
+        sprite_cgm.scale(screen2->getScaleX(), screen2->getScaleY());
+        sprite_cgm.setPosition(10.0, 10.0);
+
+        wincgm.draw(sprite_cgm);
+        wincgm.display();
         t = t2;
     }
 

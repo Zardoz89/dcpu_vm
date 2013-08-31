@@ -42,13 +42,13 @@ public:
 
     virtual sf::Color getBorder();
 
-    static const int scaleX         = 1;
-    static const int scaleY         = 1;
+    static constexpr float scaleX         = 1;
+    static constexpr float scaleY         = 1;
     static const int videoWidth     = Lem1803::WIDTH * scaleX;
     static const int videoHeight    = Lem1803::HEIGHT * scaleY;
    
-    virtual int getScaleX();
-    virtual int getScaleY();
+    virtual float getScaleX();
+    virtual float getScaleY();
     virtual int getVideoWidth() {return videoWidth + BORDER_SIZE*2;}
     virtual int getVideoHeight() {return videoHeight + BORDER_SIZE*2;}
     virtual int getWidth() {return HEIGHT;}
