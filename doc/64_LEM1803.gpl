@@ -1,0 +1,68 @@
+GIMP Palette
+Name: 64_LEM1803
+Columns: 8
+#
+  0   0   0	Black
+  0   0  85	Sin nombre
+ 85   0   0	Sin nombre
+ 85   0  85	Sin nombre
+  0  85   0	Sin nombre
+  0  85  85	Sin nombre
+ 85  85   0	Sin nombre
+ 85  85  85	Dark Grey
+170 170 170	Light Grey
+  0   0 255	Sin nombre
+255   0   0	Sin nombre
+255   0 255	Sin nombre
+  0 255   0	Sin nombre
+  0 255 255	Sin nombre
+255 255   0	Sin nombre
+255 255 255	White
+  0   0 170	Sin nombre
+  0  85 170	Sin nombre
+  0  85 255	Sin nombre
+  0 170   0	Sin nombre
+  0 170  85	Sin nombre
+  0 170 170	Sin nombre
+  0 170 255	Sin nombre
+  0 255  85	Sin nombre
+  0 255 170	Sin nombre
+ 85   0 170	Sin nombre
+ 85   0 255	Sin nombre
+ 85  85 170	Sin nombre
+ 85  85 255	Sin nombre
+ 85 170   0	Sin nombre
+ 85 170  85	Sin nombre
+ 85 170 170	Sin nombre
+ 85 170 255	Sin nombre
+ 85 255   0	Sin nombre
+ 85 255  85	Sin nombre
+ 85 255 170	Sin nombre
+ 85 255 255	Sin nombre
+170   0   0	Sin nombre
+170   0  85	Sin nombre
+170   0 170	Sin nombre
+170   0 255	Sin nombre
+170  85   0	Sin nombre
+170  85  85	Sin nombre
+170  85 170	Sin nombre
+170  85 255	Sin nombre
+170 170  85	Sin nombre
+170 170 255	Sin nombre
+170 255   0	Sin nombre
+170 255  85	Sin nombre
+170 255 170	Sin nombre
+170 255 255	Sin nombre
+255   0  85	Sin nombre
+255   0 170	Sin nombre
+255  85   0	Sin nombre
+255  85  85	Sin nombre
+255  85 170	Sin nombre
+255  85 255	Sin nombre
+255 170   0	Sin nombre
+255 170  85	Sin nombre
+255 170 170	Sin nombre
+255 170 255	Sin nombre
+255 255   0	Sin nombre
+255 255  85	Sin nombre
+255 255 170	Sin nombre
