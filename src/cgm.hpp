@@ -87,8 +87,8 @@ public:
 
     static constexpr float scaleX = 1.5;
     static constexpr float scaleY = 1.5;
-    static const int videoWidth = CGM::WIDTH * scaleX;
-    static const int videoHeight = CGM::HEIGHT * scaleY;
+    static const int videoWidth = (CGM::WIDTH * scaleX);
+    static const int videoHeight = (CGM::HEIGHT * scaleY);
 
     virtual int getScaleX() {return scaleX;}
     virtual int getScaleY() {return scaleY;}

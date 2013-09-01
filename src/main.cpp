@@ -382,7 +382,7 @@ void run() {
 
         texture_cgm.loadFromImage(screen2->getScreen());
         sf::Sprite sprite_cgm(texture_cgm);
-        sprite_cgm.scale(screen2->getScaleX(), screen2->getScaleY());
+        sprite_cgm.scale(1.5, 1.5) ;// WTF!
         sprite_cgm.setPosition(10.0, 10.0);
 
         wincgm.draw(sprite_cgm);

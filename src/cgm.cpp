@@ -4,7 +4,6 @@
 #include <cctype>
 #include <string>
 
-
 namespace cpu {
 
 namespace cgm {
@@ -132,10 +131,9 @@ namespace cgm {
             // Update the texture
             switch (videomode) {
             case 0: // Mode 0 256x192-64x24 cells of 4x8 pixels. 64 colors
-            
                 for (unsigned i=0; i < CGM::WIDTH * CGM::HEIGHT; i++) {
-                    unsigned row = i >> 3; // /8
-                    unsigned col = i % 4*CGM::COLS[videomode];
+                    unsigned col = (i /4) % (CGM::COLS[videomode]);
+                    unsigned row = i / (8*4*CGM::COLS[videomode]); 
 
                     uint16_t attr_pos = row * CGM::COLS[0] + col;
                     attr_pos += attribute_map;
