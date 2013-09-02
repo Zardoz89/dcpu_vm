@@ -41,8 +41,7 @@ void step();
 //void one_bench();
 void run();
 
-// TODO change the function sing to use a shared pointer
-void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::lem::Lem1803> mon);
+void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::AbstractMonitor> mon);
 
 //void cpu_in_thread(int n);
 
@@ -345,7 +344,8 @@ void run() {
     high_resolution_clock::time_point t2; 
   
     winlem.setActive(false);
-    boost::thread thr_render (renderGuy, &winlem, screen);
+    boost::thread thr_render (renderGuy, &winlem, 
+            std::static_pointer_cast<cpu::AbstractMonitor>(screen));
 
     while (winlem.isOpen() ) { //&& wincgm.isOpen()) {
         t2 =  high_resolution_clock::now(); 
@@ -423,7 +423,7 @@ void cpu_in_thread(int n) {
 }
 */
 
-void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::lem::Lem1803> mon)
+void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::AbstractMonitor> mon)
 {
     sf::Texture texture_lem;
     

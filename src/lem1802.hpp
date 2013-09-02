@@ -23,7 +23,7 @@ static const uint16_t MEM_DUMP_PALETTE      = 5;
 /**
  * @brief LEM1802 that uses SFML
  */
-class Lem1802 : public cpu::IHardware, cpu::AbstractMonitor {
+class Lem1802 : public cpu::IHardware, public cpu::AbstractMonitor {
 public:
     Lem1802();
     virtual ~Lem1802();
