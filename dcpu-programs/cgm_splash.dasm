@@ -40,7 +40,20 @@
         STI [J], [I + BITPLANE]
         IFL I, 128
            SET PC, loop_bitplane 
-        
+    
+        set B, 0
+    :loop_videomodes
+        set Z, 0xF000
+    :wait_loop
+        sub Z, 1
+        ifg Z, 1
+        set PC, wait_loop
+    
+        set A, 4
+        add B, 1
+        mod B, 6
+            HWI [DEV_DISPLAY]
+        set PC, loop_videomodes
        
     :end SET PC, end
      
@@ -92,4 +105,5 @@
     :DEV_DISPLAY DAT 0xFFFF
     :DEV_KEYBOARD DAT 0xFFFF
     :DEV_CLOCK DAT 0xFFFF
+
 

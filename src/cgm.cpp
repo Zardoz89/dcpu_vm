@@ -135,7 +135,7 @@ namespace cgm {
                     unsigned col = (i /4) % (CGM::COLS[videomode]);
                     unsigned row = i / (8*4*CGM::COLS[videomode]); 
 
-                    uint16_t attr_pos = row * CGM::COLS[0] + col;
+                    uint16_t attr_pos = row * CGM::COLS[videomode] + col;
                     attr_pos += attribute_map;
                     // Get palette indexes and other attributes
                     uint16_t fg_ind = (cpu->getMem()[attr_pos] & 0x0FC0) >> 6;
@@ -177,13 +177,99 @@ namespace cgm {
                 break;
 
             case 1: // 256x192-32x24 cells of 8x8 pixels. 64 colors
-                // TODO Implement the rest modes
+                for (unsigned i=0; i < CGM::WIDTH * CGM::HEIGHT; i++) {
+                    unsigned col = (i /8) % (CGM::COLS[videomode]);
+                    unsigned row = i / (8*8*CGM::COLS[videomode]); 
+
+                    uint16_t attr_pos = row * CGM::COLS[videomode] + col;
+                    attr_pos += attribute_map;
+                    // Get palette indexes and other attributes
+                    uint16_t fg_ind = (cpu->getMem()[attr_pos] & 0x0FC0) >> 6;
+                    uint16_t bg_ind = (cpu->getMem()[attr_pos] & 0x003F);
+
+                    uint16_t fg_col, bg_col;
+                    if (palette_map == 0) { // Use default palette
+                        fg_col = CGM::def_palette_map[fg_ind];
+                        bg_col = CGM::def_palette_map[bg_ind];
+                    } else {
+                        fg_col = cpu->getMem()[palette_map+ fg_ind];
+                        bg_col = cpu->getMem()[palette_map+ bg_ind];
+                    }
+
+                    // Composes RGBA values from palette colors
+                    sf::Color fg (
+                            ((fg_col & 0x7C00)>> 10) *8,
+                            ((fg_col & 0x03E0)>> 5)  *8,
+                             (fg_col & 0x001F)       *8,
+                            0xFF );
+                    sf::Color bg (
+                            ((bg_col & 0x7C00)>> 10) *8,
+                            ((bg_col & 0x03E0)>> 5)  *8,
+                             (bg_col & 0x001F)       *8,
+                            0xFF );
+
+                    auto bit = 15 - (i % 16); // From MSB to LSB
+                    uint16_t word = bitfield_map + (i >> 4);
+                    unsigned x = i % CGM::WIDTH;
+                    unsigned y = i / CGM::WIDTH;
+                    if (cpu->getMem()[word] & 1<<bit) {
+                        // Foreground
+                        screen.setPixel (x, y, fg);
+                    } else {
+                        // Backgorund
+                        screen.setPixel (x, y, bg);
+                    }
+                }
                 break;
 
-            case 2: // 256x192-16x192 cells of 16x1 pixels. 16 colors
+            case 2: // 256x192-16x192 cells of 8x2 pixels. 16 colors
+                for (unsigned i=0; i < CGM::WIDTH * CGM::HEIGHT; i++) {
+                    unsigned col = (i /8) % (CGM::COLS[videomode]);
+                    unsigned row = i / (2*8*CGM::COLS[videomode]); 
+
+                    uint16_t attr_pos = row * CGM::COLS[videomode] + col;
+                    attr_pos += attribute_map;
+                    // Get palette indexes and other attributes
+                    uint16_t fg_ind = (cpu->getMem()[attr_pos] & 0x0FC0) >> 6;
+                    uint16_t bg_ind = (cpu->getMem()[attr_pos] & 0x003F);
+
+                    uint16_t fg_col, bg_col;
+                    if (palette_map == 0) { // Use default palette
+                        fg_col = CGM::def_palette_map[fg_ind];
+                        bg_col = CGM::def_palette_map[bg_ind];
+                    } else {
+                        fg_col = cpu->getMem()[palette_map+ fg_ind];
+                        bg_col = cpu->getMem()[palette_map+ bg_ind];
+                    }
+
+                    // Composes RGBA values from palette colors
+                    sf::Color fg (
+                            ((fg_col & 0x7C00)>> 10) *8,
+                            ((fg_col & 0x03E0)>> 5)  *8,
+                             (fg_col & 0x001F)       *8,
+                            0xFF );
+                    sf::Color bg (
+                            ((bg_col & 0x7C00)>> 10) *8,
+                            ((bg_col & 0x03E0)>> 5)  *8,
+                             (bg_col & 0x001F)       *8,
+                            0xFF );
+
+                    auto bit = 15 - (i % 16); // From MSB to LSB
+                    uint16_t word = bitfield_map + (i >> 4);
+                    unsigned x = i % CGM::WIDTH;
+                    unsigned y = i / CGM::WIDTH;
+                    if (cpu->getMem()[word] & 1<<bit) {
+                        // Foreground
+                        screen.setPixel (x, y, fg);
+                    } else {
+                        // Backgorund
+                        screen.setPixel (x, y, bg);
+                    }
+                }
                 break;
 
             case 3: // 256x192 B&W. 2 colors
+                // TODO mode 3
                 break;
 
             case 4: // 256x192 4x8 font Text mode
@@ -287,6 +373,7 @@ namespace cgm {
                 break;
             
             case 5: // 256x192 8x8 font Text mode
+                // TODO mode 5
                 break;
             default:
                 ; 
