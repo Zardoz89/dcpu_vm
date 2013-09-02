@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <string>
 
 namespace cpu {
 
@@ -23,7 +22,7 @@ namespace cgm {
 
     CGM::CGM() : 
         bitfield_map (0), attribute_map (0), palette_map (0), font_map (0),
-        videomode(0), border_col (0), ticks (0), enable (true), blink(0) 
+        videomode(0), border_col (0), blink(0) 
     { }
 
     CGM::~CGM() 
@@ -33,12 +32,12 @@ namespace cgm {
     {
         this->IHardware::attachTo(cpu, index);
 
-        tick_per_refresh = cpu->cpu_clock / CGM::FPS;
         blink_max = cpu->cpu_clock / CGM::BLINKPERSECOND;
-
+        bitfield_map = attribute_map = font_map = palette_map = 0;
+        blink = 0;
+        border_col = 0;
         videomode = 0; // Mode 0
 
-        screen.create(CGM::WIDTH, CGM::HEIGHT, sf::Color::Black);
     }
 
     void CGM::handleInterrupt()
@@ -50,7 +49,6 @@ namespace cgm {
         switch (cpu->GetA() ) {
         case MEM_BITPLANE_SCREEN:
             if (bitfield_map == 0 && attribute_map != 0 && cpu->GetB() != 0) {
-                ticks = tick_per_refresh +1; // Force to do initial print
                 videomode = 0; 
             }
             bitfield_map = cpu->GetB();
@@ -58,7 +56,6 @@ namespace cgm {
 
         case MEM_ATTRIBUTE_SCREEN:
             if (bitfield_map != 0 && attribute_map == 0 && cpu->GetB() != 0) {
-                ticks = tick_per_refresh +1; // Force to do initial print
                 videomode = 0;
             }
             attribute_map = cpu->GetB();
@@ -113,21 +110,19 @@ namespace cgm {
 
     void CGM::tick()
     {
-        if (++ticks > tick_per_refresh) {
-            // Update screen at desired FPS
-            ticks = 0;
-            this->show();
-        }
         if (++blink > blink_max*2)
             blink = 0;
     }
 
-    void CGM::show()
+    sf::Image* CGM::updateScreen() const
     {
         if (this->cpu == NULL)
-            return;
+            return NULL;
         
-        if (bitfield_map != 0 && attribute_map != 0  && enable) { 
+        sf::Image* scr = new sf::Image();
+        scr->create(CGM::WIDTH, CGM::HEIGHT, sf::Color::Black);
+        
+        if (bitfield_map != 0 && attribute_map != 0) { 
             // Update the texture
             switch (videomode) {
             case 0: // Mode 0 256x192-64x24 cells of 4x8 pixels. 64 colors
@@ -168,10 +163,10 @@ namespace cgm {
                     unsigned y = i / CGM::WIDTH;
                     if (cpu->getMem()[word] & 1<<bit) {
                         // Foreground
-                        screen.setPixel (x, y, fg);
+                        scr->setPixel (x, y, fg);
                     } else {
                         // Backgorund
-                        screen.setPixel (x, y, bg);
+                        scr->setPixel (x, y, bg);
                     }
                 }
                 break;
@@ -214,10 +209,10 @@ namespace cgm {
                     unsigned y = i / CGM::WIDTH;
                     if (cpu->getMem()[word] & 1<<bit) {
                         // Foreground
-                        screen.setPixel (x, y, fg);
+                        scr->setPixel (x, y, fg);
                     } else {
                         // Backgorund
-                        screen.setPixel (x, y, bg);
+                        scr->setPixel (x, y, bg);
                     }
                 }
                 break;
@@ -260,10 +255,10 @@ namespace cgm {
                     unsigned y = i / CGM::WIDTH;
                     if (cpu->getMem()[word] & 1<<bit) {
                         // Foreground
-                        screen.setPixel (x, y, fg);
+                        scr->setPixel (x, y, fg);
                     } else {
                         // Backgorund
-                        screen.setPixel (x, y, bg);
+                        scr->setPixel (x, y, bg);
                     }
                 }
                 break;
@@ -329,43 +324,43 @@ namespace cgm {
                         }
 
                         // Display it
-                        for (int i=8; i< 16; i++) { // Puts MSB of Words
+                        for (int i=0; i< 8; i++) { 
+                            // *** MSB ***
                             // First word 
-                            bool pixel = ((1<<i) & glyph[0]) > 0;
+                            bool pixel = ((1<<(i+8)) & glyph[0]) > 0;
                             if (pixel) {
-                                screen.setPixel (col*4, row*8 +i-8, fg);
+                                scr->setPixel (col*4, row*8 +i, fg);
                             } else {
-                                screen.setPixel (col*4, row*8 +i-8, bg);
+                                scr->setPixel (col*4, row*8 +i, bg);
                             }
                             // Second word
                             pixel = ((1<<i) & glyph[1]) > 0;
                             if (pixel) {
-                                screen.setPixel (col*4 +2, row*8 +i-8, fg);
+                                scr->setPixel (col*4 +2, row*8 +i, fg);
                             } else {
-                                screen.setPixel (col*4 +2, row*8 +i-8, bg);
+                                scr->setPixel (col*4 +2, row*8 +i, bg);
                             }
-                        }
-
-                        for (int i=0; i< 8; i++) { // Puts LSB of Words
+                            
+                            // *** LSB ***
                             // First word 
-                            bool pixel = ((1<<i) & glyph[0]) >0;
+                            pixel = ((1<<(i+8)) & glyph[0]) >0;
                             if (pixel) {
-                                screen.setPixel (col*4 +1, row*8 +i, fg);
+                                scr->setPixel (col*4 +1, row*8 +i, fg);
                             } else {
-                                screen.setPixel (col*4 +1, row*8 +i, bg);
+                                scr->setPixel (col*4 +1, row*8 +i, bg);
                             }
                             // Secodn word
                             pixel = ((1<<i) & glyph[1]) > 0;
                             if (pixel) {
-                                screen.setPixel (col*4 +3, row*8 +i, fg);
+                                scr->setPixel (col*4 +3, row*8 +i, fg);
                             } else {
-                                screen.setPixel (col*4 +3, row*8 +i, bg);
+                                scr->setPixel (col*4 +3, row*8 +i, bg);
                             }
                         }
 
                         if (underf) { // Underline, puts last row to ON
                             for (int i=0; i<4; i++)
-                                screen.setPixel (col*4 +i, row*8 +8, fg);
+                                scr->setPixel (col*4 +i, row*8 +8, fg);
                         }
 
                     }
@@ -381,18 +376,11 @@ namespace cgm {
             
             
         
-        } else { // Not active blank screen
-            screen.create(CGM::WIDTH, CGM::HEIGHT, sf::Color::Black);
-        }
+        } 
+        return scr;
     }
 
-
-    void CGM::setEnable(bool enable) 
-    {
-        this->enable = enable;
-    }
-
-    sf::Color CGM::getBorder()
+    sf::Color CGM::getBorder() const
     {
         uint16_t border;
         if (palette_map == 0) { // Use default palette
