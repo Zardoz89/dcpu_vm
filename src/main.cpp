@@ -17,6 +17,7 @@
 #include "disassembler.hpp"
 
 #include "gclock.hpp"
+#include "gkeyboard.hpp"
 //#include "fake_lem1802.hpp"
 #include "lem1802.hpp"
 #include "lem1803.hpp"
@@ -259,6 +260,15 @@ void run() {
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
 
+    auto keyboard = make_shared<keyboard::GKeyboard>();
+    cpu->attachHardware (keyboard);
+    //keyboard->pushKeyEvent(true, keyboard::KEYCODES::ARROW_LEFT);
+    //keyboard->pushKeyEvent(false, keyboard::KEYCODES::ARROW_LEFT);
+    keyboard->pushKeyEvent(true, 'h');
+    keyboard->pushKeyEvent(true, 'o');
+    keyboard->pushKeyEvent(true, 'l');
+    keyboard->pushKeyEvent(true, 'a');
+
     cpu->reset();
     cpu->loadProgram (data, size);
     
@@ -289,6 +299,7 @@ void run() {
             cerr << "Delta :" << delta.count() << " ns \t";
             cerr << "Rest :" << rest.count() << " ns ";
             cerr << " Running at "<< p*100.0 << " % speed." << endl;
+            cerr << keyboard->bufferSize() << endl;
         }
         t = t2;
     }

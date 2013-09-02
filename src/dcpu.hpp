@@ -1,3 +1,4 @@
+#pragma once
 #ifndef DCPU_HPP
 #define DCPU_HPP 1
 
