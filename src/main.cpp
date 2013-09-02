@@ -19,7 +19,7 @@
 //#include "fake_lem1802.hpp"
 #include "lem1802.hpp"
 #include "lem1803.hpp"
-//#include "cgm.hpp"
+#include "cgm.hpp"
 
 using namespace cpu;
 
@@ -38,7 +38,6 @@ size_t size = 0;
 
 //void benchmark();
 void step();
-//void one_bench();
 void run();
 
 void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::AbstractMonitor> mon);
@@ -93,7 +92,6 @@ int main (int argc, char **argv)
    
 badchar:
     std::cout << "Select what to do :" << std::endl;
-//    std::cout << "\tb -> benchmark  s -> step execution o-> benchmark one VM r-> run 800k cycles";
     std::cout << "\ts -> step execution\n\tr-> run";
     std::cout << std::endl << std::endl;
     char choose;
@@ -103,9 +101,7 @@ badchar:
         benchmark();
     } else*/ if ( choose == 's' || choose == 'S') {
         step();
-    } /*else if ( choose == 'o' || choose == 'O') {
-        one_bench();
-    } */else if ( choose == 'r' || choose == 'R') {
+    } else if ( choose == 'r' || choose == 'R') {
         run();
     } else {
         goto badchar; /// HATE ME!!!!
@@ -165,15 +161,14 @@ void step() {
     using namespace std;
     auto cpu = make_shared<DCPU>();
     
-    auto screen = make_shared<lem::Lem1803>();
-    //cpu->attachHardware (screen);
+    auto screen = make_shared<lem::Lem1802>();
+    cpu->attachHardware (screen);
    
-    sf::RenderWindow window(sf::VideoMode(
+    sf::RenderWindow win(sf::VideoMode(
                                 screen->phyWidth()  + screen->borderSize()*2,
                                 screen->phyHeight() + screen->borderSize()*2),
                             "DCPU-16");
     
-    sf::Texture texture_lem;
     
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
@@ -189,8 +184,11 @@ void step() {
             break;
     }
     
-    while (c != 'q' && window.isOpen()) {
-   
+    win.setActive(false);
+    boost::thread thr_render (renderGuy, &win, 
+            std::static_pointer_cast<cpu::AbstractMonitor>(screen));
+    
+    while (c != 'q' && win.isOpen()) {
         cout << cpu->dumpRegisters() << endl;
         cout << "T cycles " << dec << cpu->getTotCycles() << endl;
         cout << "> " << cpu->dumpRam() << " - ";
@@ -202,29 +200,15 @@ void step() {
         
         if (c == 'f') {
             for (int i = 0; i < 100; i++)
-                cpu->tick();
+                cpu->step();
+                //cpu->tick();
         } else {
-            if (cpu->tick())
-                cout << "Execute! ";
+            cpu->step();
+            /*if (cpu->tick())
+                cout << "Execute! ";*/
         }
         cout << endl;
-            
-        // Clear and set the border color
-        window.clear(screen->getBorder());
 
-        sf::Image* scr = screen->updateScreen();
-        texture_lem.create(screen->width(), screen->height());
-        texture_lem.loadFromImage(*scr);
-        sf::Sprite sprite_lem(texture_lem);
-        sprite_lem.scale(
-                screen->phyWidth()  / (float)(screen->width() ) , 
-                screen->phyHeight() / (float)(screen->height()) ); 
-        sprite_lem.setPosition(screen->borderSize(), screen->borderSize());
-
-        window.draw(sprite_lem);
-        window.display();
-
-        delete scr;
         while (1) {
             c = getchar();
             if (c == 'f' || c == 'q' || c == '\n' )
@@ -232,77 +216,15 @@ void step() {
         }
         
     }
+    if (win.isOpen())
+        win.close();
+
+    if (thr_render.joinable())
+        thr_render.join();
     
 }
 
-/*
-void one_bench() {
-    using namespace std;
-    using namespace std::chrono;
-    
-    const int times = 200;
 
-    high_resolution_clock::time_point  starts[times];
-    high_resolution_clock::time_point  creates[times];
-    high_resolution_clock::time_point  loadstarts[times];
-    high_resolution_clock::time_point  loads[times];
-    high_resolution_clock::time_point  finishs[times];
-   
-    for (int x=0; x < times; x++) {
-        using namespace std::chrono;
-        starts[x] = high_resolution_clock::now(); 
-        auto cpu = make_shared<DCPU>();
-
-        creates[x] = high_resolution_clock::now(); 
-        
-        auto screen = make_shared<Fake_Lem1802>();
-        screen->setEnable(false); // We not desire to write to stdout
-        cpu->attachHardware (screen);
-        
-        loadstarts[x] = high_resolution_clock::now(); 
-        
-        cpu->reset();
-        cpu->loadProgram (data, size);
-        
-        loads[x] = high_resolution_clock::now(); 
-        
-        for (int i=0; i < 10000; i++) {
-            cpu->tick();
-        }
-        finishs[x] = high_resolution_clock::now(); 
-    }
-
-
-    double d_create, d_load, d_execute;
-    d_create = d_load = d_execute = 0;
-    
-    for (int x=0; x < times; x++) {
-
-        auto tmp = duration_cast<chrono::microseconds> 
-            (creates[x] - starts[x]);
-        d_create += tmp.count();
-        
-        tmp = duration_cast<chrono::microseconds> 
-            (loads[x] - loadstarts[x]); 
-        d_load += tmp.count();
-        
-        tmp = duration_cast<chrono::microseconds> 
-            (finishs[x] - loads[x]); 
-        
-        d_execute += tmp.count();
-        
-    }
-    d_create /= times;
-    d_load /= times;
-    d_execute /= times;
-
-    cout << "Measured time: " << endl;
-    cout << "\tCreating time "<< d_create << "us" << endl;
-    cout << "\tLoad time "<< d_load << "us" << endl;
-    cout << "\tExecute 10k cycles time "<< d_execute << "us" << endl;
-
-}
-*/
 void run() {
 
     using namespace std;
@@ -311,28 +233,13 @@ void run() {
     
     auto cpu = make_shared<DCPU>();
     
-    auto screen = make_shared<lem::Lem1803>();
+    auto screen = make_shared<cgm::CGM>();
     cpu->attachHardware (screen);
    
-    sf::RenderWindow winlem(sf::VideoMode(
+    sf::RenderWindow win(sf::VideoMode(
                                 screen->phyWidth()  + screen->borderSize()*2,
                                 screen->phyHeight() + screen->borderSize()*2),
-                            "DCPU-16 LEM");
-   
-
-
-/*
-    auto screen2 = make_shared<cgm::CGM>();
-    cpu->attachHardware (screen2);
-    
-    sf::RenderWindow wincgm(sf::VideoMode(
-                                screen2->getVideoWidth(),
-                                screen2->getVideoHeight()),
-                            "DCPU-16 CGM");
-   
-    sf::Texture texture_cgm;
-    texture_cgm.create(screen2->getWidth(), screen2->getHeight());
-*/
+                            "DCPU-16");
 
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
@@ -343,19 +250,13 @@ void run() {
     high_resolution_clock::time_point t = high_resolution_clock::now();
     high_resolution_clock::time_point t2; 
   
-    winlem.setActive(false);
-    boost::thread thr_render (renderGuy, &winlem, 
+    win.setActive(false);
+    boost::thread thr_render (renderGuy, &win, 
             std::static_pointer_cast<cpu::AbstractMonitor>(screen));
 
-    while (winlem.isOpen() ) { //&& wincgm.isOpen()) {
+    while (win.isOpen() ) { //&& wincgm.isOpen()) {
         t2 =  high_resolution_clock::now(); 
         
-        /*
-        while (wincgm.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) {
-                wincgm.close();
-            }
-        }*/
         
         cpu->tick();
         
@@ -370,38 +271,10 @@ void run() {
             //cerr << " Running at "<< p*100.0 << " % speed." << endl;
         }
 
-        // Clear and set the border color - LEM180X
-        /*
-        winlem.clear(screen->getBorder());
-
-        sf::Image* scr = screen->updateScreen();
-        texture_lem.create(screen->width(), screen->height());
-        texture_lem.loadFromImage(*scr);
-        sf::Sprite sprite_lem(texture_lem);
-        sprite_lem.scale(
-                screen->phyWidth()  / (float)(screen->width() ) , 
-                screen->phyHeight() / (float)(screen->height()) ); 
-        sprite_lem.setPosition(screen->borderSize(), screen->borderSize());
-
-        winlem.draw(sprite_lem);
-        winlem.display();
-*/
-        /*
-        // Clear and set the border color - CGM
-        wincgm.clear(screen->getBorder());
-
-        texture_cgm.loadFromImage(screen2->getScreen());
-        sf::Sprite sprite_cgm(texture_cgm);
-        sprite_cgm.scale(1.5, 1.5) ;// WTF!
-        sprite_cgm.setPosition(10.0, 10.0);
-
-        wincgm.draw(sprite_cgm);
-        wincgm.display();*/
-
-        //delete scr;
         t = t2;
     }
-
+    if (thr_render.joinable())
+        thr_render.join();
 
     cout << "Finish" << endl;
 
