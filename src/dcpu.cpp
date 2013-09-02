@@ -218,11 +218,11 @@ int DCPU::realStep()
         
         // special registers:
     case STACK:
-        a = ram + (POP);
+        a = ram + (uint16_t)(POP);
         break;  // POP
         
     case PEEK:
-        a = ram + rsp;
+        a = ram + (uint16_t)rsp;
         break;  // PEEK
         
     case PICK:
@@ -244,13 +244,13 @@ int DCPU::realStep()
         
         // next word, indirect:
     case PTR_NW:
-        a = ram + ram[ (rpc++)];
+        a = ram + (uint16_t)(ram[(uint16_t)(rpc++)]);
         cycles++;
         break;
         
         // next word, direct (literal):
     case NEXT_WORD:
-        a = ram + (rpc++);
+        a = ram + (uint16_t)(rpc++);
         cycles++;
         break;
         
@@ -380,11 +380,11 @@ int DCPU::realStep()
             
             // special registers:
         case STACK:
-            b = ram + (PUSH);
+            b = ram + (uint16_t)(PUSH);
             break;  // PUSH
             
         case PEEK:
-            b = ram + rsp;
+            b = ram + (uint16_t)rsp;
             break;    // PEEK
             
         case PICK:
@@ -406,7 +406,7 @@ int DCPU::realStep()
             
             // next word, indirect:
         case PTR_NW:
-            b = ram + ram[ (rpc++)];
+            b = ram + (uint16_t)(ram[ (rpc++)]);
             cycles++;
             break;
             

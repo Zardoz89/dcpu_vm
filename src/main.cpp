@@ -36,6 +36,8 @@ const int BATCH         = 10;
 uint16_t* data;
 size_t size = 0;
 
+bool running = true;
+
 //void benchmark();
 void step();
 void run();
@@ -161,14 +163,14 @@ void step() {
     using namespace std;
     auto cpu = make_shared<DCPU>();
     
-    auto screen = make_shared<lem::Lem1802>();
+    auto screen = make_shared<lem::Lem1803>();
     cpu->attachHardware (screen);
    
     sf::RenderWindow win(sf::VideoMode(
                                 screen->phyWidth()  + screen->borderSize()*2,
                                 screen->phyHeight() + screen->borderSize()*2),
                             "DCPU-16");
-    
+    win.setFramerateLimit(30); 
     
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
@@ -188,7 +190,7 @@ void step() {
     boost::thread thr_render (renderGuy, &win, 
             std::static_pointer_cast<cpu::AbstractMonitor>(screen));
     
-    while (c != 'q' && win.isOpen()) {
+    while (running) {
         cout << cpu->dumpRegisters() << endl;
         cout << "T cycles " << dec << cpu->getTotCycles() << endl;
         cout << "> " << cpu->dumpRam() << " - ";
@@ -214,13 +216,15 @@ void step() {
             if (c == 'f' || c == 'q' || c == '\n' )
                 break;
         }
-        
+
+        if (c == 'q')
+            running = false;
     }
-    if (win.isOpen())
-        win.close();
+
 
     if (thr_render.joinable())
         thr_render.join();
+
     
 }
 
@@ -240,6 +244,7 @@ void run() {
                                 screen->phyWidth()  + screen->borderSize()*2,
                                 screen->phyHeight() + screen->borderSize()*2),
                             "DCPU-16 CGM1084");
+    win.setFramerateLimit(30); 
 
     auto screen2 = make_shared<lem::Lem1803>();
     cpu->attachHardware (screen2);
@@ -248,6 +253,7 @@ void run() {
                                 screen2->phyWidth()  + screen2->borderSize()*2,
                                 screen2->phyHeight() + screen2->borderSize()*2),
                             "DCPU-16 LEM1803");
+    win2.setFramerateLimit(30); 
     
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
@@ -266,7 +272,7 @@ void run() {
     boost::thread thr_render2 (renderGuy, &win2, 
             std::static_pointer_cast<cpu::AbstractMonitor>(screen2));
     
-    while (win.isOpen() && win2.isOpen() ) { //&& wincgm.isOpen()) {
+    while (running ) { //&& wincgm.isOpen()) {
         t2 =  high_resolution_clock::now(); 
         
         
@@ -285,11 +291,6 @@ void run() {
 
         t = t2;
     }
-
-    if (win.isOpen())
-        win.close();
-    if (win2.isOpen())
-        win2.close();
 
     if (thr_render.joinable())
         thr_render.join();
@@ -321,11 +322,13 @@ void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::AbstractMonitor> mon)
 {
     sf::Texture texture;
     
-    while (win->isOpen()) {
+    while (running) {
+        win->setActive(true);
         sf::Event event;
         while (win->pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
                 win->close();
+                running = false;
                 continue;
             }
         }
@@ -344,8 +347,13 @@ void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::AbstractMonitor> mon)
 
         win->draw(sprite);
         win->display();
-
+        win->setActive(false);
+        
         delete scr;
     }
+    
+    if (win->isOpen())
+        win->close();
+
 }
 
