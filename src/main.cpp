@@ -6,6 +6,7 @@
 #include <chrono>
 
 #include <boost/thread.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp> 
 
 //#include <SFML/System.hpp>
 #include <SFML/Window.hpp>
@@ -278,17 +279,17 @@ void run() {
         
         cpu->tick();
         
-        //auto rest = nanoseconds(1000000000/cpu->cpu_clock)-delta; 
+        auto delta = duration_cast<chrono::nanoseconds>(t2 - t);
+        auto rest = nanoseconds(1000000000/cpu->cpu_clock)-delta; 
 
-        if ((cpu->getTotCycles() % 50000) == 0) { // Not show running speed every clock tick 
-            auto delta = duration_cast<chrono::nanoseconds>(t2 - t);
-            //double p = nanoseconds(1000000000/cpu->cpu_clock).count() /
-            //    (double)(delta.count() + rest.count());
-            cerr << "Delta :" << delta.count() << " ns " << endl;
-            //cerr << "Rest :" << rest.count() << " ns ";
-            //cerr << " Running at "<< p*100.0 << " % speed." << endl;
+        if ((cpu->getTotCycles() % 100000) == 0) { 
+            // Not show running speed every clock tick 
+            double p = nanoseconds(1000000000/cpu->cpu_clock).count() /
+                (double)(delta.count() );//+ rest.count());
+            cerr << "Delta :" << delta.count() << " ns \t";
+            cerr << "Rest :" << rest.count() << " ns ";
+            cerr << " Running at "<< p*100.0 << " % speed." << endl;
         }
-
         t = t2;
     }
 
@@ -350,6 +351,7 @@ void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::AbstractMonitor> mon)
         win->setActive(false);
         
         delete scr;
+        boost::this_thread::yield();
     }
     
     if (win->isOpen())
