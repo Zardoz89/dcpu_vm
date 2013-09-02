@@ -245,8 +245,8 @@ void run() {
     cpu->attachHardware (screen2);
     
     sf::RenderWindow win2(sf::VideoMode(
-                                screen->phyWidth()  + screen->borderSize()*2,
-                                screen->phyHeight() + screen->borderSize()*2),
+                                screen2->phyWidth()  + screen2->borderSize()*2,
+                                screen2->phyHeight() + screen2->borderSize()*2),
                             "DCPU-16 LEM1803");
     
     auto clock = make_shared<Generic_Clock>();
@@ -319,7 +319,7 @@ void cpu_in_thread(int n) {
 
 void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::AbstractMonitor> mon)
 {
-    sf::Texture texture_lem;
+    sf::Texture texture;
     
     while (win->isOpen()) {
         sf::Event event;
@@ -333,15 +333,16 @@ void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::AbstractMonitor> mon)
         win->clear(mon->getBorder());
 
         sf::Image* scr = mon->updateScreen();
-        texture_lem.create(mon->width(), mon->height());
-        texture_lem.loadFromImage(*scr);
-        sf::Sprite sprite_lem(texture_lem);
-        sprite_lem.scale(
+        texture.create(mon->width(), mon->height());
+        texture.loadFromImage(*scr);
+        
+        sf::Sprite sprite(texture);
+        sprite.scale(
                 mon->phyWidth()  / (float)(mon->width() ) , 
                 mon->phyHeight() / (float)(mon->height()) ); 
-        sprite_lem.setPosition(mon->borderSize(), mon->borderSize());
+        sprite.setPosition(mon->borderSize(), mon->borderSize());
 
-        win->draw(sprite_lem);
+        win->draw(sprite);
         win->display();
 
         delete scr;
