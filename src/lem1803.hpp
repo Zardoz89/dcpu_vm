@@ -1,12 +1,7 @@
 #ifndef _LEM1803_HPP
 #define _LEM1803_HPP
 
-#include <cstdint>
-
 #include "lem1802.hpp"
-
-#include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Texture.hpp>
 
 namespace cpu {
 
@@ -15,14 +10,14 @@ namespace lem {
 static const uint16_t LEGACY_MODE = 255;
 
 /**
- * @brief LEM1802 that uses SFML
+ * @brief LEM1803 that uses SFML
  */
 class Lem1803 : public Lem1802 {
 public:
     Lem1803();
     virtual ~Lem1803();
     
-    static const uint16_t revision2     = 0x1803;
+    static const uint16_t REV2     = 0x1803;
 
     static const unsigned int WIDTH     = 384;
     static const unsigned int HEIGHT    = 288;
@@ -31,31 +26,33 @@ public:
     static const unsigned int COLS      = 96;
 
     virtual uint16_t getRevision() {
-        return revision2;
+        return REV2;
     }
     
     virtual void handleInterrupt();
     
-    virtual void attachTo (DCPU* cpu, size_t index);
+    virtual sf::Image* updateScreen() const;
+    
+    virtual sf::Color getBorder() const;
 
-    virtual void show();
+    virtual unsigned int width() const 
+    { // Logical screen resolution!
+        if (emulation_mode)
+            return Lem1802::width();
+        else
+            return WIDTH;
+    }
 
-    virtual sf::Color getBorder();
-
-    static constexpr float scaleX         = 1;
-    static constexpr float scaleY         = 1;
-    static const int videoWidth     = Lem1803::WIDTH * scaleX;
-    static const int videoHeight    = Lem1803::HEIGHT * scaleY;
-   
-    virtual float getScaleX();
-    virtual float getScaleY();
-    virtual int getVideoWidth() {return videoWidth + BORDER_SIZE*2;}
-    virtual int getVideoHeight() {return videoHeight + BORDER_SIZE*2;}
-    virtual int getWidth() {return HEIGHT;}
-    virtual int getHeight() {return WIDTH;}
-    int getBorderSize() {return BORDER_SIZE;}
-
-
+    virtual unsigned int height() const 
+    {
+        if (emulation_mode)
+            return Lem1802::height();
+        else
+            return HEIGHT;
+    }
+    
+    virtual unsigned int phyWidth() const {return WIDTH;}
+    virtual unsigned int phyHeight() const {return HEIGHT;}
 
     static const uint16_t def_palette_map2[64];   /// Default palette
     static const uint16_t def_font_map2[512];     /// Default fontmap

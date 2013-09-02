@@ -237,10 +237,7 @@ private:
 class IHardware {
 public:
 
-    IHardware() {
-        index = -1;
-        cpu = NULL;
-    };
+    IHardware() : cpu(NULL), index(-1)  { };
     virtual ~IHardware() {};
     
     virtual uint32_t getId() = 0;               /// Hardware ID

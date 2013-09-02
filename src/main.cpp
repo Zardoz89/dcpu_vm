@@ -5,6 +5,8 @@
 #include <memory>
 #include <chrono>
 
+#include <boost/thread.hpp>
+
 //#include <SFML/System.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
@@ -17,7 +19,7 @@
 //#include "fake_lem1802.hpp"
 #include "lem1802.hpp"
 #include "lem1803.hpp"
-#include "cgm.hpp"
+//#include "cgm.hpp"
 
 using namespace cpu;
 
@@ -39,7 +41,10 @@ void step();
 //void one_bench();
 void run();
 
-void cpu_in_thread(int n);
+// TODO change the function sing to use a shared pointer
+void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::lem::Lem1803> mon);
+
+//void cpu_in_thread(int n);
 
 
 int main (int argc, char **argv)
@@ -165,12 +170,11 @@ void step() {
     //cpu->attachHardware (screen);
    
     sf::RenderWindow window(sf::VideoMode(
-                                screen->getVideoWidth(),
-                                screen->getVideoHeight()),
+                                screen->phyWidth()  + screen->borderSize()*2,
+                                screen->phyHeight() + screen->borderSize()*2),
                             "DCPU-16");
     
-    sf::Texture texture;
-    texture.create(screen->getWidth(), screen->getHeight());
+    sf::Texture texture_lem;
     
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
@@ -209,15 +213,19 @@ void step() {
         // Clear and set the border color
         window.clear(screen->getBorder());
 
-        texture.loadFromImage(screen->getScreen());
-        sf::Sprite sprite(texture);
-        sprite.scale(screen->getScaleX(), screen->getScaleY());
-        sprite.setPosition(10.0, 10.0);
+        sf::Image* scr = screen->updateScreen();
+        texture_lem.create(screen->width(), screen->height());
+        texture_lem.loadFromImage(*scr);
+        sf::Sprite sprite_lem(texture_lem);
+        sprite_lem.scale(
+                screen->phyWidth()  / (float)(screen->width() ) , 
+                screen->phyHeight() / (float)(screen->height()) ); 
+        sprite_lem.setPosition(screen->borderSize(), screen->borderSize());
 
-        window.draw(sprite);
+        window.draw(sprite_lem);
         window.display();
 
-        
+        delete scr;
         while (1) {
             c = getchar();
             if (c == 'f' || c == 'q' || c == '\n' )
@@ -308,14 +316,13 @@ void run() {
     cpu->attachHardware (screen);
    
     sf::RenderWindow winlem(sf::VideoMode(
-                                screen->getVideoWidth(),
-                                screen->getVideoHeight()),
+                                screen->phyWidth()  + screen->borderSize()*2,
+                                screen->phyHeight() + screen->borderSize()*2),
                             "DCPU-16 LEM");
    
-    sf::Texture texture_lem;
-    texture_lem.create(screen->getWidth(), screen->getHeight());
 
 
+/*
     auto screen2 = make_shared<cgm::CGM>();
     cpu->attachHardware (screen2);
     
@@ -326,7 +333,7 @@ void run() {
    
     sf::Texture texture_cgm;
     texture_cgm.create(screen2->getWidth(), screen2->getHeight());
-
+*/
 
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
@@ -336,22 +343,19 @@ void run() {
     
     high_resolution_clock::time_point t = high_resolution_clock::now();
     high_resolution_clock::time_point t2; 
-    
-    while (winlem.isOpen() && wincgm.isOpen()) {
+  
+    winlem.setActive(false);
+    boost::thread thr_render (renderGuy, &winlem, screen);
+
+    while (winlem.isOpen() ) { //&& wincgm.isOpen()) {
         t2 =  high_resolution_clock::now(); 
-        sf::Event event;
         
-        while (winlem.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) {
-                winlem.close();
-            }
-        }
-        
+        /*
         while (wincgm.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
                 wincgm.close();
             }
-        }
+        }*/
         
         cpu->tick();
         
@@ -367,16 +371,22 @@ void run() {
         }
 
         // Clear and set the border color - LEM180X
+        /*
         winlem.clear(screen->getBorder());
 
-        texture_lem.loadFromImage(screen->getScreen());
+        sf::Image* scr = screen->updateScreen();
+        texture_lem.create(screen->width(), screen->height());
+        texture_lem.loadFromImage(*scr);
         sf::Sprite sprite_lem(texture_lem);
-        sprite_lem.scale(screen->getScaleX(), screen->getScaleY());
-        sprite_lem.setPosition(10.0, 10.0);
+        sprite_lem.scale(
+                screen->phyWidth()  / (float)(screen->width() ) , 
+                screen->phyHeight() / (float)(screen->height()) ); 
+        sprite_lem.setPosition(screen->borderSize(), screen->borderSize());
 
         winlem.draw(sprite_lem);
         winlem.display();
-
+*/
+        /*
         // Clear and set the border color - CGM
         wincgm.clear(screen->getBorder());
 
@@ -386,13 +396,18 @@ void run() {
         sprite_cgm.setPosition(10.0, 10.0);
 
         wincgm.draw(sprite_cgm);
-        wincgm.display();
+        wincgm.display();*/
+
+        //delete scr;
         t = t2;
     }
+
 
     cout << "Finish" << endl;
 
 }
+
+
 
 /*
 
@@ -408,4 +423,34 @@ void cpu_in_thread(int n) {
 }
 */
 
+void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::lem::Lem1803> mon)
+{
+    sf::Texture texture_lem;
+    
+    while (win->isOpen()) {
+        sf::Event event;
+        while (win->pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
+                win->close();
+                continue;
+            }
+        }
+
+        win->clear(mon->getBorder());
+
+        sf::Image* scr = mon->updateScreen();
+        texture_lem.create(mon->width(), mon->height());
+        texture_lem.loadFromImage(*scr);
+        sf::Sprite sprite_lem(texture_lem);
+        sprite_lem.scale(
+                mon->phyWidth()  / (float)(mon->width() ) , 
+                mon->phyHeight() / (float)(mon->height()) ); 
+        sprite_lem.setPosition(mon->borderSize(), mon->borderSize());
+
+        win->draw(sprite_lem);
+        win->display();
+
+        delete scr;
+    }
+}
 

@@ -1,10 +1,6 @@
 #include "lem1803.hpp"
 
 #include <algorithm>
-#include <string>
-#include <cctype>
-#include <cstdio>
-
 
 namespace cpu {
 
@@ -20,36 +16,21 @@ namespace lem {
     };
    
 
-    Lem1803::Lem1803() : emulation_mode(true) { }
+    Lem1803::Lem1803() : emulation_mode(true) 
+    { }
 
-    Lem1803::~Lem1803() { }
-
-    void Lem1803::attachTo (DCPU* cpu, size_t index) {
-        this->IHardware::attachTo(cpu, index);
-
-        tick_per_refresh = cpu->cpu_clock / FPS;
-        blink_max = cpu->cpu_clock / Lem1802::BLINKPERSECOND;
-        emulation_mode = true;
-
-        screen.create(Lem1802::WIDTH, Lem1802::HEIGHT, sf::Color::Black);
-    }
+    Lem1803::~Lem1803() 
+    { }
 
     void Lem1803::handleInterrupt()
     {
         if (this->cpu == NULL)
             return;
 
-
         if (cpu->GetA() == LEGACY_MODE) {
             emulation_mode = !emulation_mode;
             font_map = palette_map = screen_map = 0;
-            if (emulation_mode) {
-                screen.create(Lem1802::WIDTH, Lem1802::HEIGHT, 
-                                sf::Color::Black);
-            } else {
-                screen.create(Lem1803::WIDTH, Lem1803::HEIGHT, 
-                                sf::Color::Black);
-            }
+            blink = 0;
             return;
         } 
 
@@ -72,18 +53,20 @@ namespace lem {
     }
 
     
-    void Lem1803::show()
+    sf::Image* Lem1803::updateScreen() const
     {
 
         if (this->cpu == NULL)
-            return;
+            return NULL;
 
         if (emulation_mode) {
-            Lem1802::show();
-            return;
+            return Lem1802::updateScreen();
         }
         
-        if (screen_map != 0 && enable) { // Update the texture
+        sf::Image* scr = new sf::Image();
+        scr->create(Lem1803::WIDTH, Lem1803::HEIGHT, sf::Color::Black);
+
+        if (screen_map != 0) { // Update the texture
             for (unsigned row=0; row < Lem1803::ROWS; row++) {
                 for (unsigned col=0; col < Lem1803::COLS; col++) {
                     uint16_t pos = screen_map + row * (Lem1803::COLS/2) + (col/2);
@@ -136,47 +119,46 @@ namespace lem {
                         glyph[1] = cpu->getMem()[font_map+ (ascii*2)+1]; 
                     }
                     
-                    for (int i=8; i< 16; i++) { // Puts MSB of Words
+                    for (int i=0; i< 8; i++) { 
+                        // *** MSB ***
                         // First word 
-                        bool pixel = ((1<<i) & glyph[0]) > 0;
+                        bool pixel = ((1<<(i+8)) & glyph[0]) > 0;
                         if (pixel) {
-                            screen.setPixel (col*4, row*8 +i-8, fg);
+                            scr->setPixel (col*4, row*8 +i, fg);
                         } else {
-                            screen.setPixel (col*4, row*8 +i-8, bg);
+                            scr->setPixel (col*4, row*8 +i, bg);
+                        }
+                        // Second word
+                        pixel = ((1<<(i+8)) & glyph[1]) > 0;
+                        if (pixel) {
+                            scr->setPixel (col*4 +2, row*8 +i, fg);
+                        } else {
+                            scr->setPixel (col*4 +2, row*8 +i, bg);
+                        }
+                    
+                        // *** LSB ***
+                        // First word 
+                        pixel = ((1<<i) & glyph[0]) >0;
+                        if (pixel) {
+                            scr->setPixel (col*4 +1, row*8 +i, fg);
+                        } else {
+                            scr->setPixel (col*4 +1, row*8 +i, bg);
                         }
                         // Second word
                         pixel = ((1<<i) & glyph[1]) > 0;
                         if (pixel) {
-                            screen.setPixel (col*4 +2, row*8 +i-8, fg);
+                            scr->setPixel (col*4 +3, row*8 +i, fg);
                         } else {
-                            screen.setPixel (col*4 +2, row*8 +i-8, bg);
-                        }
-                    }
-
-                    for (int i=0; i< 8; i++) { // Puts LSB of Words
-                        // First word 
-                        bool pixel = ((1<<i) & glyph[0]) >0;
-                        if (pixel) {
-                            screen.setPixel (col*4 +1, row*8 +i, fg);
-                        } else {
-                            screen.setPixel (col*4 +1, row*8 +i, bg);
-                        }
-                        // Secodn word
-                        pixel = ((1<<i) & glyph[1]) > 0;
-                        if (pixel) {
-                            screen.setPixel (col*4 +3, row*8 +i, fg);
-                        } else {
-                            screen.setPixel (col*4 +3, row*8 +i, bg);
+                            scr->setPixel (col*4 +3, row*8 +i, bg);
                         }
                     }
                 }
             }
-        } else {
-            screen.create(Lem1803::WIDTH, Lem1803::HEIGHT, sf::Color::Black);
-        }
+        } 
+        return scr;
     }
 
-    sf::Color Lem1803::getBorder()
+    sf::Color Lem1803::getBorder() const
     {
         if (emulation_mode)
             return Lem1802::getBorder();
@@ -192,16 +174,6 @@ namespace lem {
                     (sf::Uint8)(((border & 0x03E0)>> 5)  *8),
                     (sf::Uint8)( (border & 0x001F)       *8),
                     0xFF );
-    }
-
-    float Lem1803::getScaleX()     
-    {
-        return (emulation_mode) ? Lem1802::getScaleX() : scaleX;
-    }
-
-    float Lem1803::getScaleY()     
-    {
-        return (emulation_mode) ? Lem1802::getScaleY() : scaleY;
     }
 
 } // END OF NAMESPACE lem
