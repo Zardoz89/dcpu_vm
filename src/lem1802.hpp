@@ -11,7 +11,6 @@
 namespace cpu {
 
 namespace lem {
-
 static const uint16_t MEM_MAP_SCREEN        = 0;
 static const uint16_t MEM_MAP_FONT          = 1;
 static const uint16_t MEM_MAP_PALETTE       = 2;
@@ -78,13 +77,13 @@ public:
      */
     virtual sf::Color getBorder();
 
-    static const int scaleX = 3;
-    static const int scaleY = 3;
+    static constexpr float scaleX = 3.0;
+    static constexpr float scaleY = 3.0;
     static const int videoWidth = Lem1802::WIDTH * scaleX;
     static const int videoHeight = Lem1802::HEIGHT * scaleY;
 
-    virtual int getScaleX() {return scaleX;}
-    virtual int getScaleY() {return scaleY;}
+    virtual float getScaleX() {return scaleX;}
+    virtual float getScaleY() {return scaleY;}
     virtual int getVideoWidth() {return videoWidth + BORDER_SIZE*2;}
     virtual int getVideoHeight() {return videoHeight + BORDER_SIZE*2;}
     virtual int getWidth() {return HEIGHT;}

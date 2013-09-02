@@ -10,7 +10,7 @@ namespace cpu {
 
 namespace lem {
     
-    const uint16_t Lem1803::def_font_map2[512] = {   /// Default font map
+    const uint16_t Lem1803::def_font_map2[256*2] = {   /// Default font map
 #       include "lem1802_font.inc"
         // TODO Upper half of 8-bit Extended ASCII
    };
@@ -194,11 +194,12 @@ namespace lem {
                     0xFF );
     }
 
-    int Lem1803::getScaleX()     
+    float Lem1803::getScaleX()     
     {
         return (emulation_mode) ? Lem1802::getScaleX() : scaleX;
     }
-    int Lem1803::getScaleY()     
+
+    float Lem1803::getScaleY()     
     {
         return (emulation_mode) ? Lem1802::getScaleY() : scaleY;
     }
