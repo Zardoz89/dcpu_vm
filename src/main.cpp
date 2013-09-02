@@ -239,8 +239,16 @@ void run() {
     sf::RenderWindow win(sf::VideoMode(
                                 screen->phyWidth()  + screen->borderSize()*2,
                                 screen->phyHeight() + screen->borderSize()*2),
-                            "DCPU-16");
+                            "DCPU-16 CGM1084");
 
+    auto screen2 = make_shared<lem::Lem1803>();
+    cpu->attachHardware (screen2);
+    
+    sf::RenderWindow win2(sf::VideoMode(
+                                screen->phyWidth()  + screen->borderSize()*2,
+                                screen->phyHeight() + screen->borderSize()*2),
+                            "DCPU-16 LEM1803");
+    
     auto clock = make_shared<Generic_Clock>();
     cpu->attachHardware (clock);
 
@@ -254,7 +262,11 @@ void run() {
     boost::thread thr_render (renderGuy, &win, 
             std::static_pointer_cast<cpu::AbstractMonitor>(screen));
 
-    while (win.isOpen() ) { //&& wincgm.isOpen()) {
+    win2.setActive(false);
+    boost::thread thr_render2 (renderGuy, &win2, 
+            std::static_pointer_cast<cpu::AbstractMonitor>(screen2));
+    
+    while (win.isOpen() && win2.isOpen() ) { //&& wincgm.isOpen()) {
         t2 =  high_resolution_clock::now(); 
         
         
@@ -273,7 +285,16 @@ void run() {
 
         t = t2;
     }
+
+    if (win.isOpen())
+        win.close();
+    if (win2.isOpen())
+        win2.close();
+
     if (thr_render.joinable())
+        thr_render.join();
+
+    if (thr_render2.joinable())
         thr_render.join();
 
     cout << "Finish" << endl;
