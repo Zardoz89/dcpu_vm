@@ -6,10 +6,10 @@ namespace cpu {
 enum basic_opcodes {
     SPECIAL = 0X00,
     SET     = 0X01,
-    ADD	    = 0X02,
-    SUB	    = 0X03,
-    MUL	    = 0X04,
-    MLI	    = 0X05,
+    ADD        = 0X02,
+    SUB        = 0X03,
+    MUL        = 0X04,
+    MLI        = 0X05,
     DIV     = 0x06,
     DVI     = 0x07,
     MOD     = 0x08,
@@ -21,7 +21,7 @@ enum basic_opcodes {
     ASR     = 0x0E,   
     SHL     = 0x0F,
     
-    IFB		= 0X10,
+    IFB        = 0X10,
     IFC     = 0x11,
     IFE     = 0x12,
     IFN     = 0x13,
@@ -33,19 +33,19 @@ enum basic_opcodes {
     NONB1   = 0x18,
     NONB2   = 0x19,
     
-    ADX	    = 0X1A,
+    ADX        = 0X1A,
     SBX     = 0x1B,
     
     NONB3   = 0x1C,
     NONB4   = 0x1D,
     
     
-    STI	    = 0X1E,
+    STI        = 0X1E,
     STD     = 0x1F,
 };
 
 enum special_opcodes {
-    N_A	    = 0x00,
+    N_A        = 0x00,
     JSR     = 0x01,
     
     NONS1   = 0x02,
@@ -54,9 +54,9 @@ enum special_opcodes {
     NONS4   = 0x05,
     NONS5   = 0x06,
     
-    HCF	    = 0x07,
+    HCF        = 0x07,
     
-    INT	    = 0X08,
+    INT        = 0X08,
     IAG     = 0x09,
     IAS     = 0x0A,
     RFI     = 0x0B,
@@ -67,7 +67,7 @@ enum special_opcodes {
     NONS8   = 0x0F,
     
     
-    HWN	    = 0X10,
+    HWN        = 0X10,
     HWQ     = 0x11,
     HWI     = 0x12,
 };

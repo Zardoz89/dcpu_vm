@@ -54,19 +54,19 @@ public:
     bool checkInterrupt (uint16_t &msg) {
         return false;
     }
-	
-	/**
-	 * @The screen must at least size WIDTH*HEIGHT*4 rgba
-	 */
-	virtual void initScreen()
-	{
-	  if (screen)
-	    delete screen;
-	  screen = new uint8_t[Lem1802::WIDTH*Lem1802::HEIGHT*4];
-	}
-	
-	
-	
+    
+    /**
+     * @The screen must at least size WIDTH*HEIGHT*4 rgba
+     */
+    virtual void initScreen()
+    {
+      if (screen)
+        delete screen;
+      screen = new uint8_t[Lem1802::WIDTH*Lem1802::HEIGHT*4];
+    }
+    
+    
+    
     virtual void handleInterrupt();
     virtual void tick();
     
@@ -84,33 +84,33 @@ public:
 
     const static uint16_t def_palette_map[16];   /// Default palette
     const static uint16_t def_font_map[128*2];   /// Default fontmap
-	
-	virtual const sf::Texture& getScreen()
-	{
-	   return texture;
-	}
-	
-	virtual unsigned int width() const
-	{
-		return texture.getSize().x;
-	}
+    
+    virtual const sf::Texture& getScreen()
+    {
+       return texture;
+    }
+    
+    virtual unsigned int width() const
+    {
+        return texture.getSize().x;
+    }
     
     virtual unsigned int height() const
-	{
-		return texture.getSize().y;
-	}
+    {
+        return texture.getSize().y;
+    }
 
     virtual unsigned int phyWidth() const
-	{
-		return Lem1802::WIDTH;
-	}
+    {
+        return Lem1802::WIDTH;
+    }
     
     virtual unsigned int phyHeight() const
-	{
-		return Lem1802::HEIGHT;
-	}
-	
-	virtual sf::Color getBorder() const;
+    {
+        return Lem1802::HEIGHT;
+    }
+    
+    virtual sf::Color getBorder() const;
 
 protected:
 
@@ -128,14 +128,14 @@ protected:
     uint16_t blink;                   /// Counter for blinking
    
     sf::Texture texture;              /// SFML screen texture
-	
-	
-	
-	// Threads and windows are not used anymore because 
-	// Win32 portability forbit window event in threads !
-	// It more logical that the following class just create the texture...
-	
-	/*
+    
+    
+    
+    // Threads and windows are not used anymore because 
+    // Win32 portability forbit window event in threads !
+    // It more logical that the following class just create the texture...
+    
+    /*
     #ifdef __NO_THREAD_11__
     sf::Thread* renderguy;            /// Rendered thread for mingw 4.7
     #else

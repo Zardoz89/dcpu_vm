@@ -29,11 +29,11 @@ namespace lem {
         this->IHardware::attachTo(cpu, index);
 
         tick_per_refresh = cpu->cpu_clock / FPS;
-		initScreen();
-		if (emulation_mode)
-			texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
-		else
-			texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
+        initScreen();
+        if (emulation_mode)
+            texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
+        else
+            texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
         texture.update(clear);
         texture.setSmooth(false);
         texture.setRepeated(false);
@@ -48,17 +48,17 @@ namespace lem {
         if (cpu->GetA() == LEGACY_MODE) {
             emulation_mode = !emulation_mode;
             font_map = palette_map = screen_map = 0;
-			initScreen();
-			if (emulation_mode)
-			    texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
-			else
-				texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
+            initScreen();
+            if (emulation_mode)
+                texture.create(Lem1802::WIDTH, Lem1802::HEIGHT);
+            else
+                texture.create(Lem1803::WIDTH, Lem1803::HEIGHT);
             return;
         } 
 
         size_t s;
         if (!emulation_mode) { // Only this commands are diferent 
-		    
+            
             if (cpu->GetA() == MEM_DUMP_FONT) {
                 s = RAM_SIZE - 1 - cpu->GetB() < 512 ? 
                         RAM_SIZE - 1 - cpu->GetB() : 512 ;
@@ -86,13 +86,13 @@ namespace lem {
         }
         need_render = false;
         if (screen_map != 0 && enable) { // Update the texture
-		    
-		    uint8_t* pixel_pos = screen;
-			//4 pixel per col 4 value per pixels
-			const unsigned row_pixel_size = Lem1803::WIDTH*4; 
-			const unsigned row_pixel_size_8 = row_pixel_size*8; 
+            
+            uint8_t* pixel_pos = screen;
+            //4 pixel per col 4 value per pixels
+            const unsigned row_pixel_size = Lem1803::WIDTH*4; 
+            const unsigned row_pixel_size_8 = row_pixel_size*8; 
             for (unsigned row=0; row < Lem1803::ROWS; row++) {
-			    pixel_pos=screen + row*row_pixel_size_8;
+                pixel_pos=screen + row*row_pixel_size_8;
                 for (unsigned col=0; col < Lem1803::COLS; col++) {
                     uint16_t pos = screen_map + row * (Lem1803::COLS/2) + (col/2);
                     uint16_t pos_attr = screen_map + 1728 + row*Lem1803::COLS + col;
@@ -149,66 +149,66 @@ namespace lem {
                         // First word 
                         bool pixel = ((1<<i) & glyph[0]) > 0;
                         if (pixel) {
-							*(current_pixel_pos+0) = fg[0];
-							*(current_pixel_pos+1) = fg[1];
-							*(current_pixel_pos+2) = fg[2];
-							*(current_pixel_pos+3) = fg[3];
+                            *(current_pixel_pos+0) = fg[0];
+                            *(current_pixel_pos+1) = fg[1];
+                            *(current_pixel_pos+2) = fg[2];
+                            *(current_pixel_pos+3) = fg[3];
                         } else {
-						    *(current_pixel_pos+0) = bg[0];
-							*(current_pixel_pos+1) = bg[1];
-							*(current_pixel_pos+2) = bg[2];
-							*(current_pixel_pos+3) = bg[3];
+                            *(current_pixel_pos+0) = bg[0];
+                            *(current_pixel_pos+1) = bg[1];
+                            *(current_pixel_pos+2) = bg[2];
+                            *(current_pixel_pos+3) = bg[3];
                         }
                         // Second word
                         pixel = ((1<<i) & glyph[1]) > 0;
                         if (pixel) {
-						    *(current_pixel_pos+0+2*4) = fg[0];
-							*(current_pixel_pos+1+2*4) = fg[1];
-							*(current_pixel_pos+2+2*4) = fg[2];
-							*(current_pixel_pos+3+2*4) = fg[3];
+                            *(current_pixel_pos+0+2*4) = fg[0];
+                            *(current_pixel_pos+1+2*4) = fg[1];
+                            *(current_pixel_pos+2+2*4) = fg[2];
+                            *(current_pixel_pos+3+2*4) = fg[3];
                         } else {
-							*(current_pixel_pos+0+2*4) = bg[0];
-							*(current_pixel_pos+1+2*4) = bg[1];
-							*(current_pixel_pos+2+2*4) = bg[2];
-							*(current_pixel_pos+3+2*4) = bg[3];
+                            *(current_pixel_pos+0+2*4) = bg[0];
+                            *(current_pixel_pos+1+2*4) = bg[1];
+                            *(current_pixel_pos+2+2*4) = bg[2];
+                            *(current_pixel_pos+3+2*4) = bg[3];
                         }
-						current_pixel_pos += row_pixel_size;
+                        current_pixel_pos += row_pixel_size;
                     }
-					current_pixel_pos = pixel_pos;
+                    current_pixel_pos = pixel_pos;
 
                     for (int i=0; i< 8; i++) { // Puts LSB of Words
                         // First word 
                         bool pixel = ((1<<i) & glyph[0]) >0;
                         if (pixel) {
-							*(current_pixel_pos+0+1*4) = fg[0];
-							*(current_pixel_pos+1+1*4) = fg[1];
-							*(current_pixel_pos+2+1*4) = fg[2];
-							*(current_pixel_pos+3+1*4) = fg[3];
+                            *(current_pixel_pos+0+1*4) = fg[0];
+                            *(current_pixel_pos+1+1*4) = fg[1];
+                            *(current_pixel_pos+2+1*4) = fg[2];
+                            *(current_pixel_pos+3+1*4) = fg[3];
                         } else {
-							*(current_pixel_pos+0+1*4) = bg[0];
-							*(current_pixel_pos+1+1*4) = bg[1];
-							*(current_pixel_pos+2+1*4) = bg[2];
-							*(current_pixel_pos+3+1*4) = bg[3];
+                            *(current_pixel_pos+0+1*4) = bg[0];
+                            *(current_pixel_pos+1+1*4) = bg[1];
+                            *(current_pixel_pos+2+1*4) = bg[2];
+                            *(current_pixel_pos+3+1*4) = bg[3];
                         }
                         // Secodn word
                         pixel = ((1<<i) & glyph[1]) > 0;
                         if (pixel) {
-							*(current_pixel_pos+0+3*4) = fg[0];
-							*(current_pixel_pos+1+3*4) = fg[1];
-							*(current_pixel_pos+2+3*4) = fg[2];
-							*(current_pixel_pos+3+3*4) = fg[3];
+                            *(current_pixel_pos+0+3*4) = fg[0];
+                            *(current_pixel_pos+1+3*4) = fg[1];
+                            *(current_pixel_pos+2+3*4) = fg[2];
+                            *(current_pixel_pos+3+3*4) = fg[3];
                         } else {
-							*(current_pixel_pos+0+3*4) = bg[0];
-							*(current_pixel_pos+1+3*4) = bg[1];
-							*(current_pixel_pos+2+3*4) = bg[2];
-							*(current_pixel_pos+3+3*4) = bg[3];
+                            *(current_pixel_pos+0+3*4) = bg[0];
+                            *(current_pixel_pos+1+3*4) = bg[1];
+                            *(current_pixel_pos+2+3*4) = bg[2];
+                            *(current_pixel_pos+3+3*4) = bg[3];
                         }
-						current_pixel_pos += row_pixel_size;
+                        current_pixel_pos += row_pixel_size;
                     }
-					pixel_pos+=16;
+                    pixel_pos+=16;
                 }
             }
-			texture.update(screen);
+            texture.update(screen);
         } else {
             texture.update(clear);
         }

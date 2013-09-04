@@ -56,8 +56,8 @@ public:
      * @param offset Offset to place the program in DCPU RAM
      */
     bool loadProgram (const uint16_t* prog,
-	                  unsigned int size,
-					  unsigned int offset = 0);
+                      unsigned int size,
+                      unsigned int offset = 0);
     
     /**
      * @brief Attach a Hardware device to the DCPU
@@ -209,9 +209,9 @@ public:
     
 private:
     uint16_t* ram; /// RAM
-	
-	uint16_t* register_table[0x1E];
-	
+    
+    uint16_t* register_table[0x1E];
+    
     
     inline int realStep();
     
@@ -222,7 +222,7 @@ private:
     
     bool int_queueing;  /// Queue interrupts
     bool skipping_flag; /// Skiping next instruccion ?
-    bool on_fire; 		/// HCF
+    bool on_fire;         /// HCF
     
     /* hardware: */
     std::vector<std::shared_ptr<IHardware>> attached_hardware;

@@ -24,7 +24,7 @@ namespace cgm {
         bitfield_map (0), attribute_map (0), palette_map (0), font_map (0),
         videomode(0), border_col (0), blink(0), texture() 
     { 
-	}
+    }
 
     CGM::~CGM() 
     { }
@@ -38,7 +38,7 @@ namespace cgm {
         blink = 0;
         border_col = 0;
         videomode = 0; // Mode 0
-		texture.create(CGM::WIDTH,CGM::HEIGHT);
+        texture.create(CGM::WIDTH,CGM::HEIGHT);
 
     }
 
@@ -118,8 +118,8 @@ namespace cgm {
 
     const sf::Texture& CGM::getScreen()
     {
-		//TODO Remove sf::Image dependancy Use a pointer instead
-		//TODO Remove all POSSIBLES multiplication insides loops
+        //TODO Remove sf::Image dependancy Use a pointer instead
+        //TODO Remove all POSSIBLES multiplication insides loops
         if (this->cpu == NULL || !need_render)
             return texture;
         
@@ -268,53 +268,54 @@ namespace cgm {
                 break;
 
             case 3: // 256x192 B&W. 2 colors 
-				//Get the 2 colors
-				{ //Stop case label error
-					uint16_t fg_ind = (cpu->getMem()[attribute_map] & 0x0FC0) >> 6;
-					uint16_t bg_ind = (cpu->getMem()[attribute_map] & 0x003F);
-					uint16_t fg_col, bg_col;
-					if (palette_map == 0) { // Use default palette
-						fg_col = CGM::def_palette_map[fg_ind];
-						bg_col = CGM::def_palette_map[bg_ind];
-					} else {
-						fg_col = cpu->getMem()[palette_map+ fg_ind];
-						bg_col = cpu->getMem()[palette_map+ bg_ind];
-					}
-					// Composes RGBA values from palette colors
-					sf::Color fg (
-							((fg_col & 0x7C00)>> 10) *8,
-							((fg_col & 0x03E0)>> 5)  *8,
-							 (fg_col & 0x001F)       *8,
-							0xFF );
-					sf::Color bg (
-							((bg_col & 0x7C00)>> 10) *8,
-							((bg_col & 0x03E0)>> 5)  *8,
-							 (bg_col & 0x001F)       *8,
-							0xFF );
-					const unsigned loop_condition = CGM::WIDTH * CGM::HEIGHT/16;
-					unsigned x = 0;
-					unsigned y = 0;
-				
-				for (unsigned i=0; i < loop_condition; i++) {
-					uint16_t bit = cpu->getMem()[bitfield_map+i];
-					for (unsigned j = 0; j < 16; j++)
-					{
-						if (bit & 1<<j) {
-							// Foreground
-							scr.setPixel (x, y, fg);
-						} else {
-							// Backgorund
-							scr.setPixel (x, y, bg);
-						}
-						x++;
-					}
-					if (x>=CGM::WIDTH)
-					{
-						y++;
-						x=0;
-					}
+                //Get the 2 colors
+                { //Stop case label error
+                    uint16_t fg_ind = (cpu->getMem()[attribute_map] & 0x0FC0)
+                                                                           >> 6;
+                    uint16_t bg_ind = (cpu->getMem()[attribute_map] & 0x003F);
+                    uint16_t fg_col, bg_col;
+                    if (palette_map == 0) { // Use default palette
+                        fg_col = CGM::def_palette_map[fg_ind];
+                        bg_col = CGM::def_palette_map[bg_ind];
+                    } else {
+                        fg_col = cpu->getMem()[palette_map+ fg_ind];
+                        bg_col = cpu->getMem()[palette_map+ bg_ind];
+                    }
+                    // Composes RGBA values from palette colors
+                    sf::Color fg (
+                            ((fg_col & 0x7C00)>> 10) *8,
+                            ((fg_col & 0x03E0)>> 5)  *8,
+                             (fg_col & 0x001F)       *8,
+                            0xFF );
+                    sf::Color bg (
+                            ((bg_col & 0x7C00)>> 10) *8,
+                            ((bg_col & 0x03E0)>> 5)  *8,
+                             (bg_col & 0x001F)       *8,
+                            0xFF );
+                    const unsigned loop_condition = CGM::WIDTH * CGM::HEIGHT/16;
+                    unsigned x = 0;
+                    unsigned y = 0;
+                
+                for (unsigned i=0; i < loop_condition; i++) {
+                    uint16_t bit = cpu->getMem()[bitfield_map+i];
+                    for (unsigned j = 0; j < 16; j++)
+                    {
+                        if (bit & 1<<j) {
+                            // Foreground
+                            scr.setPixel (x, y, fg);
+                        } else {
+                            // Backgorund
+                            scr.setPixel (x, y, bg);
+                        }
+                        x++;
+                    }
+                    if (x>=CGM::WIDTH)
+                    {
+                        y++;
+                        x=0;
+                    }
                 }
-				}
+                }
                 break;
 
             case 4: // 256x192 4x8 font Text mode
@@ -359,9 +360,11 @@ namespace cgm {
                         // Every word contains two characters
                         unsigned char ascii;
                         if (col%2 == 0) {  
-                            ascii = (unsigned char) (cpu->getMem()[pos] & 0x00FF);
+                            ascii = (unsigned char) 
+                                (cpu->getMem()[pos] & 0x00FF);
                         } else {
-                            ascii = (unsigned char) ((cpu->getMem()[pos] & 0xFF00) >> 8);
+                            ascii = (unsigned char) 
+                                ((cpu->getMem()[pos] & 0xFF00) >> 8);
                         }
                         
                         uint16_t glyph[2];
@@ -427,7 +430,7 @@ namespace cgm {
             
         
         } 
-		texture.update(scr);
+        texture.update(scr);
         return texture;
     }
 

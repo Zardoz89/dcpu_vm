@@ -38,32 +38,32 @@ public:
     virtual void attachTo (DCPU* cpu, size_t index);
 
     virtual void show();
-	
-	
-	/**
-	 * @brief is the LEM1803 emulating the LEM1802 ?
-	 */
-	bool isEmulating()
-	{
-		return emulation_mode;
-	}	
-	
-	virtual void initScreen()
-	{
-	  if (screen)
-	    delete screen;
-	  screen = new uint8_t[Lem1803::WIDTH*Lem1803::HEIGHT*4];
-	}
-	
-	virtual unsigned int phyWidth() const
-	{
-		return Lem1803::WIDTH;
-	}
+    
+    
+    /**
+     * @brief is the LEM1803 emulating the LEM1802 ?
+     */
+    bool isEmulating()
+    {
+        return emulation_mode;
+    }    
+    
+    virtual void initScreen()
+    {
+      if (screen)
+        delete screen;
+      screen = new uint8_t[Lem1803::WIDTH*Lem1803::HEIGHT*4];
+    }
+    
+    virtual unsigned int phyWidth() const
+    {
+        return Lem1803::WIDTH;
+    }
     
     virtual unsigned int phyHeight() const
-	{
-		return Lem1803::HEIGHT;
-	}
+    {
+        return Lem1803::HEIGHT;
+    }
     
     const static uint16_t def_palette_map2[64];   /// Default palette
     const static uint16_t def_font_map2[512];     /// Default fontmap

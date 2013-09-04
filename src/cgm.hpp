@@ -91,7 +91,7 @@ protected:
 
     uint_fast32_t blink;            /// Counter for blinking
     uint_fast32_t blink_max;        /// How many count to blink
-	sf::Texture texture;
+    sf::Texture texture;
    
 
 };

@@ -22,19 +22,19 @@ DCPU::DCPU()
 {
     ram = new uint16_t[RAM_SIZE];
     attached_hardware.reserve (100); // Reserve space for some logical small qty
-	register_table[REG_A] = &ra;
-	register_table[REG_B] = &rb; 
-	register_table[REG_C] = &rc; 
-	register_table[REG_X] = &rx; 
-	register_table[REG_Y] = &ry; 
-	register_table[REG_Z] = &rz; 
-	register_table[REG_I] = &ri; 
-	register_table[REG_J] = &rj; 
-	
-	register_table[REG_SP] = &rsp; 
-	register_table[REG_PC] = &rpc; 
-	register_table[REG_EX] = &rex; 
-	
+    register_table[REG_A] = &ra;
+    register_table[REG_B] = &rb; 
+    register_table[REG_C] = &rc; 
+    register_table[REG_X] = &rx; 
+    register_table[REG_Y] = &ry; 
+    register_table[REG_Z] = &rz; 
+    register_table[REG_I] = &ri; 
+    register_table[REG_J] = &rj; 
+    
+    register_table[REG_SP] = &rsp; 
+    register_table[REG_PC] = &rpc; 
+    register_table[REG_EX] = &rex; 
+    
     reset();
 }
 
@@ -58,12 +58,12 @@ bool DCPU::loadProgram (const uint16_t* prog,unsigned int size,unsigned int offs
     assert (prog != NULL);
     assert (size > 0);
     assert (offset >= 0);
-    assert (offset + size < 	UINT16_MAX);
-	if (RAM_SIZE < offset + size)
-	{
-		std::cout << "Cannot load the program not enough ram !" << std::endl;
-		return false;
-	}
+    assert (offset + size <     UINT16_MAX);
+    if (RAM_SIZE < offset + size)
+    {
+        std::cout << "Cannot load the program not enough ram !" << std::endl;
+        return false;
+    }
     
     std::copy_n (prog, size, ram + offset);
     return true;
@@ -73,18 +73,18 @@ bool DCPU::tick(unsigned int n)
 {
     bool yes = false;
     for (unsigned int i = 0; i < n;i++)
-	{
-		tot_cycles++;
-		if (wait_cycles <= 0) {
-			wait_cycles = realStep();
-			tickHardware();
-			yes = true;
-		}
-		
-		wait_cycles--;
-		
-		tickHardware();
-	}
+    {
+        tot_cycles++;
+        if (wait_cycles <= 0) {
+            wait_cycles = realStep();
+            tickHardware();
+            yes = true;
+        }
+        
+        wait_cycles--;
+        
+        tickHardware();
+    }
     return yes;
 }
 
@@ -107,9 +107,9 @@ int DCPU::realStep()
     int cycles = 0;
     
     register uint16_t *a = NULL, *b = NULL;
-    register int16_t sa, sb;   	// Signed versions
+    register int16_t sa, sb;       // Signed versions
     register uint_fast32_t tmp_result;
-    register uint16_t tmp_a;			// Used by Literal values
+    register uint16_t tmp_a;            // Used by Literal values
     uint_fast16_t old_sp = rsp;
     
     uint16_t op = *(ram + (rpc++));
@@ -117,20 +117,20 @@ int DCPU::realStep()
     // TODO Move skiing here and use a table to precalculate instrucction 
     //      long for skining
     
-	const uint16_t op_a = WOPGET_A(op);
-	const uint16_t op_b = WOPGET_B(op);
-	const uint16_t op_spo = WOPGET_SPECIAL_OP(op);
-	const uint16_t op_o = WOPGET_OP(op);
-	const bool special = (op_o == SPECIAL);
-	
-	if (op_a <= REG_J || (op_a >= REG_SP && op_a <= REG_EX))
-	  a=register_table[op_a];
-	else if (op_a >=PTR_A && op_a <= PTR_J)
-	  a=ram + *(register_table[op_a-PTR_A]);
-	else if (op_a >=PTR_NW_A && op_a <=PTR_NW_J)
-	  a=ram + *(register_table[op_a-PTR_NW_A]) + ram[(rpc++)];
-	  
-	else {
+    const uint16_t op_a = WOPGET_A(op);
+    const uint16_t op_b = WOPGET_B(op);
+    const uint16_t op_spo = WOPGET_SPECIAL_OP(op);
+    const uint16_t op_o = WOPGET_OP(op);
+    const bool special = (op_o == SPECIAL);
+    
+    if (op_a <= REG_J || (op_a >= REG_SP && op_a <= REG_EX))
+      a=register_table[op_a];
+    else if (op_a >=PTR_A && op_a <= PTR_J)
+      a=ram + *(register_table[op_a-PTR_A]);
+    else if (op_a >=PTR_NW_A && op_a <=PTR_NW_J)
+      a=ram + *(register_table[op_a-PTR_NW_A]) + ram[(rpc++)];
+      
+    else {
     switch (op_a) {
         // registers, direct:
     /*case REG_A: 
@@ -283,17 +283,17 @@ int DCPU::realStep()
         a = &tmp_a;
         break;
     }
-	}
+    }
     
     if (!special) {
-	    if (op_b <= REG_J || (op_b >= REG_SP && op_b <= REG_EX))
-		  b=register_table[op_b];
-		else if (op_b >=PTR_A && op_b <=PTR_J)
-		  b=ram + *(register_table[op_b-PTR_A]);
-		else if (op_b >=PTR_NW_A && op_b <=PTR_NW_J)
-		  b=ram + *(register_table[op_b-PTR_NW_A]) + ram[ (rpc++)];
-		  
-		else {
+        if (op_b <= REG_J || (op_b >= REG_SP && op_b <= REG_EX))
+          b=register_table[op_b];
+        else if (op_b >=PTR_A && op_b <=PTR_J)
+          b=ram + *(register_table[op_b-PTR_A]);
+        else if (op_b >=PTR_NW_A && op_b <=PTR_NW_J)
+          b=ram + *(register_table[op_b-PTR_NW_A]) + ram[ (rpc++)];
+          
+        else {
         switch (op_b) {
             // registers, direct:
         /*case REG_A:
@@ -442,7 +442,7 @@ int DCPU::realStep()
             
         }
         }
-	}
+    }
     
     assert (a != NULL); // a and b must point to something at this point
     // assert( (op->basic.o != SPECIAL && b != NULL) || op->basic.o == SPECIAL);
@@ -708,8 +708,8 @@ int DCPU::realStep()
             
         default:
             // reserved; Act like a NOP
-			/*printf("Error op Ox%x a 0x%x b 0x%x\n",WOPGET_OP(op),
-			                                     WOPGET_A(op),WOPGET_B(op));*/
+            /*printf("Error op Ox%x a 0x%x b 0x%x\n",WOPGET_OP(op),
+                                                 WOPGET_A(op),WOPGET_B(op));*/
             cycles++;
             break;
         }
@@ -789,8 +789,8 @@ int DCPU::realStep()
             
         default:
             // reserved; Does a NOP
-			/*printf("Error spec zeros Ox%x a 0x%x op 0x%x\n",WOPGET_OP(op),
-			                                     WOPGET_SPECIAL_A(op),WOPGET_SPECIAL_OP(op));*/
+            /*printf("Error spec zeros Ox%x a 0x%x op 0x%x\n",WOPGET_OP(op),
+                                                 WOPGET_SPECIAL_A(op),WOPGET_SPECIAL_OP(op));*/
             cycles++;
             break;
         }
