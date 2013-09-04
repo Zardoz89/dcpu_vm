@@ -1,8 +1,9 @@
 #include "dcpu.hpp"
 #include "dcpu_opcodes.hpp"
-
+#include <iostream>
 #include <algorithm>
 #include <sstream>
+#include <cstdio>
 #include <iomanip>
 
 #include <assert.h>
@@ -21,6 +22,19 @@ DCPU::DCPU()
 {
     ram = new uint16_t[RAM_SIZE];
     attached_hardware.reserve (100); // Reserve space for some logical small qty
+    register_table[REG_A] = &ra;
+    register_table[REG_B] = &rb; 
+    register_table[REG_C] = &rc; 
+    register_table[REG_X] = &rx; 
+    register_table[REG_Y] = &ry; 
+    register_table[REG_Z] = &rz; 
+    register_table[REG_I] = &ri; 
+    register_table[REG_J] = &rj; 
+    
+    register_table[REG_SP] = &rsp; 
+    register_table[REG_PC] = &rpc; 
+    register_table[REG_EX] = &rex; 
+    
     reset();
 }
 
@@ -39,31 +53,39 @@ void DCPU::reset()
     
 }
 
-void DCPU::loadProgram (const uint16_t* prog, int size, int offset)
+bool DCPU::loadProgram (const uint16_t* prog,unsigned int size,unsigned int offset)
 {
     assert (prog != NULL);
     assert (size > 0);
     assert (offset >= 0);
-    assert (offset + size < 	UINT16_MAX);
-    
-    std::copy_n (prog, size, ram + offset);
-    
-}
-
-bool DCPU::tick()
-{
-
-    tot_cycles++;
-    if (wait_cycles <= 0) {
-        wait_cycles = realStep();
-        tickHardware();
-        return true;
+    assert (offset + size <     UINT16_MAX);
+    if (RAM_SIZE < offset + size)
+    {
+        std::cout << "Cannot load the program not enough ram !" << std::endl;
+        return false;
     }
     
-    wait_cycles--;
-    
-    tickHardware();
-    return false;
+    std::copy_n (prog, size, ram + offset);
+    return true;
+}
+
+bool DCPU::tick(unsigned int n)
+{
+    bool yes = false;
+    for (unsigned int i = 0; i < n;i++)
+    {
+        tot_cycles++;
+        if (wait_cycles <= 0) {
+            wait_cycles = realStep();
+            tickHardware();
+            yes = true;
+        }
+        
+        wait_cycles--;
+        
+        tickHardware();
+    }
+    return yes;
 }
 
 int DCPU::step() {
@@ -84,338 +106,105 @@ int DCPU::realStep()
 {
     int cycles = 0;
     
-    uint16_t op_word, a_word, b_word, special_op;
-    uint16_t pos;
+    uint16_t pos = rpc++;
     register uint16_t *a = NULL, *b = NULL;
-    register int16_t sa, sb;   	// Signed versions
+    register int16_t sa, sb;            // Signed versions
     register uint_fast32_t tmp_result;
-    register uint16_t tmp_a;			// Used by Literal values
+    register uint16_t tmp_a;            // Used by Literal values
     uint_fast16_t old_sp = rsp;
     
-    //opword* op = (opword*) (ram + (rpc++) );
-    op_word = GET_OPCODE(ram[rpc]);
-    a_word = GET_A (ram[rpc]);
-    special_op = b_word = GET_B(ram[rpc++]);
+    const uint16_t op_word = GET_OPCODE(ram[pos]);
+    const uint16_t op_a = GET_A(ram[pos]);
+    const uint16_t op_b = GET_B(ram[pos]);
+    const uint16_t special_op = op_b;
+
+    const bool f_special = (op_word == SPECIAL);
     
-    // TODO Move skiing here and use a table to precalculate instrucction 
-    //      long for skining
+    if (op_a <= REG_J || (op_a >= REG_SP && op_a <= REG_EX)) {
+      a = register_table[op_a];
     
-    switch (a_word) {
-        // registers, direct:
-    case REG_A:
-        a = &ra;
-        break;
-        
-    case REG_B:
-        a = &rb;
-        break;
-        
-    case REG_C:
-        a = &rc;
-        break;
-        
-    case REG_X:
-        a = &rx;
-        break;
-        
-    case REG_Y:
-        a = &ry;
-        break;
-        
-    case REG_Z:
-        a = &rz;
-        break;
-        
-    case REG_I:
-        a = &ri;
-        break;
-        
-    case REG_J:
-        a = &rj;
-        break;
-        
-        // registers, indirect:
-    case PTR_A:
-        a = ram + ra;
-        break;
-        
-    case PTR_B:
-        a = ram + rb;
-        break;
-        
-    case PTR_C:
-        a = ram + rc;
-        break;
-        
-    case PTR_X:
-        a = ram + rx;
-        break;
-        
-    case PTR_Y:
-        a = ram + ry;
-        break;
-        
-    case PTR_Z:
-        a = ram + rz;
-        break;
-        
-    case PTR_I:
-        a = ram + ri;
-        break;
-        
-    case PTR_J:
-        a = ram + rj;
-        break;
-        
-        // registers + next word, indirect:
-    case PTR_NW_A:
-        pos = ra + ram[ (rpc++)];
-        a = ram + pos;
-        cycles++;
-        break;
-        
-    case PTR_NW_B:
-        pos = rb + ram[ (rpc++)];
-        a = ram + pos;
-        cycles++;
-        break;
-        
-    case PTR_NW_C:
-        pos = rc + ram[ (rpc++)];
-        a = ram + pos;
-        cycles++;
-        break;
-        
-    case PTR_NW_X:
-        pos = rx + ram[ (rpc++)];
-        a = ram + pos;
-        cycles++;
-        break;
-        
-    case PTR_NW_Y:
-        pos = ry + ram[ (rpc++)];
-        a = ram + pos;
-        cycles++;
-        break;
-        
-    case PTR_NW_Z:
-        pos = rz + ram[ (rpc++)];
-        a = ram + pos;
-        cycles++;
-        break;
-        
-    case PTR_NW_I:
-        pos = ri + ram[ (rpc++)];
-        a = ram + pos;
-        cycles++;
-        break;
-        
-    case PTR_NW_J:
-        pos = rj + ram[ (rpc++)];
-        a = ram + pos;
-        cycles++;
-        break;
-        
-        // special registers:
-    case STACK:
-        a = ram + (uint16_t)(POP);
-        break;  // POP
-        
-    case PEEK:
-        a = ram + (uint16_t)rsp;
-        break;  // PEEK
-        
-    case PICK:
-        a = ram + ( (uint16_t) (rsp + rpc++) ); // PICK n
-        cycles++;
-        break;
-        
-    case REG_SP:
-        a = &rsp;
-        break;
-        
-    case REG_PC:
-        a = &rpc;
-        break;
-        
-    case REG_EX:
-        a = &rex;
-        break;
-        
-        // next word, indirect:
-    case PTR_NW:
-        a = ram + (uint16_t)(ram[(uint16_t)(rpc++)]);
-        cycles++;
-        break;
-        
-        // next word, direct (literal):
-    case NEXT_WORD:
-        a = ram + (uint16_t)(rpc++);
-        cycles++;
-        break;
-        
-        // literal value:
-    default:
-        tmp_a = a_word - LIT_B - 1; // (-1 to 30)
-        a = &tmp_a;
-        break;
-    }
-    
-    if (op_word != SPECIAL ) {
-        switch (b_word) {
-            // registers, direct:
-        case REG_A:
-            b = &ra;
-            break;
-            
-        case REG_B:
-            b = &rb;
-            break;
-            
-        case REG_C:
-            b = &rc;
-            break;
-            
-        case REG_X:
-            b = &rx;
-            break;
-            
-        case REG_Y:
-            b = &ry;
-            break;
-            
-        case REG_Z:
-            b = &rz;
-            break;
-            
-        case REG_I:
-            b = &ri;
-            break;
-            
-        case REG_J:
-            b = &rj;
-            break;
-            
-            // registers, indirect:
-        case PTR_A:
-            b = ram + ra;
-            break;
-            
-        case PTR_B:
-            b = ram + rb;
-            break;
-            
-        case PTR_C:
-            b = ram + rc;
-            break;
-            
-        case PTR_X:
-            b = ram + rx;
-            break;
-            
-        case PTR_Y:
-            b = ram + ry;
-            break;
-            
-        case PTR_Z:
-            b = ram + rz;
-            break;
-            
-        case PTR_I:
-            b = ram + ri;
-            break;
-            
-        case PTR_J:
-            b = ram + rj;
-            break;
-            
-            // registers + next word, indirect:
-        case PTR_NW_A:
-            pos = ra + ram[ (rpc++)];
-            b = ram + pos;
-            cycles++;
-            break;
-            
-        case PTR_NW_B:
-            pos = rb + ram[ (rpc++)];
-            b = ram + pos;
-            cycles++;
-            break;
-            
-        case PTR_NW_C:
-            pos = rc + ram[ (rpc++)];
-            b = ram + pos;
-            cycles++;
-            break;
-            
-        case PTR_NW_X:
-            pos = rx + ram[ (rpc++)];
-            b = ram + pos;
-            cycles++;
-            break;
-            
-        case PTR_NW_Y:
-            pos = ry + ram[ (rpc++)];
-            b = ram + pos;
-            cycles++;
-            break;
-            
-        case PTR_NW_Z:
-            pos = rz + ram[ (rpc++)];
-            b = ram + pos;
-            cycles++;
-            break;
-            
-        case PTR_NW_I:
-            pos = ri + ram[ (rpc++)];
-            b = ram + pos;
-            cycles++;
-            break;
-            
-        case PTR_NW_J:
-            pos = rj + ram[ (rpc++)];
-            b = ram + pos;
-            cycles++;
-            break;
-            
+    } else if (op_a >=PTR_A && op_a <= PTR_J) {
+      a = ram + *(register_table[op_a-PTR_A]);
+
+    } else if (op_a >=PTR_NW_A && op_a <=PTR_NW_J) {
+      a = ram + (uint16_t)(*(register_table[op_a-PTR_NW_A]) 
+              + ram[(uint16_t)(rpc++)]);
+    } else {
+        switch (op_a) {
+
             // special registers:
         case STACK:
-            b = ram + (uint16_t)(PUSH);
-            break;  // PUSH
+            a = ram + (uint16_t)(POP);
+            break;  // POP
             
         case PEEK:
-            b = ram + (uint16_t)rsp;
-            break;    // PEEK
+            a = ram + rsp;
+            break;  // PEEK
             
         case PICK:
-            b = ram + ( (uint16_t) (rsp + rpc++) ); // PICK n
+            a = ram + (uint16_t)(rsp + rpc++); // PICK n
             cycles++;
-            break;
-            
-        case REG_SP:
-            b = &rsp;
-            break;
-            
-        case REG_PC:
-            b = &rpc;
-            break;
-            
-        case REG_EX:
-            b = &rex;
             break;
             
             // next word, indirect:
         case PTR_NW:
-            b = ram + (uint16_t)(ram[ (rpc++)]);
+            a = ram + (uint16_t)(ram[(uint16_t)(rpc++)]);
             cycles++;
             break;
             
             // next word, direct (literal):
         case NEXT_WORD:
-            b = ram + (rpc++);
+            a = ram + (uint16_t)(rpc++);
             cycles++;
             break;
             
+            // literal value:
+        default:
+            tmp_a = op_a - LIT_B - 1; // (-1 to 30)
+            a = &tmp_a;
+            break;
+        }
+    }
+    
+    if (!f_special ) {
+        if (op_b <= REG_J || (op_b >= REG_SP && op_b <= REG_EX)) {
+          b=register_table[op_b];
+        
+        } else if (op_b >=PTR_A && op_b <=PTR_J) {
+          b=ram + *(register_table[op_b-PTR_A]);
+
+        } else if (op_b >=PTR_NW_A && op_b <=PTR_NW_J) {
+          b=ram + *(register_table[op_b-PTR_NW_A]) + ram[ (rpc++)];
+        } else {
+            switch (op_b) {
+                
+                // special registers:
+            case STACK:
+                b = ram + (uint16_t)(PUSH);
+                break;  // PUSH
+                
+            case PEEK:
+                b = ram + rsp;
+                break;    // PEEK
+                
+            case PICK:
+                b = ram + (uint16_t)(rsp + rpc++); // PICK n
+                cycles++;
+                break;
+                
+                // next word, indirect:
+            case PTR_NW:
+                b = ram + (uint16_t)(ram[(uint16_t)(rpc++)]);
+                cycles++;
+                break;
+                
+                // next word, direct (literal):
+            case NEXT_WORD:
+                b = ram + (uint16_t)(rpc++);
+                cycles++;
+                break;
+                
+            }
         }
     }
     
@@ -436,7 +225,7 @@ int DCPU::realStep()
         rsp = old_sp;
         
         // Decode OpCodes and execute
-    } else if (op_word != SPECIAL) {
+    } else if (!f_special) {
         // Basic opcode
         
         switch (op_word) {
@@ -683,6 +472,8 @@ int DCPU::realStep()
             
         default:
             // reserved; Act like a NOP
+            /*printf("Error op Ox%x a 0x%x b 0x%x\n",WOPGET_OP(op),
+                                                 WOPGET_A(op),WOPGET_B(op));*/
             cycles++;
             break;
         }
@@ -762,6 +553,8 @@ int DCPU::realStep()
             
         default:
             // reserved; Does a NOP
+            /*printf("Error spec zeros Ox%x a 0x%x op 0x%x\n",WOPGET_OP(op),
+                                                 WOPGET_SPECIAL_A(op),WOPGET_SPECIAL_OP(op));*/
             cycles++;
             break;
         }

@@ -1,11 +1,10 @@
 #include "lem1803.hpp"
 
 #include <algorithm>
-
 namespace cpu {
 
 namespace lem {
-    
+
     const uint16_t Lem1803::def_font_map2[256*2] = {   /// Default font map
 #       include "lem1802_font.inc"
         // TODO Upper half of 8-bit Extended ASCII
@@ -18,7 +17,6 @@ namespace lem {
 
     Lem1803::Lem1803() : emulation_mode(true) 
     { }
-
     Lem1803::~Lem1803() 
     { }
 
@@ -56,13 +54,12 @@ namespace lem {
     sf::Image* Lem1803::updateScreen() const
     {
 
-        if (this->cpu == NULL)
+        if (this->cpu == NULL || !need_render)
             return NULL;
-
         if (emulation_mode) {
             return Lem1802::updateScreen();
         }
-        
+        need_render = false;
         sf::Image* scr = new sf::Image();
         scr->create(Lem1803::WIDTH, Lem1803::HEIGHT, sf::Color::Black);
 

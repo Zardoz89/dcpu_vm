@@ -18,11 +18,9 @@ else (CMAKE_HOST_APPLE)
 endif (CMAKE_HOST_APPLE)
 
 if (CMAKE_HOST_WIN32)
-    message(WARNING "This build has not yet been tested on Win32")
+    message(WARNING "This build has only been tested on MinGW 4.7")
     set(TRILLEK_SEARCH_PATHS
-        /usr
-        /usr/local
-        /opt/local
+        C:/MinGW
     )
 endif (CMAKE_HOST_WIN32)
 

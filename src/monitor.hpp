@@ -1,7 +1,7 @@
 #pragma once
 #ifndef _MONITOR_HPP_
 #define _MONITOR_HPP_ 1
-
+#include "dcpu.hpp"
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Image.hpp>
 
@@ -9,8 +9,9 @@
 
 namespace cpu {
 
-class AbstractMonitor {
+class AbstractMonitor : public cpu::IHardware{
 public:
+        AbstractMonitor() : need_render(false) {} 
     /**
      * Return Actual screen resolution Width without border
      */
@@ -46,6 +47,16 @@ public:
      */
     virtual sf::Color getBorder() const = 0;
 
+        /**
+         * @Call before render 1 frame to each frames
+         */
+        inline void prepareRender()
+        {
+            need_render = true;
+        }
+    
+protected:
+    mutable bool need_render; ///Do we need a render (Improve the speed)
 };
 
 } // END OF NAMESPACE cpu

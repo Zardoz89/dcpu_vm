@@ -1,0 +1,80 @@
+Name: Generic Keyboard (compatible)
+ID: 0x30cf7406
+Version: 1.1
+
+Interrupts do different things depending on contents of the A register:
+
+ A |  NAME      | BEHAVIOUR
+---+----------------------------------------------------------------------------
+ 0 | CLEAR      | Clear keyboard buffer
+ 1 | POP        | Store next key-code event in C register, or 0 if the buffer is
+   |            | empty
+ 2 | PUSH       | Inserts B register value in the buffer, if is a valid key-code 
+   |            | event.
+ 3 | SET-MSG    | If register B is non-zero, turn on interrupts with message B. 
+   |            | If B is zero, disable interrupts
+ 4 | GET-STATUS | Store in C register the Status LEDs state
+ 5 | SET-STATUS | Reads the B register ans sets the Status LEDs state
+---+----------------------------------------------------------------------------
+
+When interrupts are enabled, the keyboard will trigger an interrupt when one or
+more keys have been pressed or released.
+
+Key-code event Format:
+ 15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+-------------------------------------------------
+  -  -  -  -  -  -  -  A  k  k  k  k  k  k  k  k
+
+Where :
+ - A if the bit is at 1, this means that key is being pressed (Key Down). If is
+      0, means that the key was released (Key Up)
+ - kkkkkkkk Scan code of the key pressed or released 
+ - Bits 15-9 Unused. Ignored it, but can be used in future advanced keyboards.
+
+Scan codes are:
+  0x10: Backspace
+  0x11: Return
+  0x12: Insert
+  0x13: Delete
+  0x1B: Escape/Break
+  0x20-0x40: ASCII characters
+  0x5B-0x7f: ASCII characters
+  0x80: Arrow up
+  0x81: Arrow down
+  0x82: Arrow left
+  0x83: Arrow right
+  0x90: Shift
+  0x91: Control
+  Other values: Reserved for advanced keyboards or localized keyboards
+
+Status LEDs:
+  A keyboard must have at least this LED state: Caps Locks Enable.
+  Commands 4 and 5, uses the LSB bit 0 to get/set the Caps Locks Enable state
+
+Caps Locks Mode : 
+  When Caps Locks key is pushed, the keyboard enters in Caps Locks mode.
+  In Caps Locks mode, the Caps Locks Enable status LED is set to On, and when
+  leaves this mode, is set to Off. 
+  When enters in this mode, inserts the event that Shift key is being pressed in
+  the buffer. If the Shift key is being pressed before entering the mode, then 
+  inserts in the buffer, the event of Shift key being released (Key Up).
+  When leaves this mode, insert the event that Shift key is being released in 
+  the buffer. If the Shift key is being pressed before leaving this mode, then
+  inserts in the buffer, the event of Shift key being pressed (Key Down).
+  In this mode, when the Shift key is pressed, is registered with the A flag 
+  inverted. Aka, the Key Down event is registered like Key Up and vice versa. 
+
+Example of Use:
+  Writing a ISR that uses POP to get the keycode pressed/released. This ISR 
+  remembers the last Shift key event, and is being pressed, process 
+  ASCII keycodes like ASCII upper-case equivalent characters, or symbols mapped 
+  to Shift+Key. Similar behaviour can be do with Alt key or used to detect 
+  Ctrl+Key.
+
+   
+
+
+
+Stuff to read : 
+ - http://retired.beyondlogic.org/keyboard/keybrd.htm
+ - flint.cs.yale.edu/cs422/doc/art-of-asm/pdf/CH20.PDF

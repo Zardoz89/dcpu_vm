@@ -48,7 +48,7 @@ public:
      * @brief Does a DCPU clock tick
      * @return True if executed an instrucction
      */
-    bool tick();
+    bool tick(unsigned int n=1);
     
     /**
      * @brief Load a program to the DCPU RAM
@@ -56,7 +56,9 @@ public:
      * @param size Data program size in 16 bit words
      * @param offset Offset to place the program in DCPU RAM
      */
-    void loadProgram (const uint16_t* prog, int size, int offset = 0);
+    bool loadProgram (const uint16_t* prog,
+                      unsigned int size,
+                      unsigned int offset = 0);
     
     /**
      * @brief Attach a Hardware device to the DCPU
@@ -209,6 +211,9 @@ public:
 private:
     uint16_t* ram; /// RAM
     
+    uint16_t* register_table[0x1E];
+    
+    
     inline int realStep();
     
     inline void triggerInterrupt (uint16_t msg);
@@ -218,7 +223,7 @@ private:
     
     bool int_queueing;  /// Queue interrupts
     bool skipping_flag; /// Skiping next instruccion ?
-    bool on_fire; 		/// HCF
+    bool on_fire;         /// HCF
     
     /* hardware: */
     std::vector<std::shared_ptr<IHardware>> attached_hardware;

@@ -1,11 +1,11 @@
 #include "lem1802.hpp"
-
+#include <iostream>
 #include <algorithm>
 
 namespace cpu {
 
-
 namespace lem {
+
 
     const uint16_t Lem1802::def_font_map[128*2] = {     /// Default font map
 #       include "lem1802_font.inc"
@@ -16,8 +16,7 @@ namespace lem {
     };
 
     Lem1802::Lem1802() : screen_map (0), font_map (0), palette_map (0),
-                         border_col (0), blink(0) 
-    { }
+    border_col (0), blink(0) { }
 
     Lem1802::~Lem1802() 
     { }
@@ -25,7 +24,6 @@ namespace lem {
     void Lem1802::attachTo (DCPU* cpu, size_t index) 
     {
         this->IHardware::attachTo(cpu, index);
-
         blink_max = cpu->cpu_clock / Lem1802::BLINKPERSECOND;
         blink = 0;
         screen_map = font_map, palette_map = 0;
@@ -36,7 +34,7 @@ namespace lem {
     {
         if (this->cpu == NULL)
             return;
-
+        
         size_t s;
         switch (cpu->GetA() ) {
             case MEM_MAP_SCREEN:
@@ -58,7 +56,7 @@ namespace lem {
             case MEM_DUMP_FONT:
                 s = RAM_SIZE - 1 - cpu->GetB() < 256 ? 
                         RAM_SIZE - 1 - cpu->GetB() : 256 ;
-                std::copy_n (Lem1802::def_font_map, s, cpu->getMem() + cpu->GetB() );
+                std::copy_n (Lem1802::def_font_map,s,cpu->getMem()+cpu->GetB());
                 break;
 
             case MEM_DUMP_PALETTE:
@@ -82,8 +80,12 @@ namespace lem {
 
     sf::Image* Lem1802::updateScreen() const
     {
-        if (this->cpu == NULL)
+        //TODO use uint32_t to fast copy the color into the buffer
+        //TODO remove all multiplications inside loop
+        if (this->cpu == NULL || !need_render)
             return NULL;
+
+        need_render = false;
         
         sf::Image* scr = new sf::Image();
         scr->create(Lem1802::WIDTH, Lem1802::HEIGHT, sf::Color::Black);

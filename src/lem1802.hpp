@@ -1,12 +1,12 @@
 #pragma once
 #ifndef _LEM1802_HPP
 #define _LEM1802_HPP
+#include "config.hpp"
 
 #include <cstdint>
 
-#include "dcpu.hpp" // Base class: cpu::IHardware
-#include "monitor.hpp"
-
+#include "dcpu.hpp" 
+#include "monitor.hpp" //base class AbstractMonitor
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Image.hpp>
 
@@ -23,7 +23,7 @@ static const uint16_t MEM_DUMP_PALETTE      = 5;
 /**
  * @brief LEM1802 that uses SFML
  */
-class Lem1802 : public cpu::IHardware, public cpu::AbstractMonitor {
+class Lem1802 : public cpu::AbstractMonitor {
 public:
     Lem1802();
     virtual ~Lem1802();
@@ -77,19 +77,19 @@ public:
 
 protected:
 
-    uint16_t screen_map;            /// Where map VIDEO RAM 
-    uint16_t font_map;              /// Where map FONT
-    uint16_t palette_map;           /// Where map PALETTE
+    uint16_t screen_map;                /// Where map VIDEO RAM 
+    uint16_t font_map;                  /// Where map FONT
+    uint16_t palette_map;               /// Where map PALETTE
     
-    uint8_t border_col;             /// Border color palette index
+    uint8_t border_col;                 /// Border color palette index
     
-    uint_fast32_t blink;                 /// Counter for blinking
-    uint_fast32_t blink_max;             /// Max ticks to change blink state
+    uint_fast32_t blink;                /// Counter for blinking
+    uint_fast32_t blink_max;            /// Max ticks to change blink state
 
 };
 
-} // end of namespace lem
+}//end of lem NAMESPACE
 
-} // end of namespace cpu
+}//end of cpu NAMESPACE
 
 #endif // _LEM1802_HPP

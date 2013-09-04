@@ -8,7 +8,6 @@
 #include "monitor.hpp"
 
 #include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Texture.hpp>
 
 namespace cpu {
 
@@ -29,7 +28,7 @@ enum COMMANDS { /// A register commands
 /**
  * @brief CGM 1084 monitor that uses SFML
  */
-class CGM : public cpu::IHardware, public cpu::AbstractMonitor {
+class CGM : public cpu::AbstractMonitor {
 public:
     CGM();
     virtual ~CGM();

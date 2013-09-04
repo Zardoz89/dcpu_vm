@@ -3,68 +3,98 @@
 #include <cstdint>
 #include <algorithm>
 #include <memory>
+#include <stdio.h>
 #include <chrono>
 
-#include <boost/thread.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp> 
-
-//#include <SFML/System.hpp>
-#include <SFML/Window.hpp>
-#include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Texture.hpp>
-
+#include "config.hpp"
+#include "dcpu_opcodes.hpp"
 #include "dcpu.hpp"
 #include "disassembler.hpp"
-
 #include "gclock.hpp"
 #include "gkeyboard.hpp"
-//#include "fake_lem1802.hpp"
 #include "lem1802.hpp"
-#include "lem1803.hpp"
-#include "cgm.hpp"
+//#include "lem1803.hpp"
+//#include "cgm.hpp"
 
 using namespace cpu;
 
-/*
-const long TOTALCPUS    = 215*16;
-const long PERTHREAD    = 16;  // At 16 looks that is the ideal for the FX-4100
-#define THREADS           (TOTALCPUS/PERTHREAD)
-const long CYCLES       = 1000*1000;
-
-const int BATCH         = 10;
-*/
-
-//std::vector<std::vector<std::shared_ptr<DCPU>>> threads;
-uint16_t* data;
-size_t size = 0;
-
-bool running = true;
-
-//void benchmark();
-void step();
-void run();
-
-void keyGuy(std::shared_ptr<cpu::keyboard::GKeyboard> gkey);
-void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::AbstractMonitor> mon);
-
-//void cpu_in_thread(int n);
-
+void print_help(std::string program_name)
+{
+    std::cout << "usage : " << program_name << " [--options] <dcpu16-exe>\n";
+    std::cout << "--------------------------------------------------------\n";
+    std::cout << "  options:" << std::endl;
+    std::cout << "    --debug                  : start in debug mode\n";
+    std::cout << "            F1  : next step" << std::endl;
+    std::cout << "            F2  : print registers" << std::endl;
+    std::cout << "            F3  : reset (no need debug mode)" << std::endl;
+    std::cout << "            F12 : switch debug/run" << std::endl;
+    std::cout << "    --monitor=<monitor_name> : use the following monitor\n";
+    std::cout << "            1802 -> Lem1802 (default) [c]" << std::endl;
+    std::cout << "            1803 -> Lem1803 [c]" << std::endl;
+    std::cout << "            cgm -> Colour Graphics Monitor" << std::endl;
+    std::cout << "            [c] : compatible with Lem1802 0x10c programs\n";
+}
 
 int main (int argc, char **argv)
 {
 
-    char* filename;
+    std::string filename;
+    int monitor_type=0; 
+    bool debug=false;
+    size_t size = 0;
+    uint16_t* data;
     std::ifstream binfile;
     
+    
     if (argc <= 1) {
-        std::cerr << "Missing input file\n";
+        std::cerr << "Missing input file, type --help for list options\n";
         return 0;
     }
+    for (int k=1; k < argc; k++) //parse arguments
+    {
+        if (argv[k][0] == '-')
+        {
+            std::string opt = argv[k];
+            if (opt.find("--monitor") != std::string::npos)
+            {
+                if (opt == "--monitor=1802") monitor_type=0;
+                else if (opt == "--monitor=1803") monitor_type=1; 
+                else if (opt == "--monitor=cgm") monitor_type=2;
+                else { 
+                    std::cout << "Warning unknow monitor type "; 
+                    std::cout << opt << std::endl;
+                }
+            }
+            else if (opt=="--help"||opt=="-help"||opt=="-h")
+            {
+                std::string pn = argv[0];
+                pn.erase(0,pn.find_last_of('\\')+1); //windows
+                pn.erase(0,pn.find_last_of('/')+1); //linux
+                print_help(pn);
+                return 0;
+            }
+            else if (opt=="--debug")
+            {
+                debug=true;
+            }
+            else
+            {
+                std::cout << "Warning: unknow option ";
+                std::cout << opt << " it will be ignored !" << std::endl;
+            }
+        }
+        else
+        {
+            filename = argv[k];
+        }
     
-    filename = argv[1];
+    }
+    
+    
+    //TODO make a function which do that but fast
     std::cout <<  "Input BIN File : " << filename << "\n";
     
-    binfile.open (filename, std::ios::in | std::ios::binary );
+    binfile.open (filename.c_str(), std::ios::in | std::ios::binary );
     
     if (!binfile) {
         std::cerr << "ERROR: I can open file\n";
@@ -81,10 +111,11 @@ int main (int argc, char **argv)
     
     int i = 0;
     
-    while (! binfile.eof() ) {
+    while (! binfile.eof() ) { 
+        //need improvement read (read whole file and then switch endianess
         uint16_t word = 0;
         binfile.read ( (char*) &word, 2);
-        unsigned char tmp = ( (word & 0xFF00) >> 8) & 0x00FF;
+        uint16_t tmp = ( (word & 0xFF00) >> 8) & 0x00FF;
         word = ( (word & 0x00FF) << 8) | tmp;
         data[i] = word;
         i++;
@@ -92,411 +123,209 @@ int main (int argc, char **argv)
     
     binfile.close();
     
+    
     std::cout << "Readed " << size << " bytes - " << size / 2 << " words\n";
     size /= 2;
-   
-badchar:
-    std::cout << "Select what to do :" << std::endl;
-    std::cout << "\ts -> step execution\n\tr-> run";
-    std::cout << std::endl << std::endl;
-    char choose;
-    std::cin >> choose;
-    
-/*    if (choose == 'b' || choose == 'B') {
-        benchmark();
-    } else*/ if ( choose == 's' || choose == 'S') {
-        step();
-    } else if ( choose == 'r' || choose == 'R') {
-        run();
-    } else {
-        goto badchar; /// HATE ME!!!!
-    }
-
-    delete[] data;
-
-    return 0;
-}
-
-/*
-void benchmark() 
-{
-    // Load program to all CPUs
-    for (int u=0; u< THREADS; u++) {
-        std::vector<std::shared_ptr<DCPU>> cpus;
-        cpus.reserve (PERTHREAD);
-        for (int i = 0; i< PERTHREAD; i++) {
-            auto cpu = std::make_shared<DCPU>();   
-            //auto screen = std::make_shared<Fake_Lem1802>();
-            //screen->setEnable(false); // We not desire to write to stdout
-            //cpu->attachHardware (screen);
-            cpu->reset();
-            cpu->loadProgram (data, size);
-            
-            cpus.push_back(cpu);
-        }
-
-        threads.push_back(cpus);
-        
-    }
-    
-    sf::Thread* tds[THREADS];
-
-    std::cout << "Threads " << THREADS << "\t CPU PerThread " << PERTHREAD;
-    std::cout << "\t N cpus " << PERTHREAD * THREADS << std::endl;
-    std::cout << "Cycles " << CYCLES << std::endl;
-    
-    auto start = std::chrono::high_resolution_clock::now(); 
-    
-    for (int i=0; i< THREADS; i++) {
-        tds[i] = new sf::Thread(cpu_in_thread, i);
-        tds[i]->launch();
-    }
-    
-    for (int i=0; i< THREADS; i++) {
-        delete tds[i]; //wait() is automatically called
-    }
-
-	auto end = std::chrono::high_resolution_clock::now();
-    auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - start); 
-	std::cout << "Measured time: " << dur.count() << "ms" << std::endl;
-    
-}
-*/
-void step() {
-    using namespace std;
-    auto cpu = make_shared<DCPU>();
-    
-    auto screen = make_shared<lem::Lem1803>();
-    cpu->attachHardware (screen);
-   
-    sf::RenderWindow win(sf::VideoMode(
-                                screen->phyWidth()  + screen->borderSize()*2,
-                                screen->phyHeight() + screen->borderSize()*2),
-                            "DCPU-16");
-    win.setFramerateLimit(30); 
-    
-    auto clock = make_shared<Generic_Clock>();
-    cpu->attachHardware (clock);
-    
-    cpu->reset();
-    cpu->loadProgram (data, size);
     
     
-    char c = getchar();
-    while (1) {
-        c = getchar();
-        if (c == 'f' || c == 'q' || c == '\n' )
+    sf::String window_title="dcpu_vm";
+    auto dcpu = std::make_shared<DCPU>();
+    auto gclock = std::make_shared<Generic_Clock>();
+    auto gkeyboard = std::make_shared<keyboard::GKeyboard>();
+    std::shared_ptr<AbstractMonitor> monitor;
+    switch (monitor_type)
+    {
+   /*     case 1:
+            monitor=std::make_shared<lem::Lem1803>();
+            std::cout << "Use Lem1803 Monitor" << std::endl;
+            window_title = "Lem 1803";
+            break;
+        case 2:
+            monitor=std::make_shared<cgm::CGM>();
+            std::cout << "Use CGM Monitor" << std::endl;
+            window_title = "CGM";
+            break;*/
+        default :
+            monitor=std::make_shared<lem::Lem1802>();
+            std::cout << "Use Lem1802 Monitor" << std::endl;
+            window_title = "Lem 1802";
             break;
     }
     
-    win.setActive(false);
-    boost::thread thr_render (renderGuy, &win, 
-            std::static_pointer_cast<cpu::AbstractMonitor>(screen));
-    
-    while (running) {
-        cout << cpu->dumpRegisters() << endl;
-        cout << "T cycles " << dec << cpu->getTotCycles() << endl;
-        cout << "> " << cpu->dumpRam() << " - ";
-        string s = disassembly(cpu->getMem() + cpu->GetPC(), 3);
-        cout << s << endl;
-        
-        if (cpu->GetSP() != 0x0000)
-            cout << "STACK : "<< cpu->dumpRam(cpu->GetSP(), 0xFFFF) << endl;
-        
-        if (c == 'f') {
-            for (int i = 0; i < 100; i++)
-                cpu->step();
-                //cpu->tick();
-        } else {
-            cpu->step();
-            /*if (cpu->tick())
-                cout << "Execute! ";*/
-        }
-        cout << endl;
-
-        while (1) {
-            c = getchar();
-            if (c == 'f' || c == 'q' || c == '\n' )
-                break;
-        }
-
-        if (c == 'q')
-            running = false;
-    }
-
-
-    if (thr_render.joinable())
-        thr_render.join();
-
-    
-}
-
-
-void run() {
-
-    using namespace std;
-    using namespace std::chrono;
-
-    
-    auto cpu = make_shared<DCPU>();
-    
-    auto screen = make_shared<cgm::CGM>();
-    cpu->attachHardware (screen);
+    dcpu->attachHardware (monitor);
+    dcpu->attachHardware (gclock);
+    dcpu->attachHardware (gkeyboard);
+    dcpu->reset();
+    dcpu->loadProgram (data, size);
    
-    sf::RenderWindow win(sf::VideoMode(
-                                screen->phyWidth()  + screen->borderSize()*2,
-                                screen->phyHeight() + screen->borderSize()*2),
-                            "DCPU-16 CGM1084");
-    win.setFramerateLimit(30); 
-
-    auto screen2 = make_shared<lem::Lem1803>();
-    cpu->attachHardware (screen2);
+    sf::Texture texture; // texture of the screen
+    sf::Sprite sprite;   //sprite of the screen
+    sf::RectangleShape border; //Screen border
+    sf::Clock clock; 
+    sf::RenderWindow window;
+    float border_add = monitor->borderSize()*2;
+    window.create(sf::VideoMode(monitor->phyWidth()+border_add,
+                                monitor->phyHeight()+border_add),
+                                window_title);
+    window.setFramerateLimit(60);
     
-    sf::RenderWindow win2(sf::VideoMode(
-                                screen2->phyWidth()  + screen2->borderSize()*2,
-                                screen2->phyHeight() + screen2->borderSize()*2),
-                            "DCPU-16 LEM1803");
-    win2.setFramerateLimit(30); 
     
-    auto clock = make_shared<Generic_Clock>();
-    cpu->attachHardware (clock);
-
-    auto keyboard = make_shared<keyboard::GKeyboard>();
-    cpu->attachHardware (keyboard);
-    /*keyboard->pushKeyEvent(true, 'h');
-    keyboard->pushKeyEvent(false, 'h');
-    keyboard->pushKeyEvent(true, 'o');
-    keyboard->pushKeyEvent(false, 'o');
-    keyboard->pushKeyEvent(true, 'l');
-    keyboard->pushKeyEvent(false, 'l');
-    keyboard->pushKeyEvent(true, 'a');
-    keyboard->pushKeyEvent(false, 'a');
-    */
-    
-    cpu->reset();
-    cpu->loadProgram (data, size);
-    
-    high_resolution_clock::time_point t = high_resolution_clock::now();
-    high_resolution_clock::time_point t2; 
-  
-    win.setActive(false);
-    boost::thread thr_render (renderGuy, &win, 
-            std::static_pointer_cast<cpu::AbstractMonitor>(screen));
-
-    win2.setActive(false);
-    boost::thread thr_render2 (renderGuy, &win2, 
-            std::static_pointer_cast<cpu::AbstractMonitor>(screen2));
-
-
-    boost::thread thr_gkey (keyGuy , keyboard);
-    
-    while (running ) { //&& wincgm.isOpen()) {
-        t2 =  high_resolution_clock::now(); 
-        
-        
-        cpu->tick();
-        
-        auto delta = duration_cast<chrono::nanoseconds>(t2 - t);
-        auto rest = nanoseconds(1000000000/cpu->cpu_clock)-delta; 
-
-        if ((cpu->getTotCycles() % 200000) == 0) { 
-            // Not show running speed every clock tick 
-            double p = nanoseconds(1000000000/cpu->cpu_clock).count() /
-                (double)(delta.count() );//+ rest.count());
-            cerr << "Delta :" << delta.count() << " ns \t";
-            cerr << "Rest :" << rest.count() << " ns ";
-            cerr << " Running at "<< p*100.0 << " % speed." << endl;
-            cerr << keyboard->bufferSize() << endl;
-        }
-        t = t2;
-    }
-
-    if (thr_render.joinable())
-        thr_render.join();
-
-    if (thr_render2.joinable())
-        thr_render.join();
-    
-    if (thr_gkey.joinable())
-        thr_gkey.join();
-
-    cout << "Finish" << endl;
-
-}
-
-
-
-/*
-
-// Runs PERTHREAD cpus, doing CYCLES cycles
-void cpu_in_thread(int n) {
-    auto cpus = threads[n];
-    for (long i=0; i < CYCLES; i+= BATCH) {
-        for (auto c = cpus.begin(); c != cpus.end(); c++) {
-            for ( int j=0; j < BATCH; j++)
-                (*c)->tick();
-        }
-    }
-}
-*/
-
-void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::AbstractMonitor> mon)
-{
-    sf::Texture texture;
-    
-    while (running) {
-        win->setActive(true);
+    while (window.isOpen()) //Because non mainthread event are forbidden in OSX
+    {
+        // Process events
         sf::Event event;
-        while (win->pollEvent(event)) {
+        while (window.pollEvent(event)) 
+        {
+            // Close window : exit
             if (event.type == sf::Event::Closed) {
-                win->close();
-                running = false;
-                continue;
+                window.close();
+            }
+            else if (event.type == sf::Event::KeyPressed 
+                    || event.type == sf::Event::KeyReleased)
+            {
+                bool pressed = false;
+                unsigned char keycode=0;
+                if (event.type == sf::Event::KeyPressed) pressed = true;
+                if (event.key.code>=sf::Keyboard::A && 
+                    event.key.code<=sf::Keyboard::Z)
+                {
+                    if (event.key.shift)
+                        keycode=event.key.code+'A';
+                    else
+                        keycode=event.key.code+'a';
+                }
+                else if (event.key.code>=sf::Keyboard::Num0 && 
+                        event.key.code<=sf::Keyboard::Num9)
+                {
+                    keycode=event.key.code-sf::Keyboard::Num0+'0';
+                }
+                else 
+                {
+                    switch (event.key.code)
+                    {
+                        case sf::Keyboard::Back: //BackSpace:
+                            // NOTE: Changes between SFML 2.0 and 2.1
+                            keycode=keyboard::BACKSPACE;
+                            break;
+                        case sf::Keyboard::Return:
+                            keycode=keyboard::RETURN;
+                            break;
+                        case sf::Keyboard::Insert:
+                            keycode=keyboard::INSERT;
+                            break;
+                        case sf::Keyboard::Delete:
+                            keycode=keyboard::DELETE;
+                            break;
+                        case sf::Keyboard::Up:
+                            keycode=keyboard::ARROW_UP;
+                            break;
+                        case sf::Keyboard::Down:
+                            keycode=keyboard::ARROW_DOWN;
+                            break;
+                        case sf::Keyboard::Left:
+                            keycode=keyboard::ARROW_LEFT;
+                            break;
+                        case sf::Keyboard::Right:
+                            keycode=keyboard::ARROW_RIGHT;
+                            break;
+                        case sf::Keyboard::RShift:
+                        case sf::Keyboard::LShift:
+                            keycode=keyboard::SHIFT;
+                            break;
+                        case sf::Keyboard::RControl:
+                        case sf::Keyboard::LControl:
+                            keycode=keyboard::CONTROL;
+                            break;
+                        case sf::Keyboard::F1:
+                            if (debug && pressed)
+                            {
+                              std::cout << disassembly(dcpu->getMem()
+                                                    +dcpu->GetPC(),3);
+                              std::cout << std::endl;
+                              dcpu->step();
+                            }
+                            break;
+                        case sf::Keyboard::F2:
+                            if (debug && !pressed)
+                            {
+                              printf("A : 0x%04X | B : 0x%04X | C : 0x%04X\n",
+                                                dcpu->ra,dcpu->rb,dcpu->rc);
+                              printf("X : 0x%04X | Y : 0x%04X | Z : 0x%04X\n",
+                                                dcpu->rx,dcpu->ry,dcpu->rz);
+                              printf("I : 0x%04X | J : 0x%04X | IA: 0x%04X\n",
+                                                dcpu->ri,dcpu->rj,dcpu->ria);
+                              printf("PC: 0x%04X | SP: 0x%04X | EX: 0x%04X\n",
+                                                dcpu->rpc,dcpu->rsp,dcpu->rex);
+                            }
+                            break;
+                        case sf::Keyboard::F3: 
+                            //No need to be in debug mode for this one
+                            if (!pressed)
+                            {
+                                std::cout << "Reset dcpu" << std::endl;
+                                dcpu->reset();
+                                dcpu->loadProgram (data, size);
+                            }
+                            break;
+                        case sf::Keyboard::F12:
+                            if (!pressed)
+                            {
+                                debug = !debug;
+                            }
+                            break;
+                            
+                        default: break;
+                    }
+                }
+                if (keycode)
+                    gkeyboard->pushKeyEvent(pressed,keycode);
+                
             }
         }
-
-        win->clear(mon->getBorder());
-
-        sf::Image* scr = mon->updateScreen();
-        texture.create(mon->width(), mon->height());
+        
+        ///DCPU emulation stuff
+        monitor->prepareRender();
+        const float delta=clock.getElapsedTime().asSeconds();
+        clock.restart();
+        unsigned int tick_needed=(float)dcpu->cpu_clock*delta;
+        
+        if (!debug)
+        {
+            if (tick_needed > dcpu->cpu_clock/60)
+                tick_needed = dcpu->cpu_clock/60;
+            dcpu->tick(tick_needed);
+        }
+        /*border_add = monitor->borderSize();
+        sprite.setPosition(sf::Vector2f(border_add,border_add));
+        border_add *=2;
+        
+        
+        float r_width = border_add + monitor->getScreen().getSize().x;
+        float r_height = border_add + monitor->getScreen().getSize().y;
+        border.setSize(sf::Vector2f(r_width,r_height));
+        border.setFillColor(monitor->getBorder());*/
+        
+        //For emulations modes and windows resizes
+        //sf::FloatRect r(0,0,r_width,r_height);
+        //window.setView(sf::View(r));
+        window.setActive(true);
+        auto scr = monitor->updateScreen();
+        texture.create(monitor->width(), monitor->height());
         texture.loadFromImage(*scr);
-        
-        sf::Sprite sprite(texture);
+        sprite.setTexture(texture);
         sprite.scale(
-                mon->phyWidth()  / (float)(mon->width() ) , 
-                mon->phyHeight() / (float)(mon->height()) ); 
-        sprite.setPosition(mon->borderSize(), mon->borderSize());
+                monitor->phyWidth() / (float)(monitor->width() ) ,
+                monitor->phyHeight() / (float)(monitor->height()) );
+        sprite.setPosition(monitor->borderSize(), monitor->borderSize());
 
-        win->draw(sprite);
-        win->display();
-        win->setActive(false);
-        
+        window.clear(monitor->getBorder());
+        //window.draw(border);
+        window.draw(sprite);
+        window.display();
+        window.setActive(false);
         delete scr;
-        boost::this_thread::yield();
     }
-    
-    if (win->isOpen())
-        win->close();
-
+    return 0;
 }
 
 
-void keyGuy(std::shared_ptr<cpu::keyboard::GKeyboard> gkey)
-{
-     sf::RenderWindow win(sf::VideoMode(256, 92),"DCPU-16 Keyboard");
-     win.setKeyRepeatEnabled(false);
-
-     while(running && win.isOpen()) {
-        sf::Event event;
-        while (win.pollEvent(event)) {
-            bool keyDown = false;
-            bool key = false;
-            unsigned char c= 0;
-            if (event.type == sf::Event::Closed) {
-                win.close();
-                break;
-           
-            }
-            
-            if (event.type == sf::Event::KeyPressed) {
-                keyDown = true;
-                key = true;
-            } else if (event.type == sf::Event::KeyReleased ) {
-                key = true;
-            }
-
-            if (!key)
-                continue;
-
-            // Process keycode
-            switch (event.key.code) {
-            case sf::Keyboard::Escape:
-                gkey->pushKeyEvent(keyDown, cpu::keyboard::SCANCODES::ESC);
-                break;
-
-            case sf::Keyboard::Return:
-                gkey->pushKeyEvent(keyDown, cpu::keyboard::SCANCODES::RETURN);
-                break;
-
-            case sf::Keyboard::Insert:
-                gkey->pushKeyEvent(keyDown, cpu::keyboard::SCANCODES::INSERT);
-                break;
-
-            case sf::Keyboard::Delete:
-                gkey->pushKeyEvent(keyDown, cpu::keyboard::SCANCODES::DELETE);
-                break;
-
-            case sf::Keyboard::Back: // BackSpace
-                gkey->pushKeyEvent(keyDown, 
-                        cpu::keyboard::SCANCODES::BACKSPACE);
-                break;
-
-            case sf::Keyboard::Up:
-                gkey->pushKeyEvent(keyDown, 
-                        cpu::keyboard::SCANCODES::ARROW_UP);
-                break;
-            
-            case sf::Keyboard::Down:
-                gkey->pushKeyEvent(keyDown, 
-                        cpu::keyboard::SCANCODES::ARROW_DOWN);
-                break;
-
-            case sf::Keyboard::Left:
-                gkey->pushKeyEvent(keyDown, 
-                        cpu::keyboard::SCANCODES::ARROW_LEFT);
-                break;
-            
-            case sf::Keyboard::Right:
-                gkey->pushKeyEvent(keyDown, 
-                        cpu::keyboard::SCANCODES::ARROW_RIGHT);
-                break;
-            
-            case sf::Keyboard::Space:
-                gkey->pushKeyEvent(keyDown, ' ');
-                break;
-            
-            case sf::Keyboard::A:
-            case sf::Keyboard::B:
-            case sf::Keyboard::C:
-            case sf::Keyboard::D:
-            case sf::Keyboard::E:
-            case sf::Keyboard::F:
-            case sf::Keyboard::G:
-            case sf::Keyboard::H:
-            case sf::Keyboard::I:
-            case sf::Keyboard::J:
-            case sf::Keyboard::K:
-            case sf::Keyboard::L:
-            case sf::Keyboard::M:
-            case sf::Keyboard::N:
-            case sf::Keyboard::O:
-            case sf::Keyboard::P:
-            case sf::Keyboard::Q:
-            case sf::Keyboard::R:
-            case sf::Keyboard::S:
-            case sf::Keyboard::T:
-            case sf::Keyboard::U:
-            case sf::Keyboard::V:
-            case sf::Keyboard::W:
-            case sf::Keyboard::X:
-            case sf::Keyboard::Y:
-            case sf::Keyboard::Z:
-                c = event.key.code - sf::Keyboard::A;
-                c += (event.key.shift) ? 'A' : 'a';
-                gkey->pushKeyEvent(keyDown, c);
-                break;
-           
-            default:
-                ;
-            }
-        }
-
-        win.clear();
-
-        win.display();
-     }
-
-     if (win.isOpen())
-         win.close();
-
-}

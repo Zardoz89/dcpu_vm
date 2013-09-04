@@ -51,6 +51,14 @@ public:
             return HEIGHT;
     }
     
+    /**
+     * @brief is the LEM1803 emulating the LEM1802 ?
+     */
+    bool isEmulating()
+    {
+        return emulation_mode;
+    } 
+    
     virtual unsigned int phyWidth() const {return WIDTH;}
     virtual unsigned int phyHeight() const {return HEIGHT;}
 

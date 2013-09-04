@@ -6,10 +6,10 @@ namespace cpu {
 enum basic_opcodes {
     SPECIAL = 0X00,
     SET     = 0X01,
-    ADD	    = 0X02,
-    SUB	    = 0X03,
-    MUL	    = 0X04,
-    MLI	    = 0X05,
+    ADD        = 0X02,
+    SUB        = 0X03,
+    MUL        = 0X04,
+    MLI        = 0X05,
     DIV     = 0x06,
     DVI     = 0x07,
     MOD     = 0x08,
@@ -21,7 +21,7 @@ enum basic_opcodes {
     ASR     = 0x0E,   
     SHL     = 0x0F,
     
-    IFB		= 0X10,
+    IFB        = 0X10,
     IFC     = 0x11,
     IFE     = 0x12,
     IFN     = 0x13,
@@ -33,19 +33,19 @@ enum basic_opcodes {
     NONB1   = 0x18,
     NONB2   = 0x19,
     
-    ADX	    = 0X1A,
+    ADX        = 0X1A,
     SBX     = 0x1B,
     
     NONB3   = 0x1C,
     NONB4   = 0x1D,
     
     
-    STI	    = 0X1E,
+    STI        = 0X1E,
     STD     = 0x1F,
 };
 
 enum special_opcodes {
-    N_A	    = 0x00,
+    N_A        = 0x00,
     JSR     = 0x01,
     
     NONS1   = 0x02,
@@ -54,9 +54,9 @@ enum special_opcodes {
     NONS4   = 0x05,
     NONS5   = 0x06,
     
-    HCF	    = 0x07,
+    HCF        = 0x07,
     
-    INT	    = 0X08,
+    INT        = 0X08,
     IAG     = 0x09,
     IAS     = 0x0A,
     RFI     = 0x0B,
@@ -67,7 +67,7 @@ enum special_opcodes {
     NONS8   = 0x0F,
     
     
-    HWN	    = 0X10,
+    HWN        = 0X10,
     HWQ     = 0x11,
     HWI     = 0x12,
 };
@@ -77,31 +77,31 @@ enum special_opcodes {
  */
 enum operator_type {
     REG_A = 0x00,
-    REG_B,
-    REG_C,
-    REG_X,
-    REG_Y,
-    REG_Z,
-    REG_I,
-    REG_J,
+    REG_B = 0x01,
+    REG_C = 0x02,
+    REG_X = 0x03,
+    REG_Y = 0x04,
+    REG_Z = 0x05,
+    REG_I = 0x06,
+    REG_J = 0x07,
     
     PTR_A = 0x08,
-    PTR_B,
-    PTR_C,
-    PTR_X,
-    PTR_Y,
-    PTR_Z,
-    PTR_I,
-    PTR_J,
+    PTR_B = 0x09,
+    PTR_C = 0x0A,
+    PTR_X = 0x0B,
+    PTR_Y = 0x0C,
+    PTR_Z = 0x0D,
+    PTR_I = 0x0E,
+    PTR_J = 0x0F,
     
     PTR_NW_A = 0x10,
-    PTR_NW_B,
-    PTR_NW_C,
-    PTR_NW_X,
-    PTR_NW_Y,
-    PTR_NW_Z,
-    PTR_NW_I,
-    PTR_NW_J,
+    PTR_NW_B = 0x11,
+    PTR_NW_C = 0x12,
+    PTR_NW_X = 0x13,
+    PTR_NW_Y = 0x14,
+    PTR_NW_Z = 0x15,
+    PTR_NW_I = 0x16,
+    PTR_NW_J = 0x17,
     
     STACK = 0x18,
     PEEK = 0x19,
@@ -118,29 +118,11 @@ enum operator_type {
     LIT_E = 0x3F
 };
 
-/**
- * Instrucction extraction
- * Take directly from Benedeck code
- */
-union opword {
-    uint16_t raw;
-    struct {
-        uint8_t o : 5;
-        uint8_t b : 5;
-        uint8_t a : 6;
-    } __attribute__ ( (__packed__) ) basic;
-    struct {
-        uint8_t zeros : 5;
-        uint8_t o     : 5;
-        uint8_t a     : 6;
-    } __attribute__ ( (__packed__) ) nonbasic;
-};
 
+// OpCode and parameters extracction
 #define GET_OPCODE(x)       ((x)&0x1F)
-#define GET_SPECIAL_OP(x)   (((x)&0x03EF)>> 5)
-
-#define GET_A(x)            (((x)&0xFC00)>> 10)
-#define GET_B(x)            (((x)&0x03EF)>> 5)
+#define GET_A(x)            ((x) >> 10)
+#define GET_B(x)            (((x)&0x03E0)>> 5)
 
 } // END OF namespace
 
