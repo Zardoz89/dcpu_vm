@@ -203,7 +203,7 @@ int main (int argc, char **argv)
                 {
                     switch (event.key.code)
                     {
-                        case sf::Keyboard::Back: //BackSpace:
+                        case sf::Keyboard::BackSpace:
                             // NOTE: Changes between SFML 2.0 and 2.1
                             keycode=keyboard::BACKSPACE;
                             break;
