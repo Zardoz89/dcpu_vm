@@ -25,13 +25,13 @@ Just type "dcpu-wm --help" to get these infos
 TODO
 ----
 
--- Finnish CGM code
--- Several optimisations on rendering monitor loops
--- Rename variables/namespaces with a convention
--- Debug/Step mode with disassembler
--- Better keyboard support
--- DCPU manager and separated graphic rendering threads
--- Correct bad english
+ - Finnish CGM code
+ - Several optimisations on rendering monitor loops
+ - Rename variables/namespaces with a convention
+ - Debug/Step mode with disassembler
+ - Better keyboard support
+ - DCPU manager and separated graphic rendering threads
+ - Correct bad english
 
 
 
