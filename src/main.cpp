@@ -262,12 +262,14 @@ void run() {
 
     auto keyboard = make_shared<keyboard::GKeyboard>();
     cpu->attachHardware (keyboard);
-    //keyboard->pushKeyEvent(true, keyboard::KEYCODES::ARROW_LEFT);
-    //keyboard->pushKeyEvent(false, keyboard::KEYCODES::ARROW_LEFT);
     keyboard->pushKeyEvent(true, 'h');
+    keyboard->pushKeyEvent(false, 'h');
     keyboard->pushKeyEvent(true, 'o');
+    keyboard->pushKeyEvent(false, 'o');
     keyboard->pushKeyEvent(true, 'l');
+    keyboard->pushKeyEvent(false, 'l');
     keyboard->pushKeyEvent(true, 'a');
+    keyboard->pushKeyEvent(false, 'a');
 
     cpu->reset();
     cpu->loadProgram (data, size);

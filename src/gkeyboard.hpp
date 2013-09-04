@@ -14,20 +14,27 @@ namespace keyboard {
 enum COMMANDS { /// A register commands
     CLEAR_BUFFER,
     POP,
-    IS_PRESSED,
-    SET_INTERRUPT,
+    IS_PRESSED, //PUSH
+    SET_MSG,
+    GET_STATUS,
+    SET_STATUS
 };
 
-enum KEYCODES {
+enum SCANCODES {
   BACKSPACE = 0x10,
   RETURN,
   INSERT,
   DELETE,
+
+  ESC = 0x1B,
+  
   // 0x20-0x7f: ASCII characters
+  
   ARROW_UP = 0x80,
   ARROW_DOWN,
   ARROW_LEFT,
   ARROW_RIGHT,
+  
   SHIFT = 0x90,
   CONTROL,
 };
@@ -41,6 +48,8 @@ public:
     static const uint32_t ID                = 0x30CF7406;
     static const uint16_t REV               = 0x0001;
     static const uint32_t MANUFACTURER      = 0x00000000;
+
+    static const size_t BUFFER_SIZE         = 64;
 
     uint32_t getId() {
         return ID;
@@ -62,9 +71,9 @@ public:
      * Push to the keyboard buffer a keycode
      * @param keydown True if the key is being pressed down. False is being
      * released
-     * @param keycode A keycode from 0 to 255
+     * @param scancode A scancode from 0 to 255
      */
-    void pushKeyEvent(bool keydown, unsigned char keycode);
+    void pushKeyEvent(bool keydown, unsigned char scancode);
 
     size_t bufferSize()
     {
@@ -77,8 +86,8 @@ public:
 protected:
     std::deque<uint16_t> keybuffer;
 
-    int16_t msg;
-    bool event;
+    int16_t msg;        /// Interrupt Msg
+    bool event;         /// Was a keyboard event ?
 
 private:
 };
