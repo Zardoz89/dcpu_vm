@@ -1,4 +1,3 @@
-#pragma once
 #ifndef _CGM_HPP
 #define _CGM_HPP
 
@@ -8,7 +7,6 @@
 #include "monitor.hpp"
 
 #include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Texture.hpp>
 
 namespace cpu {
 
@@ -17,19 +15,19 @@ namespace cgm {
 enum COMMANDS { /// A register commands
     MEM_BITPLANE_SCREEN,
     MEM_ATTRIBUTE_SCREEN,
-    MEM_MAP_PALETTE,
+    MEM_MAP_PALETTE, 
     SET_BORDER_COLOR,
     SET_VIDEO_MODE,
     GET_VIDEO_MODE,
     MEM_DUMP_PALETTE,
     MEM_DUMP_FONT,
-    MEM_MAP_FONT,
+    MEM_MAP_FONT
 };
 
 /**
  * @brief CGM 1084 monitor that uses SFML
  */
-class CGM : public cpu::IHardware, public cpu::AbstractMonitor {
+class CGM : public cpu::AbstractMonitor {
 public:
     CGM();
     virtual ~CGM();
@@ -74,7 +72,7 @@ public:
     
     virtual void attachTo (DCPU* cpu, size_t index);
     
-    virtual sf::Image* updateScreen() const;
+    virtual const sf::Texture& getScreen();
 
     virtual sf::Color getBorder() const;
 
@@ -93,6 +91,7 @@ protected:
 
     uint_fast32_t blink;            /// Counter for blinking
     uint_fast32_t blink_max;        /// How many count to blink
+	sf::Texture texture;
    
 
 };

@@ -8,12 +8,11 @@
 
 #include <SFML/Graphics.hpp>
 
-
-#define LEGACY_MODE      255
-
 namespace cpu {
 
+namespace lem {
 
+static const uint16_t LEGACY_MODE = 255;
 /**
  * @brief LEM1802 that uses SFML
  */
@@ -74,6 +73,8 @@ protected:
 
 };
 
-}
+} // end of namespace len
+
+} // end of namespace cpu
 
 #endif // _LEM1802_HPP

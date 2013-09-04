@@ -7,6 +7,8 @@
 
 namespace cpu {
 
+namespace lem {
+
     const uint16_t Lem1802::def_font_map[128*2] = {     /// Default font map
 #       include "lem1802_font.inc"
     };
@@ -242,4 +244,6 @@ namespace cpu {
         this->enable = enable;
     }
 
-} // END of NAMESPACE
+} // END of NAMESPACE lem
+
+} // END of NAMESPACE cpu

@@ -7,18 +7,28 @@
 #include <chrono>
 
 #include "config.hpp"
-#include <chrono>
-
 #include "dcpu_opcodes.hpp"
 #include "dcpu.hpp"
 #include "disassembler.hpp"
-
 #include "gclock.hpp"
 #include "gkeyboard.hpp"
 #include "lem1802.hpp"
 #include "lem1803.hpp"
+#include "cgm.hpp"
 
 using namespace cpu;
+
+void print_help(std::string program_name)
+{
+	std::cout << "usage : " << program_name << " [--options] <dcpu16-exe>\n";
+	std::cout << "--------------------------------------------------------\n";
+	std::cout << "  options:" << std::endl;
+	std::cout << "    --monitor=<monitor_name> : use the following monitor\n";
+	std::cout << "            1802 -> Lem1802 (default) [c]" << std::endl;
+	std::cout << "            1803 -> Lem1803 [c]" << std::endl;
+	std::cout << "            cgm -> Colour Graphics Monitor" << std::endl;
+	std::cout << "            [c] : compatible with Lem1802 0x10c programs\n";
+}
 
 int main (int argc, char **argv)
 {
@@ -31,7 +41,7 @@ int main (int argc, char **argv)
     
     
     if (argc <= 1) {
-        std::cerr << "Missing input file\n";
+        std::cerr << "Missing input file, type --help for list options\n";
         return 0;
     }
 	for (int k=1; k < argc; k++) //parse arguments
@@ -49,10 +59,18 @@ int main (int argc, char **argv)
 					std::cout << opt << std::endl;
 				}
 			}
+			else if (opt=="--help"||opt=="-help"||opt=="-h")
+			{
+				std::string pn = argv[0];
+				pn.erase(0,pn.find_last_of('\\')+1); //windows
+				pn.erase(0,pn.find_last_of('/')+1); //linux
+				print_help(pn);
+				return 0;
+			}
 			else
 			{
-				std::cout << "Warning unknow option ";
-				std::cout << opt << std::endl;
+				std::cout << "Warning: unknow option ";
+				std::cout << opt << " it will be ignored !" << std::endl;
 			}
 		}
 		else
@@ -100,7 +118,7 @@ int main (int argc, char **argv)
     size /= 2;
     
 	
-	
+	sf::String window_title="dcpu_vm";
     auto dcpu = std::make_shared<DCPU>();
 	auto gclock = std::make_shared<Generic_Clock>();
 	auto gkeyboard = std::make_shared<keyboard::GKeyboard>();
@@ -108,16 +126,19 @@ int main (int argc, char **argv)
 	switch (monitor_type)
 	{
 		case 1:
-			monitor=std::make_shared<Lem1803>();
+			monitor=std::make_shared<lem::Lem1803>();
 			std::cout << "Use Lem1803 Monitor" << std::endl;
+			window_title = "Lem 1803";
 			break;
 		case 2:
-			monitor=std::make_shared<Lem1803>();
+			monitor=std::make_shared<cgm::CGM>();
 			std::cout << "Use CGM Monitor" << std::endl;
+			window_title = "CGM";
 			break;
 		default :
-			monitor=std::make_shared<Lem1802>();
+			monitor=std::make_shared<lem::Lem1802>();
 			std::cout << "Use Lem1802 Monitor" << std::endl;
+			window_title = "Lem 1802";
 			break;
 	}
 	
@@ -134,7 +155,7 @@ int main (int argc, char **argv)
 	float border_add = monitor->borderSize()*2;
     window.create(sf::VideoMode(monitor->phyWidth()+border_add,
 								monitor->phyHeight()+border_add),
-								"dcpu_vm");
+								window_title);
     window.setFramerateLimit(60);
 	
 	
@@ -231,7 +252,7 @@ int main (int argc, char **argv)
 		border.setSize(sf::Vector2f(r_width,r_height));
 		border.setFillColor(monitor->getBorder());
 		
-		//For emulations modes
+		//For emulations modes and windows resizes
 		sf::FloatRect r(0,0,r_width,r_height);
 		window.setView(sf::View(r));
 		window.setActive(true);

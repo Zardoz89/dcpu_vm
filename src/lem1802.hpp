@@ -8,17 +8,17 @@
 #include "monitor.hpp" //base class AbstractMonitor
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Texture.hpp>
 
-
-#define MEM_MAP_SCREEN   0
-#define MEM_MAP_FONT     1
-#define MEM_MAP_PALETTE  2
-#define SET_BORDER_COLOR 3
-#define MEM_DUMP_FONT    4
-#define MEM_DUMP_PALETTE 5
 
 namespace cpu {
+
+namespace lem {
+static const uint16_t MEM_MAP_SCREEN        = 0;
+static const uint16_t MEM_MAP_FONT          = 1;
+static const uint16_t MEM_MAP_PALETTE       = 2;
+static const uint16_t SET_BORDER_COLOR      = 3;
+static const uint16_t MEM_DUMP_FONT         = 4;
+static const uint16_t MEM_DUMP_PALETTE      = 5;
 
 /**
  * @brief LEM1802 that uses SFML
@@ -85,7 +85,7 @@ public:
     const static uint16_t def_palette_map[16];   /// Default palette
     const static uint16_t def_font_map[128*2];   /// Default fontmap
 	
-	virtual const sf::Texture& getScreen() const
+	virtual const sf::Texture& getScreen()
 	{
 	   return texture;
 	}
@@ -145,6 +145,8 @@ protected:
     uint8_t* screen;
 };
 
-}
+}//end of lem NAMESPACE
+
+}//end of cpu NAMESPACE
 
 #endif // _LEM1802_HPP

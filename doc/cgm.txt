@@ -1,0 +1,245 @@
+WIP !
+ 
+DCPU-16 Hardware Info:
+    Name: CGM1084 - Colour Graphics Monitor
+    ID: 0x7349043c, version: 0x1084
+    Manufacturer: 0x0ca0fe84 (INVESTRONICS)
+ 
+ 
+Description:
+    The CGM1084 is a 256x192 pixel colour display compatible with the DCPU-16.
+    It have some display modes. Modes 0 to 3 uses a bit-plane of 256x192 to set 
+    pixels in on/off state. Modes 4 and 5 are text only modes.
+    The mode 0, 1 and 2 uses an attribute cell grid to set the color attributes
+    of the foreground (on pixel) and background (off pixel) of groups of pixels
+    in screen. Additionally each cell in mode 0 and 1, have to blink and 
+    underline flags.
+    The mode 3, is a B&W mode were only two colors can be configured for the all
+    screen.
+    The modes 4 and 5 handles only text and have blink and underline attributes.
+    Can't access directly the pixels.
+    
+ 
+Interrupt behaviour:
+    When a HWI is received by the GCM1084, it reads the A register and does one
+    of the following actions:
+ 
+ 
+    0: MEM_BITPLANE_SCREEN
+       Reads the B register, and maps the video bitmap ram to DCPU-16 ram 
+       starting at address B. See below for a description of video ram.
+       If B is 0, the screen is disconnected.
+    1: MEM_ATTRIBUTE_SCREEN
+       Reads the B register, and maps the video attribute ram to DCPU-16 ram
+       starting at address B. See below for a description of video ram.
+       If B is 0, the screen is disconnected.
+    2: MEM_MAP_PALETTE
+       Reads the B register, and maps the palette ram to DCPU-16 ram starting
+       at address B. See below for a description of palette ram.
+       If B is 0, the default palette is used instead.
+    3: SET_BORDER_COLOR
+       Reads the B register, and sets the border colour to palette index
+       B & 0x1F
+    4: SET_VIDEO_MODE
+       Reads the B register, and sets the desired video mode. The only valid
+       mdoes are 0, 1, 2, 3, 4 and 5. Any other value will set video mode 0. 
+       Every time that the CGM is activated, the video mode is setted to 0.
+    5: GET_VIDEO_MODE
+       Set the B register value to the actual video mode.
+    6: MEM_DUMP_PALETTE
+       Reads the B register, and writes the default palette data to DCPU-16
+       ram starting at address B.       
+       Halts the DCPU-16 for 64 cycles
+    7: MEM_DUMP_FONT
+       Reads the B register, and writes the default font data, for the actual 
+       video mode, to the DCPU-16 ram starting at address B. It only works in
+       Text modes.
+       Halts the DCPU-16 for 64 cycles
+    8: MEM_MAP_FONT
+       Reads the B register, and maps the font ram to DCPU-16 ram starting
+       at address B. See below for a description of font ram. It only works in
+       Text modes.
+       If B is 0, the default font is used instead.
+ 
+ 
+Activation:
+    In order to get the CGM to work, you need to set the BITPLANE and ATTRIBUTE
+    pointers. When both pointer are setted, the screen will take 2 seconds to 
+    be ready to display.
+ 
+ 
+Video ram:
+    The CM1084 has no internal video ram, but rather relies on being assigned
+    an area of the DCPU-16 ram. This video ram is divided in two sections, a 
+    pixel bit-plane and a attribute map. The size of the bit-plane area is of 3072
+    words in graphics mode. The size of the attribute ram have a variable size 
+    that depends of the video mode.
+ 
+ 
+Video modes:
+    Mode 0: Graphics 
+       256x192 linear bit-plane, with 64x24 cells of 4x8 pixels.
+       64 colors palette.
+    Mode 1: Graphics
+       256x192 linear bit-plane, with 32x24 cells of 8x8 pixels.
+       64 colors palette.
+    Mode 2: Graphics
+       256x192 linear bit-plane, with 32x96 attribute cells of 8x2 pixels. 
+       64 colors palette.
+    Mode 3: Graphics
+       256x192 linear bit-plane. 2 colors selectable from the palette for
+       the all screen.
+    Mode 4: Text only
+       256x192 text mode of 64x24 cells of 4x8. 64 colors palette.
+    Mode 5: Text only
+       256x192 text mode of 32x24 cells of 8x8. 64 colors palette.
+ 
+ 
+Bit-plane ram:
+    The bit-plane section is a bit-plane of ON/OFF status of each pixel of the screen.
+    
+    Mode 0, 1, 2 and 3:
+    The bit-plane in this mode is linear, being the MSB bit of the first word,
+    the pixel (0,0), and the LSB bit of the same word, the pixel (0,15).
+ 
+    Text Modes:
+    Instead of a bitplane, the CGM expect to find a packed character matrix of 
+    64x24 in  mode 4, or 32x24 in mode 5. The packed character are in this
+    bit format :
+        CCCCCCCCcccccccc
+    The lowest octect (cccccccc) select the first character. The highest octect
+    (CCCCCCCC) select another character. For example, if the first word
+    contains 0x6F48, it will displayed in screen the characters 0x48 'H' and
+    0x6F 'o' being the 'H' in row 0, column 0 and 'o' in row 0, column 1.
+ 
+ 
+Attribute ram:
+    The attribute section describes the color of the foreground and background
+    of each cell. In Mode 3, only contains a word that defines the foreground
+    and background colors of the whole screen.
+ 
+    Mode 0, Mode 1 and Mode 2:
+    Each cell is defined by a word. Each word have this bit format:
+       15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+       -----------------------------------------------
+        0  0  0  0  f  f  f  f  f  f  b  b  b  b  b  b
+    ffffff and bbbbbb select which foreground and background color to use 
+    from the palette.
+    Note: Further extensions to this standard may use the top two bits. 
+    For compatibility with future devices, keep them at 0.
+ 
+    Mode 3:
+    The attribute section contains only a word, were is stored the foreground
+    and background colors of the whole screen. These word have this bit format:
+       15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+       -----------------------------------------------
+        0  0  0  0  f  f  f  f  f  f  b  b  b  b  b  b
+    ffffff and bbbbbb select which foreground and background color to use 
+    from the palette.
+    Note: Further extensions to this standard may use the top four bits. 
+    For compatibility with future devices, keep them at 0.
+ 
+    Text modes:
+    Each cell is defined by a word. Each word have this bit format:
+       15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+       -----------------------------------------------
+        0  0  U  B  f  f  f  f  f  f  b  b  b  b  b  b
+    ffffff and bbbbbb select which foreground and background color to use 
+    from the palette. If B (bit 12) is set the cell foreground color will 
+    blink. If the U (bit 13) is set, the cell will be underlined. An underlined
+    cell will show a row of active pixels in his bottom.
+    Note: Further extensions to this standard may use the top two bits. 
+    For compatibility with future devices, keep them at 0.
+  
+ 
+Palette ram:
+    The CGM1084 has a default built in palette. If the user chooses, they may
+    supply their own palette by mapping a 64 words memory region with one word
+    per palette entry in the 64 color palette.
+    Each color entry has the following bit format (in LSB-0):
+       15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+       -----------------------------------------------
+        0  r  r  r  r  r  g  g  g  g  g  b  b  b  b  b
+    Where r, g, b are the red, green and blue channels. A higher value means a
+    lighter color.
+    So the CGM1084 can select 64 colours from a set of 32768.
+ 
+Font ram:
+    The CGM1084 have default fonts for both text modes. If the user chooses, 
+    they may supply their own font by mapping 512 or 1024 words of memory 
+    region.
+    In mode 4, the font type uses a grid of 4x8 pixels defined by two words. 
+    Each octet of each word represent a column of 8 pixels, being
+    the word 0, MSB octect, the first column. For example, the character F 
+    looks like this:
+        word0 = 1111111100001001
+        word1 = 0000100100000000
+    Or, split into octets:
+        word0 = 11111111 /
+                00001001
+        word1 = 00001001 /
+                00000000
+    In mode 5, the font type uses a grid of 8x8 pixels defined by four words.
+    Each octet of each word represent a row of 8 pixels, being the word 0, 
+    MSB octect the first row. For example to display the character F :
+        word0 = 0000000001111110
+        word1 = 0100000001111100
+        word2 = 0100000001000000
+        word3 = 0100000000000000
+    Or, split into octets:
+        word0 = 00000000 \
+                01111110
+        word1 = 01000000 \
+                01111100
+        word2 = 01000000 \
+                01000000
+        word3 = 01000000 \
+                00000000
+   
+ 
+Total RAM usage:
+Mode 0:
+    + (256*192) / 16              Bitmap RAM
+    + 64x24                       Attribute RAM
+    + 64                          Palette RAM (optional)
+    ---------------------
+    4672 words
+ 
+Mode 1:
+    + (256*192) / 16              Bitmap RAM
+    + 32x24                       Attribute RAM
+    + 64                          Palette RAM (optional)
+    ---------------------
+    3904 words
+ 
+Mode 2
+    + (256*192) / 16              Bitmap RAM
+    + 32x96                       Attribute RAM
+    + 64                          Palette RAM (optional)
+    ---------------------
+    6208 words
+ 
+Mode 3
+    + (256*192) / 16              Bitmap RAM
+    + 1                           Attribute RAM
+    + 64                          Palette RAM (optional)
+    ---------------------
+    3137 words
+ 
+Mode 4
+    + (64x24) / 2                 Packed Character RAM
+    + 64x32                       Attribute RAM
+    + 64                          Palette RAM (optional)
+    ---------------------
+    2368 words
+ 
+    Font map size : 2*256 = 512 words
+ 
+Mode 5
+    + (32x24) / 2                 Packed Character RAM
+    + 32x24                       Attribute RAM
+    + 64                          Palette RAM (optional)
+    ---------------------
+    1216 words
+ 
+    Font map size : 4*256 = 1024 words

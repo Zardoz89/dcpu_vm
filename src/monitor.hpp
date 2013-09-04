@@ -38,7 +38,7 @@ class AbstractMonitor : public cpu::IHardware{
 		/**
 		 * Generates a sf::Texture with the actual screen state
 		 */
-		virtual const sf::Texture& getScreen() const = 0;
+		virtual const sf::Texture& getScreen() = 0;
 
 		/**
 		 * Returns the Border color
