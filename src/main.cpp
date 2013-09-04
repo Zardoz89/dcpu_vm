@@ -23,6 +23,11 @@ void print_help(std::string program_name)
 	std::cout << "usage : " << program_name << " [--options] <dcpu16-exe>\n";
 	std::cout << "--------------------------------------------------------\n";
 	std::cout << "  options:" << std::endl;
+	std::cout << "    --debug                  : start in debug mode\n";
+	std::cout << "            F1  : next step" << std::endl;
+	std::cout << "            F2  : print registers" << std::endl;
+	std::cout << "            F3  : reset (no need debug mode)" << std::endl;
+	std::cout << "            F12 : switch debug/run" << std::endl;
 	std::cout << "    --monitor=<monitor_name> : use the following monitor\n";
 	std::cout << "            1802 -> Lem1802 (default) [c]" << std::endl;
 	std::cout << "            1803 -> Lem1803 [c]" << std::endl;
@@ -35,6 +40,7 @@ int main (int argc, char **argv)
 
     std::string filename;
 	int monitor_type=0; 
+	bool debug=false;
 	size_t size = 0;
 	uint16_t* data;
     std::ifstream binfile;
@@ -66,6 +72,10 @@ int main (int argc, char **argv)
 				pn.erase(0,pn.find_last_of('/')+1); //linux
 				print_help(pn);
 				return 0;
+			}
+			else if (opt=="--debug")
+			{
+				debug=true;
 			}
 			else
 			{
@@ -224,6 +234,44 @@ int main (int argc, char **argv)
 						case sf::Keyboard::LControl:
 							keycode=keyboard::CONTROL;
 							break;
+						case sf::Keyboard::F1:
+							if (debug && pressed)
+							{
+							  std::cout << disassembly(dcpu->getMem()
+													+dcpu->GetPC(),3);
+							  std::cout << std::endl;
+							  dcpu->step();
+							}
+							break;
+						case sf::Keyboard::F2:
+							if (debug && !pressed)
+							{
+							  printf("A : 0x%04X | B : 0x%04X | C : 0x%04X\n",
+												dcpu->ra,dcpu->rb,dcpu->rc);
+							  printf("X : 0x%04X | Y : 0x%04X | Z : 0x%04X\n",
+												dcpu->rx,dcpu->ry,dcpu->rz);
+							  printf("I : 0x%04X | J : 0x%04X | IA: 0x%04X\n",
+												dcpu->ri,dcpu->rj,dcpu->ria);
+							  printf("PC: 0x%04X | SP: 0x%04X | EX: 0x%04X\n",
+												dcpu->rpc,dcpu->rsp,dcpu->rex);
+							}
+							break;
+						case sf::Keyboard::F3: 
+							//No need to be in debug mode for this one
+							if (!pressed)
+							{
+								std::cout << "Reset dcpu" << std::endl;
+								dcpu->reset();
+								dcpu->loadProgram (data, size);
+							}
+							break;
+						case sf::Keyboard::F12:
+							if (!pressed)
+							{
+								debug = !debug;
+							}
+							break;
+							
 						default: break;
 					}
 				}
@@ -237,12 +285,14 @@ int main (int argc, char **argv)
 		monitor->prepareRender();
 		const float delta=clock.getElapsedTime().asSeconds();
 		clock.restart();
-	    unsigned int tick_needed=(float)dcpu->cpu_clock*delta;
+		unsigned int tick_needed=(float)dcpu->cpu_clock*delta;
 		
-		if (tick_needed > dcpu->cpu_clock/60)
-		   tick_needed = dcpu->cpu_clock/60;
-		dcpu->tick(tick_needed);
-		
+		if (!debug)
+		{
+			if (tick_needed > dcpu->cpu_clock/60)
+				tick_needed = dcpu->cpu_clock/60;
+			dcpu->tick(tick_needed);
+		}
 		border_add = monitor->borderSize();
 		sprite.setPosition(sf::Vector2f(border_add,border_add));
 		border_add *=2;
