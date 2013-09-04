@@ -44,6 +44,7 @@ bool running = true;
 void step();
 void run();
 
+void keyGuy(std::shared_ptr<cpu::keyboard::GKeyboard> gkey);
 void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::AbstractMonitor> mon);
 
 //void cpu_in_thread(int n);
@@ -262,7 +263,7 @@ void run() {
 
     auto keyboard = make_shared<keyboard::GKeyboard>();
     cpu->attachHardware (keyboard);
-    keyboard->pushKeyEvent(true, 'h');
+    /*keyboard->pushKeyEvent(true, 'h');
     keyboard->pushKeyEvent(false, 'h');
     keyboard->pushKeyEvent(true, 'o');
     keyboard->pushKeyEvent(false, 'o');
@@ -270,7 +271,8 @@ void run() {
     keyboard->pushKeyEvent(false, 'l');
     keyboard->pushKeyEvent(true, 'a');
     keyboard->pushKeyEvent(false, 'a');
-
+    */
+    
     cpu->reset();
     cpu->loadProgram (data, size);
     
@@ -284,6 +286,9 @@ void run() {
     win2.setActive(false);
     boost::thread thr_render2 (renderGuy, &win2, 
             std::static_pointer_cast<cpu::AbstractMonitor>(screen2));
+
+
+    boost::thread thr_gkey (keyGuy , keyboard);
     
     while (running ) { //&& wincgm.isOpen()) {
         t2 =  high_resolution_clock::now(); 
@@ -294,7 +299,7 @@ void run() {
         auto delta = duration_cast<chrono::nanoseconds>(t2 - t);
         auto rest = nanoseconds(1000000000/cpu->cpu_clock)-delta; 
 
-        if ((cpu->getTotCycles() % 100000) == 0) { 
+        if ((cpu->getTotCycles() % 200000) == 0) { 
             // Not show running speed every clock tick 
             double p = nanoseconds(1000000000/cpu->cpu_clock).count() /
                 (double)(delta.count() );//+ rest.count());
@@ -311,6 +316,9 @@ void run() {
 
     if (thr_render2.joinable())
         thr_render.join();
+    
+    if (thr_gkey.joinable())
+        thr_gkey.join();
 
     cout << "Finish" << endl;
 
@@ -372,3 +380,123 @@ void renderGuy(sf::RenderWindow* win, std::shared_ptr<cpu::AbstractMonitor> mon)
 
 }
 
+
+void keyGuy(std::shared_ptr<cpu::keyboard::GKeyboard> gkey)
+{
+     sf::RenderWindow win(sf::VideoMode(256, 92),"DCPU-16 Keyboard");
+     win.setKeyRepeatEnabled(false);
+
+     while(running && win.isOpen()) {
+        sf::Event event;
+        while (win.pollEvent(event)) {
+            bool keyDown = false;
+            bool key = false;
+            unsigned char c= 0;
+            if (event.type == sf::Event::Closed) {
+                win.close();
+                break;
+           
+            }
+            
+            if (event.type == sf::Event::KeyPressed) {
+                keyDown = true;
+                key = true;
+            } else if (event.type == sf::Event::KeyReleased ) {
+                key = true;
+            }
+
+            if (!key)
+                continue;
+
+            // Process keycode
+            switch (event.key.code) {
+            case sf::Keyboard::Escape:
+                gkey->pushKeyEvent(keyDown, cpu::keyboard::SCANCODES::ESC);
+                break;
+
+            case sf::Keyboard::Return:
+                gkey->pushKeyEvent(keyDown, cpu::keyboard::SCANCODES::RETURN);
+                break;
+
+            case sf::Keyboard::Insert:
+                gkey->pushKeyEvent(keyDown, cpu::keyboard::SCANCODES::INSERT);
+                break;
+
+            case sf::Keyboard::Delete:
+                gkey->pushKeyEvent(keyDown, cpu::keyboard::SCANCODES::DELETE);
+                break;
+
+            case sf::Keyboard::Back: // BackSpace
+                gkey->pushKeyEvent(keyDown, 
+                        cpu::keyboard::SCANCODES::BACKSPACE);
+                break;
+
+            case sf::Keyboard::Up:
+                gkey->pushKeyEvent(keyDown, 
+                        cpu::keyboard::SCANCODES::ARROW_UP);
+                break;
+            
+            case sf::Keyboard::Down:
+                gkey->pushKeyEvent(keyDown, 
+                        cpu::keyboard::SCANCODES::ARROW_DOWN);
+                break;
+
+            case sf::Keyboard::Left:
+                gkey->pushKeyEvent(keyDown, 
+                        cpu::keyboard::SCANCODES::ARROW_LEFT);
+                break;
+            
+            case sf::Keyboard::Right:
+                gkey->pushKeyEvent(keyDown, 
+                        cpu::keyboard::SCANCODES::ARROW_RIGHT);
+                break;
+            
+            case sf::Keyboard::Space:
+                gkey->pushKeyEvent(keyDown, ' ');
+                break;
+            
+            case sf::Keyboard::A:
+            case sf::Keyboard::B:
+            case sf::Keyboard::C:
+            case sf::Keyboard::D:
+            case sf::Keyboard::E:
+            case sf::Keyboard::F:
+            case sf::Keyboard::G:
+            case sf::Keyboard::H:
+            case sf::Keyboard::I:
+            case sf::Keyboard::J:
+            case sf::Keyboard::K:
+            case sf::Keyboard::L:
+            case sf::Keyboard::M:
+            case sf::Keyboard::N:
+            case sf::Keyboard::O:
+            case sf::Keyboard::P:
+            case sf::Keyboard::Q:
+            case sf::Keyboard::R:
+            case sf::Keyboard::S:
+            case sf::Keyboard::T:
+            case sf::Keyboard::U:
+            case sf::Keyboard::V:
+            case sf::Keyboard::W:
+            case sf::Keyboard::X:
+            case sf::Keyboard::Y:
+            case sf::Keyboard::Z:
+                c = event.key.code - sf::Keyboard::A;
+                c += (event.key.shift) ? 'A' : 'a';
+                gkey->pushKeyEvent(keyDown, c);
+                break;
+           
+            default:
+                ;
+            }
+        }
+
+        win.clear();
+
+        win.display();
+     }
+
+     if (win.isOpen())
+         win.close();
+
+}
