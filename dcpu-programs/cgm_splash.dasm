@@ -5,7 +5,7 @@
         HWQ I
         IFE B, 0x40E4
             IFE A, 0x1D9D
-                SET [DEV_SLEEP], I
+                SET [DEV_SLEEP], I ;unknow not used
         IFE B, 0x7349     
             IFE A, 0x043C
                 SET [DEV_DISPLAY], I
@@ -19,25 +19,25 @@
             SET PC, map_hardware
      
     :init_monitor
-        SET A, 0
-        SET B, 0x8000
+        SET A, 0      ;MEM_BITPLANE_SCREEN
+        SET B, 0x8000 ;bit plane memory map
             HWI [DEV_DISPLAY]
-        SET A, 1
-        SET B, 0x7000
+        SET A, 1      ;MEM_ATTRIBUTE_SCREEN
+        SET B, 0x7000 ;attribute memory map
             HWI [DEV_DISPLAY]
 
     :splash_render
         SET I, 0
         SET J, 0x7000
         :loop_attributes
-        STI [J], [I + ATTRIBUTES]
-        IFL I, 128
+        STI [J], [I + ATTRIBUTES] ;j=i++ + ATTRIBUTES
+        IFL I, 128  ; if i < 128 ;why not set direct value to I
            SET PC, loop_attributes 
             
-        SET I, 0
-        SET J, 0x8000
+        SET I, 0 ;i=0
+        SET J, 0x8000 ;j=0x8000
         :loop_bitplane
-        STI [J], [I + BITPLANE]
+        STI [J], [I + BITPLANE]j=i++ + BITPLANE
         IFL I, 128
            SET PC, loop_bitplane 
     
@@ -49,7 +49,7 @@
         ifg Z, 1
         set PC, wait_loop
     
-        set A, 4
+        set A, 4 ;SET_VIDEO_MODE
         add B, 1
         mod B, 6
             HWI [DEV_DISPLAY]

@@ -1,8 +1,9 @@
 DCPU VM
 =======
 
-Based on Benedek Vartok VM (https://bitbucket.org/benedek/dcpu-16/overview)
-Base code : Zardoz (https://github.com/Zardoz89/dcpu_vm)
+  - Base code : Zardoz (https://github.com/Zardoz89/dcpu_vm)
+  - Based on Benedek Vartok VM (https://bitbucket.org/benedek/dcpu-16/overview)
+  
 
 COMPILING
 ---------
@@ -19,7 +20,11 @@ This project fork is created to run perfectly on windows without boost
 RUN
 ---
 
-Just type "dcpu-wm --help" to get these infos
+Just type "dcpu-wm --help" to get these infos.
+There is a debug/step mode activate/desactivate with F12:
+ - F1 : Single step (print the current instruction on the console)
+ - F2 : Print registers states into console
+ - F3 : Reset the DCPU
 
 
 TODO
