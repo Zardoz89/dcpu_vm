@@ -9,7 +9,7 @@ set(dcpu-vm_SRCS
     dcpu.cpp
     disassembler.cpp  
     gclock.cpp
-    fake_lem1802.cpp
+    gkeyboard.cpp
     lem1802.cpp
     lem1803.cpp
     )

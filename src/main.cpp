@@ -14,7 +14,7 @@
 #include "disassembler.hpp"
 
 #include "gclock.hpp"
-#include "fake_lem1802.hpp"
+#include "gkeyboard.hpp"
 #include "lem1802.hpp"
 #include "lem1803.hpp"
 
@@ -62,6 +62,8 @@ int main (int argc, char **argv)
 	
     }
     
+	
+	//TODO make a function which do that but fast
     std::cout <<  "Input BIN File : " << filename << "\n";
     
     binfile.open (filename.c_str(), std::ios::in | std::ios::binary );
@@ -82,6 +84,7 @@ int main (int argc, char **argv)
     int i = 0;
     
     while (! binfile.eof() ) { 
+		//need improvement read (read whole file and then switch endianess
         uint16_t word = 0;
         binfile.read ( (char*) &word, 2);
         uint16_t tmp = ( (word & 0xFF00) >> 8) & 0x00FF;
@@ -100,6 +103,7 @@ int main (int argc, char **argv)
 	
     auto dcpu = std::make_shared<DCPU>();
 	auto gclock = std::make_shared<Generic_Clock>();
+	auto gkeyboard = std::make_shared<keyboard::GKeyboard>();
 	std::shared_ptr<AbstractMonitor> monitor;
 	switch (monitor_type)
 	{
@@ -119,6 +123,7 @@ int main (int argc, char **argv)
 	
     dcpu->attachHardware (monitor);
 	dcpu->attachHardware (gclock);
+	dcpu->attachHardware (gkeyboard);
     dcpu->reset();
     dcpu->loadProgram (data, size);
 	
@@ -143,6 +148,68 @@ int main (int argc, char **argv)
             if (event.type == sf::Event::Closed) {
                 window.close();
 		    }
+			else if (event.type == sf::Event::KeyPressed 
+					|| event.type == sf::Event::KeyReleased)
+			{
+				bool pressed = false;
+				unsigned char keycode=0;
+				if (event.type == sf::Event::KeyPressed) pressed = true;
+				if (event.key.code>=sf::Keyboard::A && 
+					event.key.code<=sf::Keyboard::Z)
+				{
+					if (event.key.shift)
+						keycode=event.key.code+'A';
+					else
+						keycode=event.key.code+'a';
+				}
+				else if (event.key.code>=sf::Keyboard::Num0 && 
+					    event.key.code<=sf::Keyboard::Num9)
+				{
+					keycode=event.key.code-sf::Keyboard::Num0+'0';
+				}
+				else 
+				{
+					switch (event.key.code)
+					{
+						case sf::Keyboard::BackSpace:
+							keycode=keyboard::BACKSPACE;
+							break;
+						case sf::Keyboard::Return:
+							keycode=keyboard::RETURN;
+							break;
+						case sf::Keyboard::Insert:
+							keycode=keyboard::INSERT;
+							break;
+						case sf::Keyboard::Delete:
+							keycode=keyboard::DELETE;
+							break;
+						case sf::Keyboard::Up:
+							keycode=keyboard::ARROW_UP;
+							break;
+						case sf::Keyboard::Down:
+							keycode=keyboard::ARROW_DOWN;
+							break;
+						case sf::Keyboard::Left:
+							keycode=keyboard::ARROW_LEFT;
+							break;
+						case sf::Keyboard::Right:
+							keycode=keyboard::ARROW_RIGHT;
+							break;
+						case sf::Keyboard::RShift:
+						case sf::Keyboard::LShift:
+							keycode=keyboard::SHIFT;
+							break;
+						case sf::Keyboard::RControl:
+						case sf::Keyboard::LControl:
+							keycode=keyboard::CONTROL;
+							break;
+						default: break;
+					}
+				}
+				if (keycode)
+					gkeyboard->pushKeyEvent(pressed,keycode);
+				
+			}
         }
 		
 		///DCPU emulation stuff

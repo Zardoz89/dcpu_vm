@@ -1,4 +1,3 @@
-#pragma once
 #ifndef _GENERIC_KEYBOARD_HPP_
 #define _GENERIC_KEYBOARD_HPP_ 1
 
