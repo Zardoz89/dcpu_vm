@@ -7,8 +7,6 @@
 
 namespace cpu {
 
-
-
 std::string disassembly(const uint16_t* data, size_t size)
 {
     using namespace std;
@@ -616,6 +614,5 @@ std::string disassembly(const uint16_t* data, size_t size)
     //}
     return str.str();
 }
-
 
 }

@@ -4,8 +4,8 @@
 
 #include <cstdint>
 
-#include "dcpu.hpp" // Base class: cpu::IHardware
-
+#include "dcpu.hpp" 
+#include "monitor.hpp" //base class AbstractMonitor
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Texture.hpp>
@@ -23,7 +23,7 @@ namespace cpu {
 /**
  * @brief LEM1802 that uses SFML
  */
-class Lem1802 : public cpu::IHardware {
+class Lem1802 : public cpu::AbstractMonitor {
 public:
     Lem1802();
     virtual ~Lem1802();
@@ -65,13 +65,7 @@ public:
 	  screen = new uint8_t[Lem1802::WIDTH*Lem1802::HEIGHT*4];
 	}
 	
-	/**
-	 * @Call before render 1 frame to each frames
-	 */
-	inline void prepareRender()
-	{
-		need_render = true;
-	}
+	
 	
     virtual void handleInterrupt();
     virtual void tick();
@@ -91,10 +85,32 @@ public:
     const static uint16_t def_palette_map[16];   /// Default palette
     const static uint16_t def_font_map[128*2];   /// Default fontmap
 	
-	virtual inline const sf::Texture& getTexture()
+	virtual const sf::Texture& getScreen() const
 	{
 	   return texture;
 	}
+	
+	virtual unsigned int width() const
+	{
+		return texture.getSize().x;
+	}
+    
+    virtual unsigned int height() const
+	{
+		return texture.getSize().y;
+	}
+
+    virtual unsigned int phyWidth() const
+	{
+		return Lem1802::WIDTH;
+	}
+    
+    virtual unsigned int phyHeight() const
+	{
+		return Lem1802::HEIGHT;
+	}
+	
+	virtual sf::Color getBorder() const;
 
 protected:
 
@@ -113,7 +129,7 @@ protected:
    
     sf::Texture texture;              /// SFML screen texture
 	
-	bool need_render;                 ///Do we need a render (Improve the speed)
+	
 	
 	// Threads and windows are not used anymore because 
 	// Win32 portability forbit window event in threads !

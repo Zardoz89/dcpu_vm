@@ -6,9 +6,7 @@
 
 #include "lem1802.hpp"
 
-#include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Texture.hpp>
 
 
 #define LEGACY_MODE      255
@@ -56,6 +54,16 @@ public:
 	  if (screen)
 	    delete screen;
 	  screen = new uint8_t[Lem1803::WIDTH*Lem1803::HEIGHT*4];
+	}
+	
+	virtual unsigned int phyWidth() const
+	{
+		return Lem1803::WIDTH;
+	}
+    
+    virtual unsigned int phyHeight() const
+	{
+		return Lem1803::HEIGHT;
 	}
     
     const static uint16_t def_palette_map2[64];   /// Default palette
