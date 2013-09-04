@@ -14,7 +14,7 @@
 #include "gkeyboard.hpp"
 #include "lem1802.hpp"
 #include "lem1803.hpp"
-//#include "cgm.hpp"
+#include "cgm.hpp"
 
 using namespace cpu;
 
@@ -140,11 +140,11 @@ int main (int argc, char **argv)
             std::cout << "Use Lem1803 Monitor" << std::endl;
             window_title = "Lem 1803";
             break;
-    /*    case 2:
+        case 2:
             monitor=std::make_shared<cgm::CGM>();
             std::cout << "Use CGM Monitor" << std::endl;
             window_title = "CGM";
-            break;*/
+            break;
         default :
             monitor=std::make_shared<lem::Lem1802>();
             std::cout << "Use Lem1802 Monitor" << std::endl;

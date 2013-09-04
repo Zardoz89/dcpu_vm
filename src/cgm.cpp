@@ -299,10 +299,10 @@ namespace cgm {
                     {
                         if (bit & 1<<j) {
                             // Foreground
-                            scr.setPixel (x, y, fg);
+                            scr->setPixel (x, y, fg);
                         } else {
                             // Backgorund
-                            scr.setPixel (x, y, bg);
+                            scr->setPixel (x, y, bg);
                         }
                         x++;
                     }
