@@ -17,7 +17,7 @@ public:
     Lem1803();
     virtual ~Lem1803();
     
-    static const uint16_t REV2     = 0x1803;
+    static const uint16_t REV2          = 0x1803;
 
     static const unsigned int WIDTH     = 384;
     static const unsigned int HEIGHT    = 288;

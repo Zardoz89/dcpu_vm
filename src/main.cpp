@@ -13,7 +13,7 @@
 #include "gclock.hpp"
 #include "gkeyboard.hpp"
 #include "lem1802.hpp"
-//#include "lem1803.hpp"
+#include "lem1803.hpp"
 //#include "cgm.hpp"
 
 using namespace cpu;
@@ -135,12 +135,12 @@ int main (int argc, char **argv)
     std::shared_ptr<AbstractMonitor> monitor;
     switch (monitor_type)
     {
-   /*     case 1:
+        case 1:
             monitor=std::make_shared<lem::Lem1803>();
             std::cout << "Use Lem1803 Monitor" << std::endl;
             window_title = "Lem 1803";
             break;
-        case 2:
+    /*    case 2:
             monitor=std::make_shared<cgm::CGM>();
             std::cout << "Use CGM Monitor" << std::endl;
             window_title = "CGM";
