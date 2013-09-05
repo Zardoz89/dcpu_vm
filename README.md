@@ -28,17 +28,20 @@ Just type "dcpu-wm --help" to get these infos.
 
     usage : dcpu-vm [--options] <dcpu16-exe>
     --------------------------------------------------------
-    options:
-        --debug                  : start in debug mode
-            F1  : next step
-            F2  : print registers
-            F3  : reset (no need debug mode)
-            F12 : switch debug/run
+      options:
+        -vsync (-v) : use vertical synchronisation
+                        (more accurate but may bug)
+        -time (-t) : use timed emulation (else refresh based)
+        -debug (-d) : start in debug mode
+                F1  : next step
+                F2  : print registers
+                F3  : reset (no need debug mode)
+                F12 : switch debug/run
         --monitor=<monitor_name> : use the following monitor
-            1802 -> Lem1802 (default) [c]
-            1803 -> Lem1803 [c]
-            cgm -> Colour Graphics Monitor
-            [c] : compatible with Lem1802 0x10c programs
+                1802 -> Lem1802 (default) [c] (-1802)
+                1803 -> Lem1803 [c] (-1803)
+                cgm -> Colour Graphics Monitor (-cgm)
+                [c] : compatible with Lem1802 0x10c programs
 
 There is a debug/step mode activate/desactivate with F12:
  
