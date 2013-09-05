@@ -167,10 +167,10 @@ int main (int argc, char **argv)
         window.setVerticalSyncEnabled(true);
     }
     else
-        window.setFramerateLimit(60);
+        window.setFramerateLimit(50);
     
     
-    
+    bool compensate_time = false; 
     while (window.isOpen()) //Because non mainthread event are forbidden in OSX
     {
         // Process events
@@ -294,16 +294,32 @@ int main (int argc, char **argv)
         
         ///DCPU emulation stuff
         monitor->prepareRender();
-        const float delta=clock.getElapsedTime().asSeconds();
+        const auto delta=clock.getElapsedTime().asMicroseconds(); 
+        //.asSeconds();
         clock.restart();
         
         if (!debug)
         {
             unsigned int tick_needed;
             if (use_time)
-                tick_needed=(float)dcpu->cpu_clock*delta;
+                tick_needed= delta / 10;
             else
-                tick_needed=dcpu->cpu_clock/60;
+                tick_needed=dcpu->cpu_clock/50;
+
+            // Makes simulation to float around 100% of speed
+            if (compensate_time) 
+                tick_needed++;
+            compensate_time ^= 1;
+
+            // Avoids fill the screen of data
+            if ((dcpu->getTotCycles() % 10000) <= 100) {
+                std::cerr << "Delta: " << delta << " ms ";
+                std::cerr << "Ticks: " << tick_needed << "   ";
+                double tmp = tick_needed*(1 / (double)(dcpu->cpu_clock));
+                int64_t rtime = 1000000 * tmp;
+                std::cerr << "Speed: " << (float)(100*delta)/rtime << std::endl;
+            }
+
             dcpu->tick(tick_needed);
         }
         
