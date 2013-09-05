@@ -17,7 +17,7 @@ public:
 
     static const uint32_t id            = 0x12d0b402;
     static const uint16_t revision      = 0x1;
-    static const uint32_t manufacturer  = 0x0;
+    static const uint32_t manufacturer  = 0x90099009;
     
     uint32_t getId() {
         return id;

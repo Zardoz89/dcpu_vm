@@ -47,7 +47,7 @@ public:
 
     static const uint32_t ID                = 0x30CF7406;
     static const uint16_t REV               = 0x0001;
-    static const uint32_t MANUFACTURER      = 0x00000000;
+    static const uint32_t MANUFACTURER      = 0x90099009;
 
     static const size_t BUFFER_SIZE         = 64;
 
