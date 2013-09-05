@@ -1,5 +1,4 @@
 #include <iostream>
-#include <fstream>
 #include <cstdint>
 #include <algorithm>
 #include <memory>
@@ -50,14 +49,6 @@ int main (int argc, char **argv)
     bool use_vsync=false; 
     //use time emulation based on sf::Clock; 
     bool use_time=false; 
-    size_t size = 0;
-    uint16_t* data;
-    std::ifstream binfile;
-    
-    if (argc <= 1) {
-        std::cerr << "Missing input file, type --help for list options\n";
-        return 0;
-    }
     
     //TODO make a fonction that parse argument into a program struct
     for (int k=1; k < argc; k++) //parse arguments
@@ -80,14 +71,14 @@ int main (int argc, char **argv)
             else if (opt=="-cgm"||opt=="--monitor=cgm") monitor_type=2;
             else if (opt.find("--monitor") != std::string::npos)
             {
-                std::cout << "Warning unknow monitor type "; 
+                std::cout << "warning: unknow monitor type "; 
                 std::cout << opt << std::endl;
             }
             else if (opt == "-vsync" || opt == "-v") use_vsync=true;
             else if (opt == "-time" || opt == "-t") use_time=true;
             else
             {
-                std::cout << "Warning: unknow option ";
+                std::cout << "warning: unknow option ";
                 std::cout << opt << " it will be ignored !" << std::endl;
             }
         }
@@ -98,43 +89,10 @@ int main (int argc, char **argv)
     
     }
     
-    
-    //TODO make a function which do that but fast
-    std::cout <<  "Input BIN File : " << filename << "\n";
-    
-    binfile.open (filename.c_str(), std::ios::in | std::ios::binary );
-    
-    if (!binfile) {
-        std::cerr << "ERROR: I can open file\n";
-        exit (1);
+    if (argc <= 1 || !filename.size()) {
+        std::cerr <<"error: missing input file, type --help for list options\n";
+        return 0;
     }
-    
-    // get length of file:
-    binfile.seekg (0, binfile.end);
-    size = binfile.tellg();
-    binfile.seekg (0, binfile.beg);
-    
-    data = new uint16_t[size / 2 + 1]();
-    std::fill_n (data, size / 2, 0); // Clean it
-    
-    int i = 0;
-    
-    while (! binfile.eof() ) { 
-        //need improvement read (read whole file and then switch endianess
-        uint16_t word = 0;
-        binfile.read ( (char*) &word, 2);
-        uint16_t tmp = ( (word & 0xFF00) >> 8) & 0x00FF;
-        word = ( (word & 0x00FF) << 8) | tmp;
-        data[i] = word;
-        i++;
-    }
-    
-    binfile.close();
-    
-    
-    std::cout << "Readed " << size << " bytes - " << size / 2 << " words\n";
-    size /= 2;
-    
     
     sf::String window_title="dcpu_vm";
     auto dcpu = std::make_shared<DCPU>();
@@ -145,17 +103,17 @@ int main (int argc, char **argv)
     {
         case 1:
             monitor=std::make_shared<lem::Lem1803>();
-            std::cout << "Use Lem1803 Monitor" << std::endl;
+            std::cout << "use Lem1803 Monitor" << std::endl;
             window_title = "Lem 1803";
             break;
         case 2:
             monitor=std::make_shared<cgm::CGM>();
-            std::cout << "Use CGM Monitor" << std::endl;
+            std::cout << "use CGM Monitor" << std::endl;
             window_title = "CGM";
             break;
         default :
             monitor=std::make_shared<lem::Lem1802>();
-            std::cout << "Use Lem1802 Monitor" << std::endl;
+            std::cout << "use Lem1802 Monitor" << std::endl;
             window_title = "Lem 1802";
             break;
     }
@@ -164,7 +122,7 @@ int main (int argc, char **argv)
     dcpu->attachHardware (gclock);
     dcpu->attachHardware (gkeyboard);
     dcpu->reset();
-    dcpu->loadProgram (data, size);
+    dcpu->loadProgramFromFile(filename);
    
     sf::Texture texture; // texture of the screen
     sf::Sprite sprite;   //sprite of the screen
@@ -200,7 +158,6 @@ int main (int argc, char **argv)
                 //Rewrap opengl camera
                 float r_width = window.getSize().x;
                 float r_height = window.getSize().y;
-                //For emulations modes and windows resizes
                 sf::FloatRect r(0,0,r_width,r_height);
                 window.setView(sf::View(r));
             }
@@ -286,9 +243,9 @@ int main (int argc, char **argv)
                             //No need to be in debug mode for this one
                             if (!pressed)
                             {
-                                std::cout << "Reset dcpu" << std::endl;
+                                std::cout << "reset dcpu" << std::endl;
                                 dcpu->reset();
-                                dcpu->loadProgram (data, size);
+                                dcpu->loadProgramFromFile(filename);
                             }
                             break;
                         case sf::Keyboard::F12:

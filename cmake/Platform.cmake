@@ -28,7 +28,7 @@ if (MSVC)
     message(WARNING "This build has not yet been tested with VC++")
     set(PLATFORM_FLAGS)
 else (MSVC)
-    set(PLATFORM_FLAGS "-Wall" "-Wno-packed-bitfield-compat" "-std=c++11" )
+    set(PLATFORM_FLAGS "-Wall" "-Wno-packed-bitfield-compat" "-std=c++11" "-std=c99")
     
     set(CMAKE_CSS_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 endif (MSVC)

@@ -56,16 +56,48 @@ void DCPU::reset()
 bool DCPU::loadProgram (const uint16_t* prog,unsigned int size,unsigned int offset)
 {
     assert (prog != NULL);
-    assert (size > 0);
-    assert (offset >= 0);
-    assert (offset + size <     UINT16_MAX);
+    assert (size > 0);    
+    assert (offset >= 0);  //always true not even needed
     if (RAM_SIZE < offset + size)
     {
-        std::cout << "Cannot load the program not enough ram !" << std::endl;
+        std::cerr << "error: cannot load the program not enough ram !\n";
         return false;
     }
     
     std::copy_n (prog, size, ram + offset);
+    return true;
+}
+
+bool DCPU::loadProgramFromFile(const std::string& filename,
+                              bool reverse_endian,
+                              unsigned int offset)
+{
+    assert (offset >= 0); //always true not even needed
+
+    FILE* f = fopen(filename.c_str(),"rb");
+    if (!f)
+    {
+        std::cerr<< "error: file \"" << filename << "\" not found"<< std::endl;
+        return false;
+    }
+    int size = fsize(f);
+    if (RAM_SIZE < offset + size)
+    {
+        std::cerr << "error: cannot load the program not enough ram !\n";
+        fclose(f);
+        return false;
+    }
+    else if (size%2)
+    {
+        std::cout<<"warning: file cannot be splitted into WORD properly\n";
+    }
+    
+    
+    fread(ram + offset, 2, size/2, f);
+    fclose(f);
+    
+    if (reverse_endian)
+        fswitchendian(ram + offset,size/2);
     return true;
 }
 

@@ -7,6 +7,7 @@
 #include <vector>
 #include <deque>
 #include <string>
+#include "file.h"
 
 namespace cpu {
 
@@ -59,6 +60,16 @@ public:
     bool loadProgram (const uint16_t* prog,
                       unsigned int size,
                       unsigned int offset = 0);
+                      
+    /**
+     * @brief Load a program to the DCPU RAM from a file
+     * @param filename filename of the program
+     * @param reverse_endian need to change the endianess
+     * @param offset Offset to place the program in DCPU RAM
+     */
+    bool loadProgramFromFile (const std::string& filename,
+                              bool reverse_endian=true,
+                              unsigned int offset = 0);
     
     /**
      * @brief Attach a Hardware device to the DCPU
