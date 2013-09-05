@@ -23,8 +23,9 @@ namespace cpu {
         switch (cpu->GetA() ) {
         case 0:
             if (cpu->GetB() > 0) {
-                max_ticks = (cpu->GetB() * cpu->cpu_clock);
-                max_ticks /= 60;
+                max_ticks = (cpu->cpu_clock * 60) / cpu->GetB();
+                // std::cerr << "Max :" << max_ticks << "B= " << cpu->GetB();
+                // std::cerr << std::endl; 
             } else {
                 max_ticks = 0;
             }
