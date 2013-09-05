@@ -30,13 +30,13 @@ bool BinAsm::load(const std::string& filename)
 	unsigned int size = fsize(f);
 	char* buff = new char[size+1];
 	fread(buff,1,size,f);
-	buff[size] = '\0';
 	fclose(f);
-	
+    //strange bug windows add a t i don't know why...
+    if (size>2 && (buff[size-2]==EOF||buff[size-2]=='t')) buff[size-2] = '\0';
+	buff[size] = '\0';
 	_fullsrc = buff;
 	_src=_fullsrc;
 	remove_comments(_src);
-	
 	delete buff;
 	return true;
 }
@@ -70,12 +70,14 @@ void BinAsm::remove_comments(std::string& str)
 std::vector<std::string> BinAsm::split_text(const std::string& text)
 {
 	std::vector<std::string> lines;
-	lines.reserve(text.size()/8);
+    if (text.size()/8 > 0)
+        lines.reserve(text.size()/8);
 	unsigned int b=0;
 	for (unsigned int i=0; i<text.size();i++)
 	{
 		if (text[i] == '\n' && i-b <= 1)
 		{
+            lines.push_back(std::string()); //empty line 
 			b = i+1;
 		}
 		else if (text[i] == '\n') 
@@ -84,15 +86,19 @@ std::vector<std::string> BinAsm::split_text(const std::string& text)
 			b=i+1;
 		}
 	}
-	if (text.size()-b > 1)
-		lines.push_back(text.substr(b,lines.size()));
+    //last line
+    if (b < text.size())
+        lines.push_back(text.substr(b,text.size()));
 	return lines;
 }
 
 std::vector<std::string> BinAsm::split_line(const std::string& line)
 {
 	std::vector<std::string>  words;
-	words.reserve(line.size()/3);
+    if (line.size())
+        words.reserve(line.size()/3);
+    else 
+        return words;
 	unsigned int b=0;
 	bool validate=false;
 	char special_case=0;
@@ -604,11 +610,15 @@ bool BinAsm::save(const std::string& filename)
 	uint16_t opcode = 0;
 	std::vector<std::string> lines=split_text(_src);
 	std::vector<std::string>::iterator lit = lines.begin();
+    std::cout << "number of lines " << lines.size() << "\n";
 	for (;lit!=lines.end();lit++)
 	{
 	    lc++;
 		std::string err = std::string();
 		std::vector<std::string> w=split_line(*lit);
+        
+        std::cout << "line " << lc << ":" << *lit << "\n";
+        
 		if (!w.size()) continue;
 		opcode = 0;
 		
@@ -618,6 +628,8 @@ bool BinAsm::save(const std::string& filename)
 			std::cerr << "cannot be used on dcpu-16" << std::endl;
 			break;
 		}
+        
+        
 		
 		if (w[0].size() && (w[0][w[0].size()-1] == ':' || w[0][0] == ':'))
 		{
@@ -626,6 +638,7 @@ bool BinAsm::save(const std::string& filename)
 		
 		if ((opcode = get_op(w[0])))
 		{
+            std::cout << "find opcode " << w[0] << "\n";
 			if (w.size() != 3)
 			{
 				err = "instruction " + w[0];
@@ -646,11 +659,13 @@ bool BinAsm::save(const std::string& filename)
 				if (a_word)
 				{
 					buff[filesize]=a_word;
+                    std::cout << "a word value " << a_word << "\n";
 					filesize++;
 				}
 				if (b_word)
 				{
 					buff[filesize]=b_word;
+                    std::cout << "b word value " << b_word << "\n";
 					filesize++;
 			    }
 			}
@@ -670,17 +685,22 @@ bool BinAsm::save(const std::string& filename)
 				opcode |= (get_a(w[1],a_word,err) << 10);
 				buff[filesize]=opcode;
 				filesize++;
+                std::cout << "find special opcode " << w[0] << "\n";
 				if (a_word)
 				{
 					buff[filesize]=a_word;
+                    std::cout << "a word value " << a_word << "\n";
 					filesize++;
 				}
 			}
 		} 
 		else {
-			if (w[0]=="dat"||w[0]==".dat"||w[0]=="DAT"||w[0]==".DAT")
+			if (w[0]=="dat"||w[0]==".dat"||w[0]=="DAT"||w[0]==".DAT") {
 				err="";
-			filesize += get_data(*lit, &(buff[filesize]),err);
+            }
+            unsigned int d = get_data(*lit, &(buff[filesize]),err); 
+            std::cout << "found " << d << " words of data\n";
+			filesize += d;
 		}
 		if (err.size())
 		{
