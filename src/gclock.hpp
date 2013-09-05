@@ -3,7 +3,7 @@
 #define _G_CLOCK_HPP_ 1
 
 #include <cstdint>
-//#include <chrono>
+#include <SFML/System.hpp>
 
 #include "dcpu.hpp"
 
@@ -35,13 +35,16 @@ public:
 
 private:
 
-    uint_fast32_t cpu_ticks; /// CPU Tick counter
-    uint_fast32_t max_ticks; /// Ticks needed to launch a interrupt
-    uint_fast32_t ticks;     /// Clock ticks
-    uint16_t msg;            /// Mesage to send when a interrupt hapens
-    bool trigger;            /// Trigered
+    uint_fast32_t cpu_ticks;    /// CPU Tick counter
+    uint_fast32_t max_ticks;    /// Ticks needed to launch a interrupt
+    uint_fast32_t ticks;        /// Clock ticks
+    uint16_t msg;               /// Mesage to send when a interrupt hapens
+    bool trigger;               /// Trigered
     
-    //std::chrono::high_resolution_clock::time_point b, e; 
+    sf::Clock clock;            /// Measures the time
+    int64_t acum;               /// Acumulates delta time
+    int64_t max_acum;           /// If accu > max_accu -> does a Tick
+    uint_fast16_t divider;      /// Frac of 60 seconds
 };
 
 } // END OF NAMESPACE cpu

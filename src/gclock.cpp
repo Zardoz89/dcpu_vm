@@ -6,9 +6,10 @@ namespace cpu {
 
     
     Generic_Clock::Generic_Clock() : 
-        cpu_ticks(0), max_ticks(0), ticks(0), msg(0), trigger(false) 
-    { 
-        //e = std::chrono::high_resolution_clock::now();
+        cpu_ticks(0), max_ticks(0), ticks(0), msg(0), trigger(false), 
+        acum(0), max_acum(0), divider(0) 
+    {
+        clock.restart();
     }
 
     Generic_Clock::~Generic_Clock() 
@@ -22,8 +23,11 @@ namespace cpu {
 
         switch (cpu->GetA() ) {
         case 0:
+            divider = cpu->GetB();
             if (cpu->GetB() > 0) {
-                max_ticks = (cpu->cpu_clock * 60) / cpu->GetB();
+                this->max_acum =  sf::seconds(60.0 / divider).asMicroseconds();
+                clock.restart();
+                //max_ticks = (cpu->cpu_clock * 60) / cpu->GetB();
                 // std::cerr << "Max :" << max_ticks << "B= " << cpu->GetB();
                 // std::cerr << std::endl; 
             } else {
@@ -49,12 +53,21 @@ namespace cpu {
     void Generic_Clock::tick() 
     {
         // We use CPU clock ticks to measure time relative to DCPU core
-        if (max_ticks >0 && msg > 0) {
-            cpu_ticks++;
+        //if (max_ticks >0 && msg > 0) {
+        if (divider >0) {
+            /*cpu_ticks++;
             if (cpu_ticks >= max_ticks) {
-                trigger = true;
                 cpu_ticks -= max_ticks;
+            }*/
 
+            acum += clock.getElapsedTime().asMicroseconds();
+            clock.restart();
+
+            if (acum >= max_acum ) {
+                acum -= max_acum;
+                ticks++;
+                trigger = msg > 0;
+                //std::cerr << "TICK! " << acum << std::endl;
             }
         }
     }
