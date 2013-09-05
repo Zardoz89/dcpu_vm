@@ -14,6 +14,7 @@
 #include "lem1802.hpp"
 #include "lem1803.hpp"
 #include "cgm.hpp"
+#include "binasm.hpp"
 
 
 
@@ -24,9 +25,7 @@ void print_help(std::string program_name)
     std::cout << "usage : " << program_name << " [-options] <dcpu16-exe>\n";
     std::cout << "--------------------------------------------------------\n";
     std::cout << "  options:" << std::endl;
-    std::cout << "    -vsync (-v) : use vertical synchronisation\n";
-    std::cout << "                    (more accurate but may bug)\n";
-    std::cout << "    -time (-t) : use timed emulation (else refresh based)\n";
+    std::cout << "    -assemble (-a) : assemble before load (experimental)\n";
     std::cout << "    -debug (-d) : start in debug mode\n";
     std::cout << "            F1  : next step" << std::endl;
     std::cout << "            F2  : print registers" << std::endl;
@@ -37,18 +36,25 @@ void print_help(std::string program_name)
     std::cout << "            1803 -> Lem1803 [c] (-1803)" << std::endl;
     std::cout << "            cgm -> Colour Graphics Monitor (-cgm)\n";
     std::cout << "            [c] : compatible with Lem1802 0x10c programs\n";
+    std::cout << "    -output <filename> (-o) : output assembled filename\n";
+    std::cout << "    -time (-t) : use timed emulation (else refresh based)\n";
+    std::cout << "    -vsync (-v) : use vertical synchronisation\n";
+    std::cout << "                    (more accurate but may bug)\n";
 }
 
 int main (int argc, char **argv)
 {
 
     std::string filename;
+    std::string outname="a.out"; //output assembled filename
     int monitor_type=0; 
     bool debug=false;
     //use vsync for refresh the screen (more accuracte than setFrameLimit)
     bool use_vsync=false; 
     //use time emulation based on sf::Clock; 
     bool use_time=false; 
+    //need asssemble the file 
+    bool assemble=false; 
     
     //TODO make a fonction that parse argument into a program struct
     for (int k=1; k < argc; k++) //parse arguments
@@ -76,6 +82,18 @@ int main (int argc, char **argv)
             }
             else if (opt == "-vsync" || opt == "-v") use_vsync=true;
             else if (opt == "-time" || opt == "-t") use_time=true;
+            else if (opt == "-assemble" || opt == "-a") assemble=true;
+            else if ((opt == "-output" || opt == "-o") && argc > k+1)
+            {
+                assemble=true;
+                outname = argv[k+1];
+                k++;
+            }
+            else if (opt == "-output" || opt == "-o")
+            {
+                std::cout << "warning: option " << opt << " requiert";
+                std::cout << " another argument it will be ignored here";
+            }
             else
             {
                 std::cout << "warning: unknow option ";
@@ -87,6 +105,16 @@ int main (int argc, char **argv)
             filename = argv[k];
         }
     
+    }
+    
+    if (assemble)
+    {
+        BinAsm assembler;
+        if (!assembler.load(filename)) return 0xdead;
+        if (!assembler.finds_labels()) return 0xdead;
+        assembler.print_labels();
+        if (!assembler.save(outname)) return 0xdead;
+        filename = outname;
     }
     
     if (argc <= 1 || !filename.size()) {
