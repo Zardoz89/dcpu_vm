@@ -22,18 +22,21 @@ using namespace cpu;
 
 void print_help(std::string program_name)
 {
-    std::cout << "usage : " << program_name << " [--options] <dcpu16-exe>\n";
+    std::cout << "usage : " << program_name << " [-options] <dcpu16-exe>\n";
     std::cout << "--------------------------------------------------------\n";
     std::cout << "  options:" << std::endl;
-    std::cout << "    --debug                  : start in debug mode\n";
+    std::cout << "    -vsync (-v) : use vertical synchronisation\n";
+    std::cout << "                    (more accurate but may bug)\n";
+    std::cout << "    -time (-t) : use timed emulation (else refresh based)\n";
+    std::cout << "    -debug (-d) : start in debug mode\n";
     std::cout << "            F1  : next step" << std::endl;
     std::cout << "            F2  : print registers" << std::endl;
     std::cout << "            F3  : reset (no need debug mode)" << std::endl;
     std::cout << "            F12 : switch debug/run" << std::endl;
     std::cout << "    --monitor=<monitor_name> : use the following monitor\n";
-    std::cout << "            1802 -> Lem1802 (default) [c]" << std::endl;
-    std::cout << "            1803 -> Lem1803 [c]" << std::endl;
-    std::cout << "            cgm -> Colour Graphics Monitor" << std::endl;
+    std::cout << "            1802 -> Lem1802 (default) [c] (-1802)\n";
+    std::cout << "            1803 -> Lem1803 [c] (-1803)" << std::endl;
+    std::cout << "            cgm -> Colour Graphics Monitor (-cgm)\n";
     std::cout << "            [c] : compatible with Lem1802 0x10c programs\n";
 }
 
@@ -43,6 +46,10 @@ int main (int argc, char **argv)
     std::string filename;
     int monitor_type=0; 
     bool debug=false;
+    //use vsync for refresh the screen (more accuracte than setFrameLimit)
+    bool use_vsync=false; 
+    //use time emulation based on sf::Clock; 
+    bool use_time=false; 
     size_t size = 0;
     uint16_t* data;
     std::ifstream binfile;
@@ -51,22 +58,15 @@ int main (int argc, char **argv)
         std::cerr << "Missing input file, type --help for list options\n";
         return 0;
     }
+    
+    //TODO make a fonction that parse argument into a program struct
     for (int k=1; k < argc; k++) //parse arguments
     {
         if (argv[k][0] == '-')
         {
             std::string opt = argv[k];
-            if (opt.find("--monitor") != std::string::npos)
-            {
-                if (opt == "--monitor=1802") monitor_type=0;
-                else if (opt == "--monitor=1803") monitor_type=1; 
-                else if (opt == "--monitor=cgm") monitor_type=2;
-                else { 
-                    std::cout << "Warning unknow monitor type "; 
-                    std::cout << opt << std::endl;
-                }
-            }
-            else if (opt=="--help"||opt=="-help"||opt=="-h")
+            
+            if (opt=="--help"||opt=="-help"||opt=="-h")
             {
                 std::string pn = argv[0];
                 pn.erase(0,pn.find_last_of('\\')+1); //windows
@@ -74,10 +74,17 @@ int main (int argc, char **argv)
                 print_help(pn);
                 return 0;
             }
-            else if (opt=="--debug")
+            else if (opt=="-debug") debug=true;
+            else if (opt=="-1802"||opt=="--monitor=1802") monitor_type=0;
+            else if (opt=="-1803"||opt=="--monitor=1803") monitor_type=1; 
+            else if (opt=="-cgm"||opt=="--monitor=cgm") monitor_type=2;
+            else if (opt.find("--monitor") != std::string::npos)
             {
-                debug=true;
+                std::cout << "Warning unknow monitor type "; 
+                std::cout << opt << std::endl;
             }
+            else if (opt == "-vsync" || opt == "-v") use_vsync=true;
+            else if (opt == "-time" || opt == "-t") use_time=true;
             else
             {
                 std::cout << "Warning: unknow option ";
@@ -168,7 +175,13 @@ int main (int argc, char **argv)
     window.create(sf::VideoMode(monitor->phyWidth()+border_add,
                                 monitor->phyHeight()+border_add),
                                 window_title);
-    window.setFramerateLimit(60);
+    if (use_vsync)
+    {
+        std::cout << "warning: vsync activated may bug" << std::endl;
+        window.setVerticalSyncEnabled(true);
+    }
+    else
+        window.setFramerateLimit(60);
     
     
     
@@ -298,12 +311,14 @@ int main (int argc, char **argv)
         monitor->prepareRender();
         const float delta=clock.getElapsedTime().asSeconds();
         clock.restart();
-        unsigned int tick_needed=(float)dcpu->cpu_clock*delta;
         
         if (!debug)
         {
-            if (tick_needed > dcpu->cpu_clock/60)
-                tick_needed = dcpu->cpu_clock/60;
+            unsigned int tick_needed;
+            if (use_time)
+                tick_needed=(float)dcpu->cpu_clock*delta;
+            else
+                tick_needed=dcpu->cpu_clock/60;
             dcpu->tick(tick_needed);
         }
         
@@ -315,8 +330,8 @@ int main (int argc, char **argv)
         texture.loadFromImage(*screen); //Slow function
         sprite.setTexture(texture);
         sprite.setScale(  //Warning setScale and scale are different !!
-         (float) (window.getSize().x-border_add*2) / (float)(monitor->width()),
-        (float) (window.getSize().y-border_add*2) / (float)(monitor->height()));
+          (float)(window.getSize().x-border_add*2)/(float)(monitor->width()),
+          (float)(window.getSize().y-border_add*2)/(float)(monitor->height()));
         sprite.setPosition(sf::Vector2f(border_add,border_add));
 
         window.clear(monitor->getBorder()); //good idea
