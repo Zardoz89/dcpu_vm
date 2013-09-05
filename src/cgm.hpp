@@ -57,8 +57,6 @@ public:
         return MANUFACTURER;
     }
     
-    virtual unsigned int width() const {return WIDTH;}
-    virtual unsigned int height() const {return HEIGHT;}
     virtual unsigned int phyWidth() const {return WIDTH;}
     virtual unsigned int phyHeight() const {return HEIGHT;}
     unsigned int borderSize() {return BORDER_SIZE;}
@@ -72,8 +70,6 @@ public:
     virtual void tick();
     
     virtual void attachTo (DCPU* cpu, size_t index);
-    
-    virtual sf::Image* updateScreen() const;
 
     virtual sf::Color getBorder() const;
 
@@ -81,6 +77,8 @@ public:
     const static uint16_t def_fonts[256*2 + 256*4];     /// Font maps
 
 protected:
+    virtual void updateScreen();
+
 
     uint16_t bitfield_map;          /// Where map BIT-FIELD 
     uint16_t attribute_map;         /// Where map ATTRIBUTE CELLS 
@@ -89,6 +87,7 @@ protected:
     uint16_t videomode;             /// Video mode
     
     uint8_t border_col;             /// Border color (unused)
+    uint32_t ticks;                 /// CPU clock ticks (for timing)
 
     uint_fast32_t blink;            /// Counter for blinking
     uint_fast32_t blink_max;        /// How many count to blink

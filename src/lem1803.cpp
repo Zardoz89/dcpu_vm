@@ -15,8 +15,10 @@ namespace lem {
     };
    
 
-    Lem1803::Lem1803() : emulation_mode(true) 
-    { }
+    Lem1803::Lem1803() : Lem1802(), emulation_mode(true) 
+    {
+        
+    }
     Lem1803::~Lem1803() 
     { }
 
@@ -29,6 +31,14 @@ namespace lem {
             emulation_mode = !emulation_mode;
             font_map = palette_map = screen_map = 0;
             blink = 0;
+            if (emulation_mode)
+            {
+                screen.create(Lem1802::WIDTH,Lem1802::HEIGHT,sf::Color::Black);
+            }
+            else
+            {
+                screen.create(Lem1803::WIDTH,Lem1803::HEIGHT,sf::Color::Black);
+            }
             return;
         } 
 
@@ -51,18 +61,16 @@ namespace lem {
     }
 
     
-    sf::Image* Lem1803::updateScreen() const
+    void Lem1803::updateScreen()
     {
 
         if (this->cpu == NULL || !need_render)
-            return NULL;
+            return;
         if (emulation_mode) {
-            return Lem1802::updateScreen();
+            Lem1802::updateScreen();
+            return;
         }
         need_render = false;
-        sf::Image* scr = new sf::Image();
-        scr->create(Lem1803::WIDTH, Lem1803::HEIGHT, sf::Color::Black);
-
         if (screen_map != 0) { // Update the texture
             for (unsigned row=0; row < Lem1803::ROWS; row++) {
                 for (unsigned col=0; col < Lem1803::COLS; col++) {
@@ -121,38 +129,37 @@ namespace lem {
                         // First word 
                         bool pixel = ((1<<(i+8)) & glyph[0]) > 0;
                         if (pixel) {
-                            scr->setPixel (col*4, row*8 +i, fg);
+                            screen.setPixel (col*4, row*8 +i, fg);
                         } else {
-                            scr->setPixel (col*4, row*8 +i, bg);
+                            screen.setPixel (col*4, row*8 +i, bg);
                         }
                         // Second word
                         pixel = ((1<<(i+8)) & glyph[1]) > 0;
                         if (pixel) {
-                            scr->setPixel (col*4 +2, row*8 +i, fg);
+                            screen.setPixel (col*4 +2, row*8 +i, fg);
                         } else {
-                            scr->setPixel (col*4 +2, row*8 +i, bg);
+                            screen.setPixel (col*4 +2, row*8 +i, bg);
                         }
                     
                         // *** LSB ***
                         // First word 
                         pixel = ((1<<i) & glyph[0]) >0;
                         if (pixel) {
-                            scr->setPixel (col*4 +1, row*8 +i, fg);
+                            screen.setPixel (col*4 +1, row*8 +i, fg);
                         } else {
-                            scr->setPixel (col*4 +1, row*8 +i, bg);
+                            screen.setPixel (col*4 +1, row*8 +i, bg);
                         }
                         // Second word
                         pixel = ((1<<i) & glyph[1]) > 0;
                         if (pixel) {
-                            scr->setPixel (col*4 +3, row*8 +i, fg);
+                            screen.setPixel (col*4 +3, row*8 +i, fg);
                         } else {
-                            scr->setPixel (col*4 +3, row*8 +i, bg);
+                            screen.setPixel (col*4 +3, row*8 +i, bg);
                         }
                     }
                 }
             }
         } 
-        return scr;
     }
 
     sf::Color Lem1803::getBorder() const

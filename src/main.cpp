@@ -16,6 +16,8 @@
 #include "lem1803.hpp"
 #include "cgm.hpp"
 
+
+
 using namespace cpu;
 
 void print_help(std::string program_name)
@@ -44,7 +46,6 @@ int main (int argc, char **argv)
     size_t size = 0;
     uint16_t* data;
     std::ifstream binfile;
-    
     
     if (argc <= 1) {
         std::cerr << "Missing input file, type --help for list options\n";
@@ -160,7 +161,7 @@ int main (int argc, char **argv)
    
     sf::Texture texture; // texture of the screen
     sf::Sprite sprite;   //sprite of the screen
-    sf::RectangleShape border; //Screen border
+    const sf::Image* screen = monitor->getScreen();
     sf::Clock clock; 
     sf::RenderWindow window;
     float border_add = monitor->borderSize()*2;
@@ -168,6 +169,7 @@ int main (int argc, char **argv)
                                 monitor->phyHeight()+border_add),
                                 window_title);
     window.setFramerateLimit(60);
+    
     
     
     while (window.isOpen()) //Because non mainthread event are forbidden in OSX
@@ -203,8 +205,8 @@ int main (int argc, char **argv)
                 {
                     switch (event.key.code)
                     {
-                        case sf::Keyboard::Back: //BackSpace:
-                            // NOTE: Changes between SFML 2.0 and 2.1
+                        // NOTE: Changes between SFML 2.0 and 2.1
+                        case sf::Keyboard::BackSpace: 
                             keycode=keyboard::BACKSPACE;
                             break;
                         case sf::Keyboard::Return:
@@ -309,21 +311,19 @@ int main (int argc, char **argv)
         //sf::FloatRect r(0,0,r_width,r_height);
         //window.setView(sf::View(r));
         window.setActive(true);
-        auto scr = monitor->updateScreen();
-        texture.create(monitor->width(), monitor->height());
-        texture.loadFromImage(*scr);
+        
+        
+        texture.loadFromImage(*screen); //Slow function
         sprite.setTexture(texture);
         sprite.scale(
                 monitor->phyWidth() / (float)(monitor->width() ) ,
                 monitor->phyHeight() / (float)(monitor->height()) );
         sprite.setPosition(monitor->borderSize(), monitor->borderSize());
 
-        window.clear(monitor->getBorder());
-        //window.draw(border);
+        window.clear(monitor->getBorder()); //good idea
         window.draw(sprite);
         window.display();
         window.setActive(false);
-        delete scr;
     }
     return 0;
 }

@@ -31,25 +31,9 @@ public:
     
     virtual void handleInterrupt();
     
-    virtual sf::Image* updateScreen() const;
+    virtual void updateScreen();
     
     virtual sf::Color getBorder() const;
-
-    virtual unsigned int width() const 
-    { // Logical screen resolution!
-        if (emulation_mode)
-            return Lem1802::width();
-        else
-            return WIDTH;
-    }
-
-    virtual unsigned int height() const 
-    {
-        if (emulation_mode)
-            return Lem1802::height();
-        else
-            return HEIGHT;
-    }
     
     /**
      * @brief is the LEM1803 emulating the LEM1802 ?

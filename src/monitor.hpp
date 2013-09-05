@@ -15,12 +15,18 @@ public:
     /**
      * Return Actual screen resolution Width without border
      */
-    virtual unsigned int width() const = 0;
+    inline unsigned int width() const
+    {
+        return screen.getSize().x;
+    }
     
     /**
      * Return Actual screen resolution Height without border
      */
-    virtual unsigned int height() const = 0;
+    inline unsigned int height() const
+    {
+        return screen.getSize().y;
+    }
 
     /**
      * Return Physical monitor Width without border
@@ -37,28 +43,39 @@ public:
      */
     virtual unsigned int borderSize() const {return 10;}
 
-    /**
-     * Generates a sf::Image with the actual screen state
-     */
-    virtual sf::Image* updateScreen() const = 0;
 
     /**
      * Returns the Border color
      */
     virtual sf::Color getBorder() const = 0;
 
-        /**
-         * @Call before render 1 frame to each frames
-         */
-        inline void prepareRender()
-        {
-            need_render = true;
-        }
+    /**
+      * @Call before render 1 frame to each frames
+      */
+    inline void prepareRender()
+    {
+        need_render = true;
+    }
+    
+    /**
+      * @brief ptr value will NEVER change
+      */
+    inline const sf::Image* getScreen() const
+    {
+        return &screen;
+    }
+    
     
 protected:
-    mutable bool need_render; ///Do we need a render (Improve the speed)
-};
+    /**
+     * Generates a sf::Image with the actual screen state
+     */
+    virtual void updateScreen() = 0;
 
+    bool need_render; ///Do we need a render (Improve the speed)
+    sf::Image screen; 
+
+};
 } // END OF NAMESPACE cpu
 
 #endif // Endif _MONITOR_HPP_

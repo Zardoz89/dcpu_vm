@@ -22,7 +22,7 @@ namespace cgm {
 
     CGM::CGM() : 
         bitfield_map (0), attribute_map (0), palette_map (0), font_map (0),
-        videomode(0), border_col (0), blink(0) 
+        videomode(0), border_col (0), ticks(0), blink(0) 
     { }
 
     CGM::~CGM() 
@@ -110,19 +110,23 @@ namespace cgm {
 
     void CGM::tick()
     {
+        if (this->cpu == NULL) return;
+        if (++ticks > this->cpu->cpu_clock/60) {
+            // Update screen at 60Hz aprox
+            ticks = 0;
+            this->updateScreen();
+        }
         if (++blink > blink_max*2)
             blink = 0;
     }
 
-    sf::Image* CGM::updateScreen() const
+    void CGM::updateScreen()
     {
-    	//TODO Remove all POSSIBLES multiplication insides loops
-        if (this->cpu == NULL)
-            return NULL;
+        if (this->cpu == NULL || !need_render)
+            return;
         
-        sf::Image* scr = new sf::Image();
-        scr->create(CGM::WIDTH, CGM::HEIGHT, sf::Color::Black);
-        
+        screen.create(CGM::WIDTH, CGM::HEIGHT, sf::Color::Black);
+        need_render = false;
         if (bitfield_map != 0 && attribute_map != 0) { 
             // Update the texture
             switch (videomode) {
@@ -164,10 +168,10 @@ namespace cgm {
                     unsigned y = i / CGM::WIDTH;
                     if (cpu->getMem()[word] & 1<<bit) {
                         // Foreground
-                        scr->setPixel (x, y, fg);
+                        screen.setPixel (x, y, fg);
                     } else {
                         // Backgorund
-                        scr->setPixel (x, y, bg);
+                        screen.setPixel (x, y, bg);
                     }
                 }
                 break;
@@ -210,10 +214,10 @@ namespace cgm {
                     unsigned y = i / CGM::WIDTH;
                     if (cpu->getMem()[word] & 1<<bit) {
                         // Foreground
-                        scr->setPixel (x, y, fg);
+                        screen.setPixel (x, y, fg);
                     } else {
                         // Backgorund
-                        scr->setPixel (x, y, bg);
+                        screen.setPixel (x, y, bg);
                     }
                 }
                 break;
@@ -256,10 +260,10 @@ namespace cgm {
                     unsigned y = i / CGM::WIDTH;
                     if (cpu->getMem()[word] & 1<<bit) {
                         // Foreground
-                        scr->setPixel (x, y, fg);
+                        screen.setPixel (x, y, fg);
                     } else {
                         // Backgorund
-                        scr->setPixel (x, y, bg);
+                        screen.setPixel (x, y, bg);
                     }
                 }
                 break;
@@ -299,10 +303,10 @@ namespace cgm {
                     {
                         if (bit & 1<<j) {
                             // Foreground
-                            scr->setPixel (x, y, fg);
+                            screen.setPixel (x, y, fg);
                         } else {
                             // Backgorund
-                            scr->setPixel (x, y, bg);
+                            screen.setPixel (x, y, bg);
                         }
                         x++;
                     }
@@ -379,38 +383,38 @@ namespace cgm {
                             // First word 
                             bool pixel = ((1<<(i+8)) & glyph[0]) > 0;
                             if (pixel) {
-                                scr->setPixel (col*4, row*8 +i, fg);
+                                screen.setPixel (col*4, row*8 +i, fg);
                             } else {
-                                scr->setPixel (col*4, row*8 +i, bg);
+                                screen.setPixel (col*4, row*8 +i, bg);
                             }
                             // Second word
                             pixel = ((1<<i) & glyph[1]) > 0;
                             if (pixel) {
-                                scr->setPixel (col*4 +2, row*8 +i, fg);
+                                screen.setPixel (col*4 +2, row*8 +i, fg);
                             } else {
-                                scr->setPixel (col*4 +2, row*8 +i, bg);
+                                screen.setPixel (col*4 +2, row*8 +i, bg);
                             }
                             
                             // *** LSB ***
                             // First word 
                             pixel = ((1<<(i+8)) & glyph[0]) >0;
                             if (pixel) {
-                                scr->setPixel (col*4 +1, row*8 +i, fg);
+                                screen.setPixel (col*4 +1, row*8 +i, fg);
                             } else {
-                                scr->setPixel (col*4 +1, row*8 +i, bg);
+                                screen.setPixel (col*4 +1, row*8 +i, bg);
                             }
                             // Secodn word
                             pixel = ((1<<i) & glyph[1]) > 0;
                             if (pixel) {
-                                scr->setPixel (col*4 +3, row*8 +i, fg);
+                                screen.setPixel (col*4 +3, row*8 +i, fg);
                             } else {
-                                scr->setPixel (col*4 +3, row*8 +i, bg);
+                                screen.setPixel (col*4 +3, row*8 +i, bg);
                             }
                         }
 
                         if (underf) { // Underline, puts last row to ON
                             for (int i=0; i<4; i++)
-                                scr->setPixel (col*4 +i, row*8 +8, fg);
+                                screen.setPixel (col*4 +i, row*8 +8, fg);
                         }
 
                     }
@@ -421,13 +425,9 @@ namespace cgm {
                 // TODO mode 5
                 break;
             default:
-                ; 
+                break; 
             }
-            
-            
-        
         } 
-        return scr;
     }
 
     sf::Color CGM::getBorder() const

@@ -67,7 +67,7 @@ public:
     
     virtual void attachTo (DCPU* cpu, size_t index);
 
-    virtual sf::Image* updateScreen() const;
+    
 
     virtual sf::Color getBorder() const;
 
@@ -76,12 +76,14 @@ public:
     const static uint16_t def_font_map[128*2];   /// Default fontmap
 
 protected:
+    virtual void updateScreen();
 
     uint16_t screen_map;                /// Where map VIDEO RAM 
     uint16_t font_map;                  /// Where map FONT
     uint16_t palette_map;               /// Where map PALETTE
     
     uint8_t border_col;                 /// Border color palette index
+    uint32_t ticks;                     /// CPU clock ticks (for timing)
     
     uint_fast32_t blink;                /// Counter for blinking
     uint_fast32_t blink_max;            /// Max ticks to change blink state
