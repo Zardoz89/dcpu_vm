@@ -182,6 +182,15 @@ int main (int argc, char **argv)
             if (event.type == sf::Event::Closed) {
                 window.close();
             }
+            else if (event.type == sf::Event::Resized)
+            {
+                //Rewrap opengl camera
+                float r_width = window.getSize().x;
+                float r_height = window.getSize().y;
+                //For emulations modes and windows resizes
+                sf::FloatRect r(0,0,r_width,r_height);
+                window.setView(sf::View(r));
+            }
             else if (event.type == sf::Event::KeyPressed 
                     || event.type == sf::Event::KeyReleased)
             {
@@ -297,28 +306,18 @@ int main (int argc, char **argv)
                 tick_needed = dcpu->cpu_clock/60;
             dcpu->tick(tick_needed);
         }
-        /*border_add = monitor->borderSize();
-        sprite.setPosition(sf::Vector2f(border_add,border_add));
-        border_add *=2;
         
         
-        float r_width = border_add + monitor->getScreen().getSize().x;
-        float r_height = border_add + monitor->getScreen().getSize().y;
-        border.setSize(sf::Vector2f(r_width,r_height));
-        border.setFillColor(monitor->getBorder());*/
-        
-        //For emulations modes and windows resizes
-        //sf::FloatRect r(0,0,r_width,r_height);
-        //window.setView(sf::View(r));
         window.setActive(true);
         
-        
+        //Working resizing code
+        border_add = monitor->borderSize();
         texture.loadFromImage(*screen); //Slow function
         sprite.setTexture(texture);
-        sprite.scale(
-                monitor->phyWidth() / (float)(monitor->width() ) ,
-                monitor->phyHeight() / (float)(monitor->height()) );
-        sprite.setPosition(monitor->borderSize(), monitor->borderSize());
+        sprite.setScale(  //Warning setScale and scale are different !!
+         (float) (window.getSize().x-border_add*2) / (float)(monitor->width()),
+        (float) (window.getSize().y-border_add*2) / (float)(monitor->height()));
+        sprite.setPosition(sf::Vector2f(border_add,border_add));
 
         window.clear(monitor->getBorder()); //good idea
         window.draw(sprite);
