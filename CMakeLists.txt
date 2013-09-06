@@ -23,10 +23,14 @@ include(Platform)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
+message( "Procesing Source Code")
 add_subdirectory(src)
+
+message( "Procesing Assets")
 add_subdirectory(assets)
 
 
 if(BUILD_tests)
+    # Some day....
 endif(BUILD_tests)
 

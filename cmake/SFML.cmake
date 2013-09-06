@@ -4,7 +4,7 @@ find_path(SFML_INCLUDE_DIR
     NAMES SFML/Window.hpp
     HINTS
     PATH_SUFFIXES include Headers
-    PATHS ${TRILLEK_SEARCH_PATHS}
+    PATHS ${DCPU_VM_SEARCH_PATHS}
 )
 
 message(STATUS "Looking for sfml-system library")
@@ -18,7 +18,7 @@ find_library(SFML_SYSTEM_LIBRARY
     NO_CMAKE_PATH
     CMAKE_FIND_FRAMEWORK NEVER
     PATH_SUFFIXES lib lib64
-    PATHS ${TRILLEK_SEARCH_PATHS}
+    PATHS ${DCPU_VM_SEARCH_PATHS}
 )
 
 message(STATUS "Looking for sfml-window library")
@@ -32,7 +32,7 @@ find_library(SFML_WINDOW_LIBRARY
     NO_CMAKE_PATH
     CMAKE_FIND_FRAMEWORK NEVER
     PATH_SUFFIXES lib lib64
-    PATHS ${TRILLEK_SEARCH_PATHS}
+    PATHS ${DCPU_VM_SEARCH_PATHS}
 )
 
 message(STATUS "Looking for sfml-graphics library")
@@ -46,7 +46,7 @@ find_library(SFML_GRAPHICS_LIBRARY
     NO_CMAKE_PATH
     CMAKE_FIND_FRAMEWORK NEVER
     PATH_SUFFIXES lib lib64
-    PATHS ${TRILLEK_SEARCH_PATHS}
+    PATHS ${DCPU_VM_SEARCH_PATHS}
 )
 
 if (SFML_SYSTEM_LIBRARY)
