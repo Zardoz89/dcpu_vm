@@ -202,14 +202,34 @@ int main (int argc, char **argv)
             } else if (event.type == sf::Event::LostFocus) {
                 keyb_focus = false;
 
-            } else if (keyb_focus && ( event.type == sf::Event::KeyPressed 
-                    || event.type == sf::Event::KeyReleased)) {
+            } else if (keyb_focus && ( event.type == sf::Event::KeyPressed || 
+                        event.type == sf::Event::KeyReleased || 
+                        event.type == sf::Event::TextEntered )) {
                 // Process VM keyboard input
                 bool pressed = (event.type == sf::Event::KeyPressed);
                 unsigned char keycode=0;
                 
-                // TODO Add symbols! But wait to know if the new keyboard specs
-                // are accepted
+                if (event.type == sf::Event::TextEntered) {
+                    // Note this works becuase Unicode maps ASCII 7 bit in his
+                    // first 128 codes
+                    if ((event.text.unicode >= '!' && 
+                         event.text.unicode <= '/') ||
+                        (event.text.unicode >= ':' && 
+                             event.text.unicode <= '@') ||
+                        (event.text.unicode >= '[' && 
+                             event.text.unicode <= 0x60) ||
+                        (event.text.unicode >= '{' && 
+                             event.text.unicode <= 0x7F) ) {
+                        
+                        gkeyboard->pushKeyEvent(true, 
+                                (unsigned char) event.text.unicode);
+                        gkeyboard->pushKeyEvent(false, 
+                                (unsigned char) event.text.unicode);
+                        /*std::cerr << event.text.unicode << "  " << 
+                             (unsigned char) event.text.unicode << std::endl;*/
+                    }
+                }
+
                 if (event.key.code>=sf::Keyboard::A && 
                     event.key.code<=sf::Keyboard::Z) {
                     if (event.key.shift)
