@@ -111,8 +111,7 @@ int main (int argc, char **argv)
     {
         BinAsm assembler;
         if (!assembler.load(filename)) return 0xdead;
-        if (!assembler.finds_labels()) return 0xdead;
-        assembler.print_labels();
+        if (!assembler.assemble()) return 0xdead;
         if (!assembler.save(outname)) return 0xdead;
         filename = outname;
     }

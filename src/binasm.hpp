@@ -18,44 +18,73 @@ class BinAsm
 		BinAsm();
 		~BinAsm();
 		
-		typedef struct
-		{
-			uint16_t offset;
-			unsigned int line;
-			std::string name;
-		} Label;
 		
 		//Load from filename;
 		bool load(const std::string& filename);
 		
 		//Remove Comments from the text
-		void remove_comments(std::string& str);
+		static void remove_comments(std::string& str);
 		//Make lines from text
 	    static std::vector<std::string> split_text(const std::string& text); 
 		//Make word from lines (separator ' ' ',') "" conservate the integrity
 		static std::vector<std::string> split_line(const std::string& line);
 		
 		//take a value from word
-		uint16_t get_value(const std::string& word, std::string& err);
-		
-		//get_data from line return size target must have line.size()*2 
-		//to be safe
-		uint16_t get_data(const std::string& line, 
-						  uint16_t* target, std::string& err);
-		
-		//Get op from word
-		uint8_t get_op(const std::string& word);
-		//Get sop from word
-		uint8_t get_sop(const std::string& word, std::string& err);
-		//Get A operator from word
-		uint8_t get_a(const std::string& word, 
-							uint16_t& data, std::string& err);
-		uint8_t get_b(const std::string& word, 
-							uint16_t& data, std::string& err);
-							
-		//search labels on the asm code
-		bool finds_labels();
+		bool get_value(const std::string& word, uint16_t& v, std::string& err);
+        //Get strings datas or number
+		bool get_data(const std::string& word,std::string& err);
 
+		//Get A operator from word return error
+		bool resolve_a(const std::string& word,std::string& err);
+        //Get B operator from word return error
+        bool resolve_b(const std::string& word,std::string& err);
+        //Add data return error
+		bool resolve_data(const std::string& word,std::string& err);
+                            
+               
+                            
+        //is the word an op
+        static bool is_op(const std::string& word, uint8_t& op);
+        //is the word an sop
+        static bool is_sop(const std::string& word, uint8_t& op);
+        //is the word a .dat or dat section
+        static bool is_data_flag(const std::string& word);
+        //is the word a register
+        static char is_register(const std::string& word);
+        //is the word a valid label
+        static bool is_valid_label_name(const std::string& word);
+        
+        bool assemble();
+
+        //is the word a label definition
+        static inline bool is_label_definition(const std::string& word)
+        {
+            if (word.size() && (word[0]==':' || word[word.size()-1]==':'))
+                return true;
+            return false;
+        }
+        
+        static inline std::string remove_spaces(const std::string& word)
+        {
+            std::string u = word;
+            size_t i = u.find(' ');
+            while (i != std::string::npos)
+            {
+                u.erase(i,1);
+                i = u.find(' ');
+            }
+            i = u.find('\t');
+            while (i != std::string::npos)
+            {
+                u.erase(i,1);
+                i = u.find('\t');
+            }
+            return u;
+        }
+        
+        //resolves labels
+        bool resolve_labels();
+							
 		
 		bool save(const std::string& filename);
 		
@@ -63,15 +92,18 @@ class BinAsm
 						 bool warning,
 						 const std::string& err);
 		
-		void print_labels();
-		
 		
 		
 	protected:
-		std::map<std::string,Label> _labels;
 		std::string _fullsrc;
 		std::string _src;
+        std::vector<std::string> _lines;
 		std::string _filename;
+        //Unresolved labels
+        std::map<uint16_t,std::string> _unresolved;
+        std::map<std::string,uint16_t> _labels;
+        uint16_t _bin[0x1000];
+        uint16_t _offset;
 		
 
 };
