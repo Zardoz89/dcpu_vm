@@ -31,17 +31,19 @@ bool BinAsm::load(const std::string& filename)
 	}
 
 	unsigned int size = fsize(f);
-	char* buff = new char[size+1];
+    //using dawn good old memory allocation
+	char* buff = (char*) malloc(size+1);
+    memset((void*)buff,'\0',size+1);
 	fread(buff,1,size,f);
 	fclose(f);
     //strange bug windows add a t i don't know why...
-    if (size>2 && (buff[size-2]==EOF||buff[size-2]=='t')) buff[size-2] = '\0';
+    //if (size>2 && (buff[size-2]==EOF||buff[size-2]=='t')) buff[size-2] = '\0';
 	buff[size] = '\0';
 	_fullsrc = buff;
 	_src=_fullsrc;
 	remove_comments(_src);
     _lines = split_text(_src);
-	delete buff;
+	free(buff);
 	return true;
 }
 
@@ -92,7 +94,7 @@ std::vector<std::string> BinAsm::split_text(const std::string& text)
 	}
     //last line
     if (b < text.size())
-        lines.push_back(text.substr(b,text.size()));
+        lines.push_back(text.substr(b,text.size()-b));
 	return lines;
 }
 
@@ -141,7 +143,7 @@ std::vector<std::string> BinAsm::split_line(const std::string& line)
 			validate=false;
 		}
 	}
-	if (validate) words.push_back(line.substr(b,line.size()));
+	if (validate) words.push_back(line.substr(b,line.size()-b));
 	return words;
 }
 
@@ -277,7 +279,7 @@ bool BinAsm::get_data(const std::string& word,std::string& err)
     return ret;
 }
 
-/*
+
 uint8_t BinAsm::get_a(const std::string& word,
 							uint16_t& data, std::string& err)
 {
@@ -336,28 +338,27 @@ uint8_t BinAsm::get_a(const std::string& word,
 	
 	if (code && u.size() > 5)
 	{
-		data=get_value(u.substr(3,u.size()-4), err);
+		get_value(u.substr(3,u.size()-4),data, err);
 		return code;
 	}
 	else if (u.size() > 2 && u[0] == '[')
 	{
 		if (u[u.size()-1] == ']') 
-			data=get_value(u.substr(1,u.size()-2), err);
+			get_value(u.substr(1,u.size()-2), data, err);
 		else
 			err="excepted ']' at the end of avalue pointer";
 		return 0x1E; 
 	}
-	uint16_t value=get_value(u, err);
+	get_value(u,data, err);
 	if (!err.size())
 	{
-		if (value == 0xFFFF) return 0x20;
-		else if (value<=30)
+		if (data == 0xFFFF) return 0x20;
+		else if (data<=30)
 		{
-			return value+0x21;
+			return data+0x21;
 		}
 		else
 		{
-			data=value;
 			return 0x1F;
 		}
 	}
@@ -365,8 +366,8 @@ uint8_t BinAsm::get_a(const std::string& word,
 	{
 		return 0xFF;
 	}
-}*/
-/*
+}
+
 uint8_t BinAsm::get_b(const std::string& word,
 							uint16_t& data, std::string& err)
 {
@@ -425,36 +426,36 @@ uint8_t BinAsm::get_b(const std::string& word,
 	
 	if (code && u.size() > 5)
 	{
-		data=get_value(u.substr(3,u.size()-4), err);
+		get_value(u.substr(3,u.size()-4),data, err);
 		return code;
 	}
 	else if (u.size() > 2 && u[0] == '[')
 	{
 		if (u[u.size()-1] == ']') 
-			data=get_value(u.substr(1,u.size()-2), err);
+			get_value(u.substr(1,u.size()-2),data, err);
 		else
 			err="excepted ']' at the end of btarget pointer";
 		return 0x1E; 
 	}
-	uint16_t value=get_value(u, err);
+	get_value(u, data,err);
 	if (!err.size())
 	{
 		err="btarget must be a pointer or a register";
-		if (value == 0xFFFF) return 0x20;
-		else if (value<=30)
+		if (data == 0xFFFF) return 0x20;
+		else if (data<=30)
 		{
-			return value+0x21;
+			return data+0x21;
 		}
 		else
 		{
-			data=value;
 			return 0x1F;
 		}
 	}
 	else
 	{
 		return 0xFF;
-	}*/
+	}
+}
 
 bool BinAsm::assemble()
 {
@@ -471,7 +472,7 @@ bool BinAsm::assemble()
         
         std::cout << "line " << lc << ":" << *lit << "\n";
         
-        int c = 0;
+        unsigned c = 0;
         w[c] = remove_spaces(w[c]);
         if (is_label_definition(w[c]))
         {
@@ -500,9 +501,37 @@ bool BinAsm::assemble()
 				err += " need 2 arguments";
                 print_error(lc,false,err);
                 error_count++;
+                err=std::string();
             }
             else 
             {
+                uint16_t opcode = op;
+                uint16_t a_word=0, b_word=0;
+				opcode |= ((get_b(w[1],b_word,err) & 0x1F) << 5);
+				if (err.size())
+				{
+					print_error(lc,false,err);
+					error_count++;
+                    err=std::string();
+				}
+                if (err.size())
+				{
+					print_error(lc,false,err);
+					error_count++;
+                    err=std::string();
+				}
+				_bin[_offset]=opcode;
+				_offset++;
+				if (a_word!=(uint16_t)-1 && a_word > 30)
+				{
+					_bin[_offset]=a_word;
+					_offset++;
+				}
+				if (b_word!=(uint16_t)-1 && b_word > 30)
+				{
+					_bin[_offset]=b_word;
+					_offset++;
+			    }
                 
             }
         }
@@ -514,10 +543,21 @@ bool BinAsm::assemble()
 				err += " need 2 arguments";
                 print_error(lc,false,err);
                 error_count++;
+                err=std::string();
             }
             else 
             {
-                
+                uint16_t opcode = op;
+                uint16_t a_word=0;
+				opcode = ((opcode & 0x1F) << 5);
+				opcode |= (get_a(w[1],a_word,err) << 10);
+				_bin[_offset]=opcode;
+				_offset++;
+				if (a_word!=(uint16_t)-1 && a_word > 30)
+				{
+					_bin[_offset]=a_word;
+					_offset++;
+				}
             }
         }
         else if (is_data_flag(w[c]))
@@ -529,6 +569,7 @@ bool BinAsm::assemble()
                 {
                     print_error(lc,false,err);
                     error_count++;
+                    err=std::string();
                 }
             }
         }
@@ -537,6 +578,7 @@ bool BinAsm::assemble()
             err ="unexcepted expression " + w[c];
             print_error(lc,false,err);
             error_count++;
+            err=std::string();
         }
 	}
 	
@@ -659,4 +701,5 @@ char BinAsm::is_register(const std::string& word)
         return p[0];
     return 0;
 }
+
 }

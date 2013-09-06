@@ -8,6 +8,7 @@
 #include "dcpu_opcodes.hpp"
 #include "file.h"
 #include <cstdlib>
+#include <cstring>
 
 namespace cpu {
 
@@ -33,13 +34,18 @@ class BinAsm
 		bool get_value(const std::string& word, uint16_t& v, std::string& err);
         //Get strings datas or number
 		bool get_data(const std::string& word,std::string& err);
-
+/*
 		//Get A operator from word return error
 		bool resolve_a(const std::string& word,std::string& err);
         //Get B operator from word return error
         bool resolve_b(const std::string& word,std::string& err);
         //Add data return error
-		bool resolve_data(const std::string& word,std::string& err);
+		bool resolve_data(const std::string& word,std::string& err);*/
+        
+        uint8_t get_a(const std::string& word,
+                                    uint16_t& data, std::string& err);
+        uint8_t get_b(const std::string& word,
+                                    uint16_t& data, std::string& err);
                             
                
                             
