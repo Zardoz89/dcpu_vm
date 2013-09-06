@@ -208,28 +208,29 @@ int main (int argc, char **argv)
                 // Process VM keyboard input
                 bool pressed = (event.type == sf::Event::KeyPressed);
                 unsigned char keycode=0;
-                
-                if (event.type == sf::Event::TextEntered) {
-                    // Note this works becuase Unicode maps ASCII 7 bit in his
-                    // first 128 codes
-                    if ((event.text.unicode >= '!' && 
+
+                // Note this works becuase Unicode maps ASCII 7 bit in his
+                // first 128 codes
+                if (event.type == sf::Event::TextEntered &&
+                       ((event.text.unicode >= '!' && 
                          event.text.unicode <= '/') ||
                         (event.text.unicode >= ':' && 
                              event.text.unicode <= '@') ||
                         (event.text.unicode >= '[' && 
                              event.text.unicode <= 0x60) ||
                         (event.text.unicode >= '{' && 
-                             event.text.unicode <= 0x7F) ) {
+                             event.text.unicode <= 0x7F) )) {
                         
                         gkeyboard->pushKeyEvent(true, 
                                 (unsigned char) event.text.unicode);
                         gkeyboard->pushKeyEvent(false, 
                                 (unsigned char) event.text.unicode);
-                        /*std::cerr << event.text.unicode << "  " << 
-                             (unsigned char) event.text.unicode << std::endl;*/
-                    }
                 }
-
+                // Ignore silenty any other TextEntered events
+                // because SFML generate at same time KeyEvent and TextEntered
+                if (event.type == sf::Event::TextEntered) 
+                    continue; 
+                
                 if (event.key.code>=sf::Keyboard::A && 
                     event.key.code<=sf::Keyboard::Z) {
                     if (event.key.shift)
