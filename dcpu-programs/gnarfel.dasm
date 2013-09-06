@@ -1,0 +1,739 @@
+;KernelX
+SET PC KernelInit
+;Kernel Variables
+:PromptStr DAT ">", 0 ;Null terminated even if only a single character.
+:ShellRC DAT "autoexec", 0
+:BatchMode DAT 0
+:BatchAddress DAT 0
+:DiskBufferPtr DAT 0x0000
+
+:Zero DAT 0x0000 ;Useful for strcmp(zero, strOther) or something.
+:Monitor DAT 0xffff
+:MonitorVersion DAT 0xffff
+:Keyboard DAT 0xffff
+:Clock DAT 0xffff
+:Ticks DAT 0x0000
+:TickSpeed DAT 0x0000
+:HMD2043 DAT 0xffff
+:SPED DAT 0xffff
+:CursorPos DAT 0x0000
+:CurrentSector DAT 0x0000
+:readline_buffer DAT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+:KernelInit
+    ;Install Primary Interrupt
+    IAS KernelInterrupt
+    
+
+    ;Detect Installed Hardware
+    JSR DetectHW
+    
+    ;Print Boot Message
+    SET A, BootStr
+    JSR printn
+    
+    JSR shell_init
+    
+    ;Nothing left to do.
+    SET PC, KernelPanic
+
+:KernelInterrupt
+    IAQ 1
+    ;Process Software interrupts
+    AND A, 0x0FFF   ;Remove the HW Interrupt Mask Bit (0xF000)
+
+
+    IFE A, [Clock]
+        ADD [Ticks], 1
+    
+    RFI 0
+:KernelPanic
+    ;We should indicate that the system has become unresponsive.
+    SET PC, KernelCrash
+
+:KernelCrash
+    
+    SET PC, KernelCrash
+
+:DetectHW
+    HWN Z
+    IFE Z, 0 
+        SET PC POP
+    SUB Z, 1
+
+    :DetectHWLoop
+        HWQ Z
+        JSR IsLEM18XX
+        JSR IsClock
+        JSR IsKeyboard
+        JSR IsHMD2043
+        JSR IsSPED
+
+        IFE Z, 0 
+            SET PC, POP
+        SUB Z, 1
+        SET PC, DetectHWLoop
+
+:IsLEM18XX
+    IFN A, 0xf615
+        SET PC, POP
+    IFN B, 0x7349
+        SET PC, POP
+    IFN X, 0x8b36
+        SET PC, POP
+    IFN Y, 0x1c6c
+        SET PC, POP
+
+    SET [Monitor], Z ;Monitor hardware ID
+    SET [MonitorVersion], C ;LEM version
+
+    SET A, 0 ;MEM_MAP_SCREEN
+    SET B, DisplayMap
+    HWI Z
+
+    SET PC, POP
+
+:IsClock
+    IFN A, 0xb402
+        SET PC, POP
+    IFN B, 0x12d0
+        SET PC, POP
+    IFN X, 0x9009
+        SET PC, POP
+    IFN Y, 0x9009
+        SET PC, POP
+
+    SET [Clock], Z ;Clock hardware ID
+
+    SET A, 0 ;60/B Ticks per sec
+    SET [TickSpeed], 60
+    SET B, 60
+    HWI Z
+
+    SET A, 2 ;Map interrupt message
+    SET B, Z
+    BOR B, 0xF000
+    HWI Z
+
+    SET PC, POP
+:IsKeyboard
+    IFN A, 0x7406
+        SET PC, POP
+    IFN B, 0x30cf
+        SET PC, POP
+    IFN X, 0x9009
+        SET PC, POP
+    IFN Y, 0x9009
+        SET PC, POP
+
+    SET [Keyboard], Z ;Keyboard hardware ID
+
+    SET A, 3 ;Enable interrupts
+    SET B, Z
+    BOR B, 0xf000
+    HWI Z
+
+
+    SET PC, POP
+:IsHMD2043
+    IFN A, 0x4cae
+        SET PC, POP
+    IFN B, 0x74fa
+        SET PC, POP
+    IFN X, 0x4948
+        SET PC, POP
+    IFN Y, 0x2154
+        SET PC, POP
+
+    SET [HMD2043], Z ;Monitor hardware ID
+
+    SET A, 0x0005
+    SET B, Z
+    BOR B, 0xF000
+    HWI Z
+
+
+    SET PC, POP
+:IsSPED
+    IFN A, 0xbf3c
+        SET PC, POP
+    IFN B, 0x42ba
+        SET PC, POP
+    IFN X, 0x7e91
+        SET PC, POP
+    IFN Y, 0x1eb3
+        SET PC, POP
+
+    SET [SPED], Z ;Keyboard hardware ID
+
+    ;No additional setup is performed
+    SET PC, POP
+
+:putc
+    ;Does not clobber.
+    SET PUSH, A
+    SET PUSH, B
+
+    SET B, DisplayMap
+    ADD B, [CursorPos]
+    SET [B], A
+    BOR [B], 0xF000
+    ADD [CursorPos], 1
+
+    IFG [CursorPos], 383
+        JSR scroll
+
+    SET B, POP
+    SET A, POP
+    SET PC, POP
+:print
+    ;Does not clobber.
+    SET PUSH, A
+    SET PUSH, B
+    :printLoop
+        IFE [A], 0
+            SET PC, printLoop_break
+
+        SET B, A
+        SET A, [A]
+        JSR putc
+        
+        SET A, B
+        ADD A, 1
+        SET PC, printLoop
+    :printLoop_break
+    SET B, POP
+    SET A, POP
+    SET PC, POP
+:newline
+    SET PUSH, A
+    :newline_loop
+        SET A, [CursorPos]
+        MOD A, 32
+        IFE A, 0
+            SET PC, newline_loopBreak
+        ADD [CursorPos], 1
+        SET PC, newline_loop
+    :newline_loopBreak
+    SET A, POP
+    SET PC, POP
+:printn
+    JSR print
+    JSR newline
+    SET PC, POP
+:cls
+    SET PUSH, A
+    SET PUSH, B
+    
+    SET A, 0
+    SET B, DisplayMap
+    :cls_loop
+        ADD A, 1 ;1-indexed
+        
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        SET [B], 0
+        ADD B, 1
+        
+
+        IFE A, 24
+            SET PC, cls_loopbreak
+        SET PC, cls_loop
+    :cls_loopbreak
+        SET [CursorPos], 0
+        SET B, POP
+        SET A, POP
+        SET PC, POP
+:scroll
+    SET PUSH, I
+    SET PUSH, J 
+    SET PUSH, X
+    SET I, DisplayMap
+    
+    SET J, DisplayMap
+    ADD J, 32
+    SET X, 0
+    :scroll_loop
+        ADD X, 1 ;Makes this a 1-indexed array!
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        STI [I], [J]
+        IFE X, 12 ;There is an extra row of 0x0000 in the display map to support fast scrolling ;)
+            SET PC, scroll_loopBreak ;This means there is always a blank row to copy.
+        
+        SET PC, scroll_loop
+    :scroll_loopBreak
+        SUB [CursorPos], 32
+        SET X, POP
+        SET J, POP
+        SET I, POP
+        SET PC, POP
+:getc  ;Returns char in C
+    SET PUSH, A
+    SET A, 1
+    :getc_loop
+        HWI [Keyboard]
+        IFN C, 0
+          IFC C, 0x0100 ; Ignores KeyDown
+            SET PC, getc_loopBreak
+
+        SET PC, getc_loop
+    :getc_loopBreak
+    SET A, POP
+    SET PC, POP
+:BatchReadline
+    SET PUSH, A
+    SET PUSH, B
+    SET PUSH, C
+
+    SET A, [BatchAddress]    
+    JSR strlen
+
+    SET B, readline_buffer
+
+    JSR memcpy
+    
+
+
+    SET A, [BatchAddress]
+    JSR strlen
+
+    SET B, readline_buffer
+    ADD B, C
+    SET [B], 0
+
+
+    ADD [BatchAddress], C
+    ADD [BatchAddress], 1
+
+    SET B, [BatchAddress]
+    IFE [B], 0xFFFF
+        SET [BatchMode], 0
+    IFE [B], 0xFFFF
+        SET [BatchAddress], 0
+
+    SET C, POP
+    SET B, POP
+    SET A, POP
+    SET PC, POP
+:readline
+    IFE [BatchMode], 0x0001
+        SET PC, BatchReadline
+    SET PUSH, A
+    SET PUSH, C
+    SET PUSH, I
+    SET C, 0
+    SET I, 0
+    :readline_loop
+        JSR getc
+        IFE C, 0x11
+            SET PC, readline_loopBreak
+
+        IFE C, 0x10
+            SET PC, readline_backspace ;Does not execute the rest of the code in this loop!
+
+        SET [readline_buffer + I], C
+        SET A, C
+        JSR putc
+        ADD I, 1
+        IFE I, 32
+            SET PC, readline_loopBreak
+        SET PC, readline_loop
+    :readline_loopBreak
+    SET [readline_buffer + I], 0
+    SET I, POP
+    SET C, POP
+    SET A, POP
+    JSR newline
+    SET PC, POP
+:readline_backspace
+    IFL I, 1
+        SET PC, readline_loop
+    SUB I, 1
+    SET PUSH, A
+    SET A, DisplayMap
+    ADD A, [CursorPos]
+    SUB A, 1
+    SET [A], 0
+    SET A, POP
+    IFG [CursorPos], 0
+        SUB [CursorPos], 1
+    SET PC, readline_loop
+:strcmp
+    SET PUSH, A
+    SET PUSH, B
+    SET PUSH, X
+    SET PUSH, Y
+    SET X, A
+    SET Y, B
+    JSR strlen
+    SET A, B
+    SET B, C
+    JSR strlen
+    SET A, C
+    IFN B, A
+        SET C, 0
+    IFE B, A
+        SET C, 1
+    SET A, X
+    SET B, Y
+    :strcmp_loop
+        IFN [A], [B]
+            SET C, 0
+        IFE [A], 0
+            SET PC, strcmp_loopBreak
+        IFE [B], 0
+            SET PC, strcmp_loopBreak
+        ADD A, 1
+        ADD B, 1
+        SET PC, strcmp_loop
+    :strcmp_loopBreak
+    SET Y, POP
+    SET X, POP
+    SET B, POP
+    SET A, POP
+    SET PC, POP
+:strlen
+    SET PUSH, A
+    SET C, 0
+    :strlen_loop
+        IFE [A], 0
+            SET PC, strlen_loopbreak
+        ADD A, 1
+        ADD C, 1
+        SET PC, strlen_loop
+    :strlen_loopBreak
+    SET A, POP
+    SET PC, POP
+
+; A=string pointer
+; outputs to A
+:atoi
+SET B,SP
+SET SP,A
+SET A,0
+;; we jump back to here
+MUL A,10
+SET C,POP
+SUB C,0x30
+ADD A,C
+IFN PEEK,0
+SUB PC,7
+SET SP,B
+SET PC,POP
+
+
+;; A = input number
+;; B = buffer location
+;; C = radix
+:itoa
+SET PUSH,I
+;;determine length of A
+SET PUSH,A
+SET I,0
+;to here from SUB PC, 4
+ADD I,1
+DIV A,C
+IFN A,0
+SUB PC,4
+;; itoa proper
+ADD B,I
+SET [B],0
+SET A,POP
+;;to here from SUB PC,0xB
+SUB B,1
+SET I,A
+MOD I,C
+DIV A,C
+IFG I,9
+ADD I,7
+ADD I,0x30
+SET [B],I
+IFN A,0
+SUB PC,0xB
+SET I,POP
+SET PC,POP
+
+
+
+:shell_init
+    SET A, ShellRC
+    JSR shell_processor ;Continues to shell
+    
+:shell
+    SET A, 0
+    SET B, 0
+    SET C, 0
+    SET X, 0
+    SET Y, 0
+    SET Z, 0
+    SET I, 0
+    SET J, 0
+    SET SP, 0
+
+    
+
+:shell_inputloop
+
+    JSR newline ;Extraneous newlines aren't displayed.  Isn't that neat?  Just print a space if you really
+                ;do want multiple blank lines.
+    SET A, PromptStr
+
+    IFE [BatchMode], 0x0000
+        JSR print
+
+    JSR readline
+    SET A, readline_buffer
+
+    JSR shell_processor
+    SET PC, shell_inputloop
+
+:shell_processor
+    SET C, 0
+
+    
+    SET B, TokenVersion
+    JSR strcmp
+
+    IFE C, 1
+        SET PC, shell_version
+
+    SET B, TokenLoad
+    JSR strcmp
+        
+    IFE C, 1
+        SET PC, shell_load
+
+    SET B, TokenConsole
+    JSR strcmp
+    
+    IFE C, 1
+        SET PC, shell_console
+
+    SET B, TokenCLS
+    JSR strcmp
+    IFE C, 1
+        SET PC, shell_cls
+
+    SET B, TokenAutoexec
+    JSR strcmp
+    IFE C, 1
+        SET PC, shell_autoexec
+
+    SET B, TokenSetsector
+    JSR strcmp
+    IFE C, 1
+        SET PC, shell_setsector
+    
+    SET B, TokenMemory
+    JSR strcmp
+    IFE C, 1
+        SET PC, shell_memory
+
+
+
+
+    SET PC, POP
+
+:shell_memory
+    SET A, 0xFFFF
+    SUB A, EndRom
+    SET B, readline_buffer
+    SET C, 10
+
+    JSR itoa
+
+    SET A, readline_buffer
+    JSR print
+    
+    SET A, BytesFreeStr
+    JSR printn
+
+
+    SET PC, shell
+:shell_setsector
+    SET A, EnterSectorStr
+    IFE [BatchMode], 0x0000
+        JSR print
+
+    JSR readline
+
+    SET A, readline_buffer
+    JSR atoi
+
+    IFL [CurrentSector], 1441
+        SET [CurrentSector], A
+    
+
+    SET PC, shell
+:shell_autoexec
+    SET [BatchMode], 1
+    SET [BatchAddress], RomAutoexec
+
+    SET PC, shell
+:shell_cls
+    JSR cls
+    SET PC, shell
+:shell_version
+    SET A, VersionStr
+    JSR printn
+
+    SET PC, shell
+:shell_load
+    IFE [HMD2043], 0xffff
+        SET PC, shell_load_failNoDrive
+
+    SET A, 0x0000
+    HWI [HMD2043]
+
+    IFE B, 0
+        SET PC, shell_load_failNoDisk
+    
+    
+    SET PC, shell
+:shell_load_failNoDisk
+    SET A, NoDiskStr
+    JSR printn
+    SET PC, shell
+:shell_load_failNoDrive
+    SET A, NoDriveStr
+    JSR printn
+    SET PC, shell
+:shell_console
+    SET A, ShellConsoleStr
+    JSR printn
+    SET PC, shell
+
+:memcpy
+    ;A - source
+    ;B - destination
+    ;C - length
+    SET PUSH, A
+    SET PUSH, B
+    SET PUSH, C
+    ADD C, A
+    :memcpy_loop
+        SET [B], [A]
+        ADD A, 1
+        ADD B, 1
+        IFN A, C
+            SET PC, memcpy_loop
+        SET C, POP
+        SET B, POP
+        SET A, POP
+        SET PC, POP
+
+:EndCode
+
+;Kernel Strings
+:EnterSectorStr DAT "Enter sector number> ", 0
+:BootStr DAT "KernelX Booting...", 0
+:NoDriveStr DAT "No drive attached!", 0
+:NoDiskStr DAT "No disk.", 0
+:BytesFreeStr DAT " bytes free.", 0
+
+:VersionStr DAT "KernelX 0.2", 0
+:DiskInitializedStr DAT "Disk was initialized.", 0
+                        ;12345678901234567890123456789012
+:ShellConsoleStr    DAT "KernelX Console System          "
+                    DAT " 0) System Information          "
+                    DAT " 9) System Configuration        "
+                    DAT " 8) Location, Heading, Route    "
+                    DAT " 7) Comms (0 New Msg, 0 Nearby) "
+                    DAT " 6) File Manager                "
+                    DAT " 5) Text Editor                 "
+                    DAT " 4) Known Object Library        "
+                    DAT " 3) Object Editor               "
+                    DAT " 2) "
+                    DAT "(0-9) or (q)uit> "
+                    DAT 0
+                    
+                    
+
+;Shell tokens
+:TokenVersion DAT "version", 0
+:TokenLoad DAT "load", 0
+:TokenConsole DAT "console", 0
+:TokenAutoexec DAT "autoexec", 0
+:TokenCLS DAT "cls", 0
+:TokenSetsector DAT "setsector", 0
+:TokenMemory DAT "memory", 0
+
+
+;Large variables
+:RomAutoexec
+    DAT "version", 0
+    DAT "memory", 0
+    DAT "setsector", 0
+    DAT "0", 0
+    DAT "load", 0
+    DAT "list", 0
+    DAT 0xFFFF ;End of batch marker.
+:DisplayMap DAT 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+:FATMap DAT 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+:SkeletonFileSystem 
+    DAT "BOOT.X" 0 0 0 0 0 0 0 0 0 0 0xF000 0x0050 0x0000 0x0000
+    DAT "FAT.TB" 0 0 0 0 0 0 0 0 0 0 0xF000 0x0150 0x0000 0x0050
+:EndSkeletonFileSystem
+    DAT 0xFFFF
+
+:EndROM DAT 0x0000 ;Last item!
+
+
