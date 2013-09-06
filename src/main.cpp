@@ -169,51 +169,64 @@ int main (int argc, char **argv)
     else
         window.setFramerateLimit(50);
     
+    // We try to use a window to show a fake keyboard and capture keyboard
+    // events if it have focus
+    sf::RenderWindow keyb_win;
+    keyb_win.create(sf::VideoMode(484, 196), "Keyboard", 
+            sf::Style::Titlebar | sf::Style::Close);
+    keyb_win.setKeyRepeatEnabled(false);
+    keyb_win.setActive(false);
+    sf::Texture keyb_tx;
+    bool keyb_image_loaded = keyb_tx.loadFromFile("assets/keyb_img.png");
+    sf::Sprite keyb_sprite;
+    if (keyb_image_loaded)
+        keyb_sprite.setTexture(keyb_tx);
+    else
+        std::cerr << "Waring: assets/keyb_img.png not found !" << std::endl;
+    bool keyb_focus;
     
+
     bool compensate_time = false; 
-    while (window.isOpen()) //Because non mainthread event are forbidden in OSX
-    {
+    while (window.isOpen() && keyb_win.isOpen()) 
+    {   //Because non mainthread event are forbidden in OSX
+    
         // Process events
         sf::Event event;
-        while (window.pollEvent(event)) 
-        {
-            // Close window : exit
+        while (keyb_win.pollEvent(event)) {
+            // This window capture key events to the VM window if have focus
             if (event.type == sf::Event::Closed) {
-                window.close();
-            }
-            else if (event.type == sf::Event::Resized)
-            {
-                //Rewrap opengl camera
-                float r_width = window.getSize().x;
-                float r_height = window.getSize().y;
-                sf::FloatRect r(0,0,r_width,r_height);
-                window.setView(sf::View(r));
-            }
-            else if (event.type == sf::Event::KeyPressed 
-                    || event.type == sf::Event::KeyReleased)
-            {
-                bool pressed = false;
+                keyb_win.close();
+
+            } else if (event.type == sf::Event::GainedFocus) {
+                keyb_focus = true;
+
+            } else if (event.type == sf::Event::LostFocus) {
+                keyb_focus = false;
+
+            } else if (keyb_focus && ( event.type == sf::Event::KeyPressed 
+                    || event.type == sf::Event::KeyReleased)) {
+                // Process VM keyboard input
+                bool pressed = (event.type == sf::Event::KeyPressed);
                 unsigned char keycode=0;
-                if (event.type == sf::Event::KeyPressed) pressed = true;
+                
+                // TODO Add symbols! But wait to know if the new keyboard specs
+                // are accepted
                 if (event.key.code>=sf::Keyboard::A && 
-                    event.key.code<=sf::Keyboard::Z)
-                {
+                    event.key.code<=sf::Keyboard::Z) {
                     if (event.key.shift)
                         keycode=event.key.code+'A';
                     else
                         keycode=event.key.code+'a';
-                }
-                else if (event.key.code>=sf::Keyboard::Num0 && 
-                        event.key.code<=sf::Keyboard::Num9)
-                {
+                } else if (event.key.code>=sf::Keyboard::Num0 && 
+                        event.key.code<=sf::Keyboard::Num9) {
+
                     keycode=event.key.code-sf::Keyboard::Num0+'0';
-                }
-                else 
-                {
-                    switch (event.key.code)
-                    {
+                } else {
+                    switch (event.key.code) {
+                        case sf::Keyboard::Space:
+                            keycode=' ';
+                            break;
                         case sf::Keyboard::BackSpace:
-                            // NOTE: Changes between SFML 2.0 and 2.1
                             keycode=keyboard::BACKSPACE;
                             break;
                         case sf::Keyboard::Return:
@@ -245,50 +258,83 @@ int main (int argc, char **argv)
                         case sf::Keyboard::LControl:
                             keycode=keyboard::CONTROL;
                             break;
-                        case sf::Keyboard::F1:
-                            if (debug && pressed)
-                            {
-                              std::cout << disassembly(dcpu->getMem()
-                                                    +dcpu->GetPC(),3);
-                              std::cout << std::endl;
-                              dcpu->step();
-                            }
+                        case sf::Keyboard::Escape:
+                            keycode=keyboard::ESC;
                             break;
-                        case sf::Keyboard::F2:
-                            if (debug && !pressed)
-                            {
-                              printf("A : 0x%04X | B : 0x%04X | C : 0x%04X\n",
-                                                dcpu->ra,dcpu->rb,dcpu->rc);
-                              printf("X : 0x%04X | Y : 0x%04X | Z : 0x%04X\n",
-                                                dcpu->rx,dcpu->ry,dcpu->rz);
-                              printf("I : 0x%04X | J : 0x%04X | IA: 0x%04X\n",
-                                                dcpu->ri,dcpu->rj,dcpu->ria);
-                              printf("PC: 0x%04X | SP: 0x%04X | EX: 0x%04X\n",
-                                                dcpu->rpc,dcpu->rsp,dcpu->rex);
-                            }
+
+
+                        default:
                             break;
-                        case sf::Keyboard::F3: 
-                            //No need to be in debug mode for this one
-                            if (!pressed)
-                            {
-                                std::cout << "reset dcpu" << std::endl;
-                                dcpu->reset();
-                                dcpu->loadProgramFromFile(filename);
-                            }
-                            break;
-                        case sf::Keyboard::F12:
-                            if (!pressed)
-                            {
-                                debug = !debug;
-                            }
-                            break;
-                            
-                        default: break;
                     }
                 }
                 if (keycode)
                     gkeyboard->pushKeyEvent(pressed,keycode);
-                
+            }
+        }
+
+        while (window.pollEvent(event)) 
+        {
+            // Close window : exit
+            if (event.type == sf::Event::Closed) {
+                window.close();
+            }
+            else if (event.type == sf::Event::Resized)
+            {
+                //Rewrap opengl camera
+                float r_width = window.getSize().x;
+                float r_height = window.getSize().y;
+                sf::FloatRect r(0,0,r_width,r_height);
+                window.setView(sf::View(r));
+            }
+            // NOTE This keyboard events should be handled by sf:Keyboard
+            // direclty and only works if any VM window have focus.
+            // Actually only wokrs if the monitor window have focus
+            else if (event.type == sf::Event::KeyPressed 
+                    || event.type == sf::Event::KeyReleased)
+            {
+                bool pressed = (event.type == sf::Event::KeyPressed);
+                switch (event.key.code)
+                {
+                    case sf::Keyboard::F1:
+                        if (debug && pressed)
+                        {
+                          std::cout << disassembly(dcpu->getMem()
+                                                +dcpu->GetPC(),3);
+                          std::cout << std::endl;
+                          dcpu->step();
+                        }
+                        break;
+                    case sf::Keyboard::F2:
+                        if (debug && !pressed)
+                        {
+                          printf("A : 0x%04X | B : 0x%04X | C : 0x%04X\n",
+                                            dcpu->ra,dcpu->rb,dcpu->rc);
+                          printf("X : 0x%04X | Y : 0x%04X | Z : 0x%04X\n",
+                                            dcpu->rx,dcpu->ry,dcpu->rz);
+                          printf("I : 0x%04X | J : 0x%04X | IA: 0x%04X\n",
+                                            dcpu->ri,dcpu->rj,dcpu->ria);
+                          printf("PC: 0x%04X | SP: 0x%04X | EX: 0x%04X\n",
+                                            dcpu->rpc,dcpu->rsp,dcpu->rex);
+                        }
+                        break;
+                    case sf::Keyboard::F3: 
+                        //No need to be in debug mode for this one
+                        if (!pressed)
+                        {
+                            std::cout << "reset dcpu" << std::endl;
+                            dcpu->reset();
+                            dcpu->loadProgramFromFile(filename);
+                        }
+                        break;
+                    case sf::Keyboard::F12:
+                        if (!pressed)
+                        {
+                            debug = !debug;
+                        }
+                        break;
+                        
+                    default: break;
+                }
             }
         }
         
@@ -339,6 +385,15 @@ int main (int argc, char **argv)
         window.draw(sprite);
         window.display();
         window.setActive(false);
+
+        // Updates Keyboard window
+        if (keyb_image_loaded) {
+            keyb_win.setActive(true);
+            keyb_win.clear();
+            keyb_win.draw(keyb_sprite);
+            keyb_win.display();
+            keyb_win.setActive(false);
+        }
     }
     return 0;
 }
