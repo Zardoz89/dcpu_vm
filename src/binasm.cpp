@@ -368,19 +368,15 @@ bool BinAsm::get_a(const std::string& word, uint8_t& a,
 	}
 	if (get_value(u,data, err, unresolved))
 	{
-		/*if (data == 0xFFFF) a=0x20;
+		if (data == 0xFFFF) a=0x20;
 		else if (data<=30)
 		{
 			a=data+0x21;
 		}
-        /*if (!data)
-        {
-            a=0x21;
-        }
 		else
 		{
 			a=0x1F;
-		}*/
+		}
         a = 0x1f;
         return true;
 	}
@@ -469,15 +465,11 @@ bool BinAsm::get_b(const std::string& word, uint8_t& b,
 		{
 			b=data+0x21;
 		}
-        if (!data)
-        {
-            b=0x21;
-        }
 		else
 		{
 			b=0x1F;
-		}*/
-        //return true;
+		}
+        //return true;*/
 	}
 	return false;
 }
@@ -495,10 +487,15 @@ bool BinAsm::assemble()
 		std::vector<std::string> w=split_line(*lit);
 		if (!w.size()) continue;
         
-        //std::cout << "line " << lc << ":" << *lit << " err " << error_count << "\n";
+        //std::cout << "line " << lc << ":" << *lit << "\n";
         
         unsigned c = 0;
         w[c] = remove_spaces(w[c]);
+        if (is_directive(w[c]))
+        {
+            print_error(lc,true,"preprocessor directive not supported yet (ignored)");
+            continue;
+        }
         if (is_label_definition(w[c]))
         {
             if (w[c][0]==':') w[c].erase(0,1);
@@ -526,7 +523,6 @@ bool BinAsm::assemble()
 				err += " need 2 arguments";
                 print_error(lc,false,err);
                 error_count++;
-                err=std::string();
             }
             else 
             {
@@ -551,7 +547,13 @@ bool BinAsm::assemble()
                 }
                 else
                 {
-                    print_error(lc,false,err);
+                    if (err.size())
+                    {
+                        print_error(lc,false,err);
+                    }
+                    else {
+                        print_error(lc,false,"cannot get avalue properly");
+                    }
 					error_count++;
                 }
                 _offset--;
@@ -559,7 +561,7 @@ bool BinAsm::assemble()
                  
                 //B Block
                 _offset++; //for get_b bug
-                if (a_word!=(uint16_t)-1 && a_word > 30)  _offset++;
+                if (requiert_data(a))  _offset++;
                 if (get_b(w[c+1],b,b_word,err,unresolved))
                 {
                     opcode |= (b & 0x1F) << 5;
@@ -581,7 +583,13 @@ bool BinAsm::assemble()
                 }
                 else 
                 {
-                    print_error(lc,false,err);
+                    if (err.size())
+                    {
+                        print_error(lc,false,err);
+                    }
+                    else {
+                        print_error(lc,false,"cannot get btarget properly");
+                    }
 					error_count++;
                 }
                 _offset++;
@@ -603,7 +611,6 @@ bool BinAsm::assemble()
 				err += " need 2 arguments";
                 print_error(lc,false,err);
                 error_count++;
-                err=std::string();
             }
             else 
             {
@@ -630,7 +637,13 @@ bool BinAsm::assemble()
                 }
                 else 
                 {
-                    print_error(lc,false,err);
+                    if (err.size())
+                    {
+                        print_error(lc,false,err);
+                    }
+                    else {
+                        print_error(lc,false,"cannot get avalue properly");
+                    }
 					error_count++;
                 }
                 _offset++;
@@ -661,7 +674,6 @@ bool BinAsm::assemble()
                 if (err.size()) //warnings
                 {
                     print_error(lc,true,err);
-                    error_count++;
                 }
             }
         }
@@ -774,9 +786,12 @@ bool BinAsm::is_valid_label_name(const std::string& word)
     {
         if (!((word[i] >= 'a' && word[i] <= 'z') || 
               (word[i] >= 'A' && word[i] <= 'Z') ||
-              (word[i] >= '0' && word[i] <= '0' && i>0) ||
+              (word[i] >= '0' && word[i] <= '9' && i>0) ||
               (word[i] == '_')))
+        {
+              //std::cout << "cause " << word[i] << std::endl;
               return false;
+        }
     }
     return true;
 }
@@ -787,8 +802,8 @@ char BinAsm::is_register(const std::string& word)
     if (!word.size()) return 0;
     std::string p = word;
 	std::transform(p.begin(), p.end(), p.begin(), ::toupper);
-    if (p[0]=='A'||p[0]=='B'||p[0]=='C'||p[0]=='X'||p[0]=='Y'||p[0]=='Z'
-        ||p[0]=='I'||p[0]=='J')
+    if (p=="A"||p=="B"||p=="C"||p=="X"||p=="Y"||p=="Z"
+        ||p=="I"||p=="J")
         return p[0];
     return 0;
 }

@@ -66,6 +66,11 @@ class BinAsm
         
         //is the current target/value requiert a data supplement
         static bool requiert_data(uint8_t a_or_b);
+        //is the word a preprocessor directive
+        static inline bool is_directive(const std::string& word)
+        {
+            return (word.size() && word[0]=='#');
+        }
         
         bool assemble();
 
