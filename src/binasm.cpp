@@ -147,9 +147,11 @@ std::vector<std::string> BinAsm::split_line(const std::string& line)
 	return words;
 }
 
-bool BinAsm::get_value(const std::string& word, uint16_t& v, std::string& err)
+bool BinAsm::get_value(const std::string& word, uint16_t& v, std::string& err,
+                                                            bool& unresolved)
 {
 	unsigned int s = word.size();
+    unresolved=false;
     if (!s) return false;
 	else if (word[0]== '\'' && s >= 3)
 	{
@@ -215,7 +217,11 @@ bool BinAsm::get_value(const std::string& word, uint16_t& v, std::string& err)
         else
         {
             _unresolved[_offset]=word;
-            err="cannot optimize with unpreviously declared label";
+            err="unpreviously declared label ("+word;
+            char buff[33];
+            sprintf(buff,"0x%04X",_offset);
+            err += std::string(" at offset :") + std::string(buff) + ')';
+            unresolved=true;
             v=0x100; //big value cause won't create optimized instruction
         }
         return true;
@@ -235,8 +241,9 @@ bool BinAsm::print_error(unsigned int line,
 	return true;
 }
 
-bool BinAsm::get_data(const std::string& word,std::string& err)
+bool BinAsm::get_data(const std::string& word,std::string& err,bool& unresolved)
 {
+    unresolved=false;
 	if (word.size() && word[0] == '"')
     {
         if (word.size() < 2 || word[word.size()-1]!='"')
@@ -244,7 +251,7 @@ bool BinAsm::get_data(const std::string& word,std::string& err)
             err="excepted \" at the end of input";
             return false;
         }
-		for (unsigned int j=1; j < word.size()-2;j++)
+		for (unsigned int j=1; j < word.size()-1;j++)
 		{
 				if (word[j-1] == '\\')
 				{
@@ -272,16 +279,19 @@ bool BinAsm::get_data(const std::string& word,std::string& err)
                 _offset++;
 		}
     }
-    uint16_t v;
-    bool ret = get_value(remove_spaces(word), v, err);
-    _bin[_offset] = v;
-    _offset++;
-    return ret;
+    else {
+        uint16_t v;
+        bool ret = get_value(remove_spaces(word), v, err,unresolved);
+        _bin[_offset] = v;
+        _offset++;
+        return ret;
+    }
+    return true;
 }
 
 
-uint8_t BinAsm::get_a(const std::string& word,
-							uint16_t& data, std::string& err)
+bool BinAsm::get_a(const std::string& word, uint8_t& a,
+							uint16_t& data, std::string& err,bool& unresolved)
 {
 	std::string u = word;
 	size_t i = u.find(' ');
@@ -293,83 +303,95 @@ uint8_t BinAsm::get_a(const std::string& word,
 	std::string p = u;
 	std::transform(p.begin(), p.end(), p.begin(), ::toupper);
 	uint16_t code = 0;
-	if (p=="A") return 0x00;
-    else if (p=="B") return 0x01;
-	else if (p=="C") return 0x02;
-	else if (p=="X") return 0x03;
-	else if (p=="Y") return 0x04;
-	else if (p=="Z") return 0x05;
-	else if (p=="I") return 0x06;
-	else if (p=="J") return 0x07;
+	if (p=="A") {a=0x00; return true; }
+    else if (p=="B") {a=0x01; return true; }
+	else if (p=="C") {a=0x02; return true; }
+	else if (p=="X") {a=0x03; return true; }
+	else if (p=="Y") {a=0x04; return true; }
+	else if (p=="Z") {a=0x05; return true; }
+	else if (p=="I") {a=0x06; return true; }
+	else if (p=="J") {a=0x07; return true; }
 	
-	else if (p=="[A]") return 0x08;
-	else if (p=="[B]") return 0x09;
-	else if (p=="[C]") return 0x0A;
-	else if (p=="[X]") return 0x0B;
-	else if (p=="[Y]") return 0x0C;
-	else if (p=="[Z]") return 0x0D;
-	else if (p=="[I]") return 0x0E;
-	else if (p=="[J]") return 0x0F;
+	else if (p=="[A]") {a=0x08; return true; }
+	else if (p=="[B]") {a=0x09; return true; }
+	else if (p=="[C]") {a=0x0A; return true; }
+	else if (p=="[X]") {a=0x0B; return true; }
+	else if (p=="[Y]") {a=0x0C; return true; }
+	else if (p=="[Z]") {a=0x0D; return true; }
+	else if (p=="[I]") {a=0x0E; return true; }
+	else if (p=="[J]") {a=0x0F; return true; }
 	
-	else if (p.find("[A+")!=std::string::npos) code=0x10;
-	else if (p.find("[B+")!=std::string::npos) code=0x11;
-	else if (p.find("[C+")!=std::string::npos) code=0x12;
-	else if (p.find("[X+")!=std::string::npos) code=0x13;
-	else if (p.find("[Y+")!=std::string::npos) code=0x14;
-	else if (p.find("[Z+")!=std::string::npos) code=0x15;
-	else if (p.find("[I+")!=std::string::npos) code=0x16;
-	else if (p.find("[J+")!=std::string::npos) code=0x17;
+	else if (p.find("[A+")!=std::string::npos) {code=0x10; return true; }
+	else if (p.find("[B+")!=std::string::npos) {code=0x11; return true; }
+	else if (p.find("[C+")!=std::string::npos) {code=0x12; return true; }
+	else if (p.find("[X+")!=std::string::npos) {code=0x13; return true; }
+	else if (p.find("[Y+")!=std::string::npos) {code=0x14; return true; }
+	else if (p.find("[Z+")!=std::string::npos) {code=0x15; return true; }
+	else if (p.find("[I+")!=std::string::npos) {code=0x16; return true; }
+	else if (p.find("[J+")!=std::string::npos) {code=0x17; return true; }
 	
 	
-	else if (p=="POP"||p=="[SP++]") return 0x18;
+	else if (p=="POP"||p=="[SP++]") {a=0x18; return true; }
 	else if (p=="PUSH"||p=="[--SP]") 
 	{
 		err="cannot push ([--SP]) on avalue";
-		return 0x18;
+        return false;
 	}
-	else if (p=="PEEK"||p=="[SP]") return 0x19;
-	else if (p=="PICK") return 0x1A;
+	else if (p=="PEEK"||p=="[SP]") {a=0x19; return true; }
+	else if (p=="PICK") {a=0x1A; return true; }
 	
 	
-	else if (p=="SP") return 0x1B;
-	else if (p=="PC") return 0x1C;
-	else if (p=="EX") return 0x1D;
+	else if (p=="SP") {a=0x1B; return true; }
+	else if (p=="PC") {a=0x1C; return true; }
+	else if (p=="EX") {a=0x1D; return true; }
 	
 	
 	if (code && u.size() > 5)
 	{
-		get_value(u.substr(3,u.size()-4),data, err);
-		return code;
+		if (get_value(u.substr(3,u.size()-4),data, err,unresolved))
+        {
+            a=code;
+            return true;
+        }
 	}
 	else if (u.size() > 2 && u[0] == '[')
 	{
-		if (u[u.size()-1] == ']') 
-			get_value(u.substr(1,u.size()-2), data, err);
-		else
+        a=0x1E; 
+		if (u[u.size()-1] == ']') {
+			return get_value(u.substr(1,u.size()-2), data, err,unresolved);
+        }
+		else {
 			err="excepted ']' at the end of avalue pointer";
-		return 0x1E; 
+            return false;
+        }
+		
 	}
-	get_value(u,data, err);
-	if (!err.size())
+	if (get_value(u,data, err, unresolved))
 	{
-		if (data == 0xFFFF) return 0x20;
+		/*if (data == 0xFFFF) a=0x20;
 		else if (data<=30)
 		{
-			return data+0x21;
+			a=data+0x21;
 		}
+        /*if (!data)
+        {
+            a=0x21;
+        }
 		else
 		{
-			return 0x1F;
-		}
+			a=0x1F;
+		}*/
+        a = 0x1f;
+        return true;
 	}
 	else
 	{
-		return 0xFF;
+        return false;
 	}
 }
 
-uint8_t BinAsm::get_b(const std::string& word,
-							uint16_t& data, std::string& err)
+bool BinAsm::get_b(const std::string& word, uint8_t& b,
+							uint16_t& data, std::string& err,bool& unresolved)
 {
 	std::string u = word;
 	size_t i = u.find(' ');
@@ -381,80 +403,83 @@ uint8_t BinAsm::get_b(const std::string& word,
 	std::string p = u;
 	std::transform(p.begin(), p.end(), p.begin(), ::toupper);
 	uint16_t code = 0;
-	if (p=="A") return 0x00;
-    else if (p=="B") return 0x01;
-	else if (p=="C") return 0x02;
-	else if (p=="X") return 0x03;
-	else if (p=="Y") return 0x04;
-	else if (p=="Z") return 0x05;
-	else if (p=="I") return 0x06;
-	else if (p=="J") return 0x07;
+	if (p=="A") {b=0x00; return true; }
+    else if (p=="B") {b=0x01; return true; }
+	else if (p=="C") {b=0x02; return true; }
+	else if (p=="X") {b=0x03; return true; }
+	else if (p=="Y") {b=0x04; return true; }
+	else if (p=="Z") {b=0x05; return true; }
+	else if (p=="I") {b=0x06; return true; }
+	else if (p=="J") {b=0x07; return true; }
 	
-	else if (p=="[A]") return 0x08;
-	else if (p=="[B]") return 0x09;
-	else if (p=="[C]") return 0x0A;
-	else if (p=="[X]") return 0x0B;
-	else if (p=="[Y]") return 0x0C;
-	else if (p=="[Z]") return 0x0D;
-	else if (p=="[I]") return 0x0E;
-	else if (p=="[J]") return 0x0F;
-	
-	else if (p.find("[A+")!=std::string::npos) code=0x10;
-	else if (p.find("[B+")!=std::string::npos) code=0x11;
-	else if (p.find("[C+")!=std::string::npos) code=0x12;
-	else if (p.find("[X+")!=std::string::npos) code=0x13;
-	else if (p.find("[Y+")!=std::string::npos) code=0x14;
-	else if (p.find("[Z+")!=std::string::npos) code=0x15;
-	else if (p.find("[I+")!=std::string::npos) code=0x16;
-	else if (p.find("[J+")!=std::string::npos) code=0x17;
-	
-	
-	else if (p=="PUSH"||p=="[--SP]") return 0x18;
+	else if (p=="[A]") {b=0x08; return true; }
+	else if (p=="[B]") {b=0x09; return true; }
+	else if (p=="[C]") {b=0x0A; return true; }
+	else if (p=="[X]") {b=0x0B; return true; }
+	else if (p=="[Y]") {b=0x0C; return true; }
+	else if (p=="[Z]") {b=0x0D; return true; }
+	else if (p=="[I]") {b=0x0E; return true; }
+	else if (p=="[J]") {b=0x0F; return true; }
+	else if (p=="PUSH"||p=="[--SP]") {b=0x18; return true; }
 	else if (p=="POP"||p=="[SP++]") 
 	{
 		err="cannot pop ([SP++]) on btarget";
-		return 0x18;
+        return false;
 	}
-	else if (p=="PEEK"||p=="[SP]") return 0x19;
-	else if (p=="PICK") return 0x1A;
+	else if (p=="PEEK"||p=="[SP]") {b=0x19; return true; }
+	else if (p=="PICK") {b=0x1A; return true; }
 	
 	
-	else if (p=="SP") return 0x1B;
-	else if (p=="PC") return 0x1C;
-	else if (p=="EX") return 0x1D;
+	else if (p=="SP") {b=0x1B; return true; }
+	else if (p=="PC") {b=0x1C; return true; }
+	else if (p=="EX") {b=0x1D; return true; }
+    
+    else if (p.find("[A+")!=std::string::npos) code=0x10;  
+	else if (p.find("[B+")!=std::string::npos) code=0x11; 
+	else if (p.find("[C+")!=std::string::npos) code=0x12;  
+	else if (p.find("[X+")!=std::string::npos) code=0x13;  
+	else if (p.find("[Y+")!=std::string::npos) code=0x14;  
+	else if (p.find("[Z+")!=std::string::npos) code=0x15;  
+	else if (p.find("[I+")!=std::string::npos) code=0x16; 
+	else if (p.find("[J+")!=std::string::npos) code=0x17; 
 	
 	
 	if (code && u.size() > 5)
 	{
-		get_value(u.substr(3,u.size()-4),data, err);
-		return code;
+        b=code;
+		return get_value(u.substr(3,u.size()-4),data, err,unresolved);
 	}
 	else if (u.size() > 2 && u[0] == '[')
 	{
-		if (u[u.size()-1] == ']') 
-			get_value(u.substr(1,u.size()-2),data, err);
-		else
+        b=0x1E;
+		if (u[u.size()-1] == ']') {
+			return get_value(u.substr(1,u.size()-2),data, err,unresolved);
+            }
+		else {
 			err="excepted ']' at the end of btarget pointer";
-		return 0x1E; 
+            return false;
+        }
+		 
 	}
-	get_value(u, data,err);
-	if (!err.size())
+	if (get_value(u, data,err,unresolved))
 	{
 		err="btarget must be a pointer or a register";
-		if (data == 0xFFFF) return 0x20;
+		/*if (data == 0xFFFF) b=0x20;
 		else if (data<=30)
 		{
-			return data+0x21;
+			b=data+0x21;
 		}
+        if (!data)
+        {
+            b=0x21;
+        }
 		else
 		{
-			return 0x1F;
-		}
+			b=0x1F;
+		}*/
+        //return true;
 	}
-	else
-	{
-		return 0xFF;
-	}
+	return false;
 }
 
 bool BinAsm::assemble()
@@ -470,7 +495,7 @@ bool BinAsm::assemble()
 		std::vector<std::string> w=split_line(*lit);
 		if (!w.size()) continue;
         
-        std::cout << "line " << lc << ":" << *lit << "\n";
+        //std::cout << "line " << lc << ":" << *lit << " err " << error_count << "\n";
         
         unsigned c = 0;
         w[c] = remove_spaces(w[c]);
@@ -505,34 +530,69 @@ bool BinAsm::assemble()
             }
             else 
             {
-                uint16_t opcode = op;
+                uint16_t opcode = op & 0x1F;
                 uint16_t a_word=0, b_word=0;
-				opcode |= ((get_b(w[1],b_word,err) & 0x1F) << 5);
-				if (err.size())
-				{
-					print_error(lc,false,err);
+                uint8_t a=0, b=0;
+                bool unresolved=false;
+                //A Block
+                _offset++; //for get_a bug
+                if (get_a(w[c+2],a,a_word,err,unresolved))
+                {
+                    opcode |= (a << 10);
+                    if (unresolved)
+                    {
+                        unresolved=false;
+                        print_error(lc,true,err);
+                    }
+                    if (requiert_data(a))
+                    {
+                        _bin[_offset]=a_word;
+                    }
+                }
+                else
+                {
+                    print_error(lc,false,err);
 					error_count++;
-                    err=std::string();
-				}
-                if (err.size())
-				{
-					print_error(lc,false,err);
+                }
+                _offset--;
+                 
+                 
+                //B Block
+                _offset++; //for get_b bug
+                if (a_word!=(uint16_t)-1 && a_word > 30)  _offset++;
+                if (get_b(w[c+1],b,b_word,err,unresolved))
+                {
+                    opcode |= (b & 0x1F) << 5;
+                    if (unresolved)
+                    {
+                        unresolved=false;
+                        print_error(lc,true,err);
+                    }
+                    if (requiert_data(b))
+                    {
+                        _bin[_offset]=b_word;
+                    }
+                    _offset--;
+                    if (requiert_data(a))
+                    {
+                        _offset--;
+                    }
+                    _bin[_offset]=opcode;
+                }
+                else 
+                {
+                    print_error(lc,false,err);
 					error_count++;
-                    err=std::string();
-				}
-				_bin[_offset]=opcode;
-				_offset++;
-				if (a_word!=(uint16_t)-1 && a_word > 30)
-				{
-					_bin[_offset]=a_word;
-					_offset++;
-				}
-				if (b_word!=(uint16_t)-1 && b_word > 30)
-				{
-					_bin[_offset]=b_word;
-					_offset++;
-			    }
-                
+                }
+                _offset++;
+                if (requiert_data(b))
+                {
+                    _offset++;
+                }
+                if (requiert_data(a))
+                {
+                    _offset++;
+                }
             }
         }
         else if (is_sop(w[c], op))
@@ -547,29 +607,61 @@ bool BinAsm::assemble()
             }
             else 
             {
-                uint16_t opcode = op;
+                uint16_t opcode = (op & 0x1F) << 5;
                 uint16_t a_word=0;
-				opcode = ((opcode & 0x1F) << 5);
-				opcode |= (get_a(w[1],a_word,err) << 10);
-				_bin[_offset]=opcode;
-				_offset++;
-				if (a_word!=(uint16_t)-1 && a_word > 30)
-				{
-					_bin[_offset]=a_word;
-					_offset++;
-				}
+                uint8_t a=0;
+                bool unresolved=false;
+                //A Block
+                _offset++;//for get_b bug
+                if (get_a(w[c+1],a,a_word,err,unresolved))
+                {
+                    opcode |= a << 10;
+                    if (unresolved)
+                    {
+                        unresolved=false;
+                        print_error(lc,true,err);
+                    }
+                    if (requiert_data(a))
+                    {
+                        _bin[_offset]=a_word;
+                    }
+                    _offset--;
+                    _bin[_offset]=opcode;
+                }
+                else 
+                {
+                    print_error(lc,false,err);
+					error_count++;
+                }
+                _offset++;
+                if (requiert_data(a))
+                {
+                    _offset++;
+                }
             }
         }
         else if (is_data_flag(w[c]))
         {
+            err=std::string();
             for (c++;c<w.size();c++)
             {
-                if (get_data(w[c],err));
-                else 
+                bool unresolved = false;
+                if (get_data(w[c],err,unresolved))
+                {
+                    if (unresolved)
+                    {
+                      print_error(lc,true,err);
+                    }
+                }
+                else if (err.size())
                 {
                     print_error(lc,false,err);
                     error_count++;
-                    err=std::string();
+                }
+                if (err.size()) //warnings
+                {
+                    print_error(lc,true,err);
+                    error_count++;
                 }
             }
         }
@@ -578,7 +670,6 @@ bool BinAsm::assemble()
             err ="unexcepted expression " + w[c];
             print_error(lc,false,err);
             error_count++;
-            err=std::string();
         }
 	}
 	
@@ -700,6 +791,61 @@ char BinAsm::is_register(const std::string& word)
         ||p[0]=='I'||p[0]=='J')
         return p[0];
     return 0;
+}
+
+bool BinAsm::resolve_labels()
+{
+    std::string err;
+    std::map<uint16_t,std::string>::iterator it;
+    
+    for (it=_unresolved.begin();it!=_unresolved.end();)
+    {
+        std::map<std::string,uint16_t>::iterator jt;
+        bool ok=false;
+        if (_unresolved.size()==0)
+            break;
+        for (jt=_labels.begin();jt!=_labels.end();jt++)
+        {
+            if (it->second == jt->first)
+            {
+                ok = true;
+                printf("linker: resolve 0x%04X (%s)\n",it->first,it->second.c_str());
+                _bin[it->first]-=0x100;
+                _bin[it->first]+=jt->second;
+                _unresolved.erase(it);
+                it=_unresolved.begin();
+                break;
+            }
+        }      
+        if (!ok)
+        {
+            std::cerr <<"linker error: unresolved symbol \""<< it->second << "\"\n";
+            it++;
+        }
+    }
+    
+    return _unresolved.size()==0;
+}
+
+bool BinAsm::requiert_data(uint8_t a_or_b)
+{
+    switch (a_or_b)
+    {
+        case 0x10:
+        case 0x11:
+        case 0x12:
+        case 0x13:
+        case 0x14:
+        case 0x15:
+        case 0x16:
+        case 0x17:
+        case 0x1E:
+        case 0x1F:
+            return true;
+        default:
+            break;
+    }
+    return false;
 }
 
 }

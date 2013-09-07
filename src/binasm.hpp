@@ -31,9 +31,11 @@ class BinAsm
 		static std::vector<std::string> split_line(const std::string& line);
 		
 		//take a value from word
-		bool get_value(const std::string& word, uint16_t& v, std::string& err);
+		bool get_value(const std::string& word, uint16_t& v, std::string& err, 
+                                                            bool& unresolved);
         //Get strings datas or number
-		bool get_data(const std::string& word,std::string& err);
+		bool get_data(const std::string& word,std::string& err
+                                                            ,bool& unresolved);
 /*
 		//Get A operator from word return error
 		bool resolve_a(const std::string& word,std::string& err);
@@ -42,10 +44,12 @@ class BinAsm
         //Add data return error
 		bool resolve_data(const std::string& word,std::string& err);*/
         
-        uint8_t get_a(const std::string& word,
-                                    uint16_t& data, std::string& err);
-        uint8_t get_b(const std::string& word,
-                                    uint16_t& data, std::string& err);
+        bool get_a(const std::string& word, uint8_t& a,
+                                    uint16_t& data, std::string& err
+                                                    ,bool& unresolved);
+        bool get_b(const std::string& word, uint8_t& b,
+                                    uint16_t& data, std::string& err
+                                                    ,bool& unresolved);
                             
                
                             
@@ -59,6 +63,9 @@ class BinAsm
         static char is_register(const std::string& word);
         //is the word a valid label
         static bool is_valid_label_name(const std::string& word);
+        
+        //is the current target/value requiert a data supplement
+        static bool requiert_data(uint8_t a_or_b);
         
         bool assemble();
 
