@@ -1,6 +1,5 @@
 #include "speaker.hpp"
 
-
 namespace cpu {
 
 namespace speaker {
@@ -23,6 +22,9 @@ namespace speaker {
         // dual channel speaker specs
         if (cpu->GetB() != freq) {
             freq = cpu->GetB();
+            if (freq > 10000)
+                freq = 10000;
+
             if (cb_function != NULL)
                 cb_function(freq, c_obj);
         }

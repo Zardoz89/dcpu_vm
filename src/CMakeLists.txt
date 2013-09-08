@@ -13,6 +13,7 @@ set(dcpu-vm_SRCS
     binasm.cpp
     file.c
     ./audio/speaker.cpp
+    ./audio/square_gen.cpp
     )
 
 add_executable(dcpu-vm ${dcpu-vm_SRCS})

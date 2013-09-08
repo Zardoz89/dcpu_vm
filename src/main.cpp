@@ -19,6 +19,9 @@
 #include "cgm.hpp"
 #include <audio/speaker.hpp>
 
+// Audio
+#include "audio/square_gen.hpp"
+
 // Util
 #include "disassembler.hpp"
 #include "binasm.hpp"
@@ -132,8 +135,16 @@ int main (int argc, char **argv)
     auto dcpu = std::make_shared<DCPU>();
     auto gclock = std::make_shared<Generic_Clock>();
     auto gkeyboard = std::make_shared<keyboard::GKeyboard>();
-    auto speaker = std::make_shared<speaker::Speaker>();
 
+    // Prepare the speaker device
+    auto speaker = std::make_shared<speaker::Speaker>();
+    audio::SquareGenerator gen;
+    gen.prepare(44100);
+    gen.play();
+    speaker->setFreqCallback(audio::SquareGenerator::WrappeCallback,
+            (void *)(&gen));
+
+    // Sets apropiated monitor
     std::shared_ptr<AbstractMonitor> monitor;
     switch (monitor_type)
     {
@@ -425,6 +436,8 @@ int main (int argc, char **argv)
             keyb_win.setActive(false);
         }
     }
+
+    gen.stop();
     return 0;
 }
 

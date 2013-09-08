@@ -1,0 +1,119 @@
+; find out hardware map
+HWN I
+:query_loop
+SUB I, 1
+HWQ I
+IFE B, 0x7349
+  IFE A, 0xf615
+    SET [monitor_n], I
+IFE B, 0x30cf
+  IFE A, 0x7406
+    SET [keyboard_n], I
+IFE B, 0x12d0
+  IFE A, 0xb402
+    SET [clock_n], I
+IFE B, 0x0206
+  IFE A, 0x0001
+    SET [spkr_n], I
+IFN I, 0
+  SET PC, query_loop
+
+; set up monitor
+SET A, 0
+SET B, 0x8000
+HWI [monitor_n]
+; green border
+SET A, 3
+SET B, 0x2
+HWI [monitor_n]
+
+; set up keyboard
+SET A, 3
+SET B, [keyboard_n]
+HWI [keyboard_n]
+
+SET A, 0
+SET B, 440
+HWI [spkr_n]
+
+; enable interrupts
+IAS int_handler
+
+SET I, 0x0044
+SET A, 0xbeef
+JSR printhex
+SUB PC, 1
+
+:int_handler
+SET A, 1
+HWI [keyboard_n]
+SHL C, 3
+SET A, C
+JSR printhex
+SET A, 0
+SET B, C
+HWI [spkr_n]
+RFI 0
+
+
+; print decimal number A to location I
+:printdec
+SET PUSH, A
+SET PUSH, B
+SET PUSH, I
+SET PUSH, J
+SET J, I
+SUB J, 1
+ADD I, 4
+:printdec_l1
+SET B, A
+MOD B, 10
+ADD B, 0xf030
+SET [0x8000+I], B
+DIV A, 10
+SUB I, 1
+IFN I, J
+  SET PC, printdec_l1
+SET J, POP
+SET I, POP
+SET B, POP
+SET A, POP
+SET PC, POP
+
+
+; print hexadecimal number A to location I
+:printhex
+SET PUSH, A
+SET PUSH, B
+SET PUSH, I
+SET PUSH, J
+SET J, I
+SUB J, 1
+ADD I, 3
+:printhex_l1
+SET B, A
+AND B, 0x0f
+IFG B, 9
+  ADD B, 7
+ADD B, 0xc030
+SET [0x8000+I], B
+SHR A, 4
+SUB I, 1
+IFN I, J
+  SET PC, printhex_l1
+SET J, POP
+SET I, POP
+SET B, POP
+SET A, POP
+SET PC, POP
+
+
+:monitor_n
+DAT 0
+:keyboard_n
+DAT 0
+:clock_n
+DAT 0
+:spkr_n
+DAT 0
+
