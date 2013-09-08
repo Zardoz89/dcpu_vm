@@ -1,5 +1,7 @@
 #include "gkeyboard.hpp"
 
+#include <iostream>
+
 #include <algorithm>
 namespace cpu {
 
@@ -22,7 +24,7 @@ namespace keyboard {
 
     bool GKeyboard::checkInterrupt (uint16_t &msg)
     {
-        if (event && msg !=0) {
+        if (event && this->msg > 0) {
             event = false;
             return true;
         }
