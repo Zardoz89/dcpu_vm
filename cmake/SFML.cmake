@@ -49,14 +49,33 @@ find_library(SFML_GRAPHICS_LIBRARY
     PATHS ${DCPU_VM_SEARCH_PATHS}
 )
 
+message(STATUS "Looking for sfml-audio library")
+find_library(SFML_AUDIO_LIBRARY
+    NAMES sfml-audio
+    HINTS
+    NO_DEFAULT_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
+    NO_CMAKE_SYSTEM_PATH
+    NO_SYSTEM_ENVIRONMENT_PATH
+    NO_CMAKE_PATH
+    CMAKE_FIND_FRAMEWORK NEVER
+    PATH_SUFFIXES lib lib64
+    PATHS ${DCPU_VM_SEARCH_PATHS}
+)
+
 if (SFML_SYSTEM_LIBRARY)
     if (SFML_WINDOW_LIBRARY)
         if (SFML_GRAPHICS_LIBRARY)
-            set (SFML_LIBRARIES 
-                "${SFML_SYSTEM_LIBRARY}" 
-                "${SFML_WINDOW_LIBRARY}" 
-                "${SFML_GRAPHICS_LIBRARY}"
-                )
+            if (SFML_AUDIO_LIBRARY)
+                set (SFML_LIBRARIES 
+                    "${SFML_SYSTEM_LIBRARY}" 
+                    "${SFML_WINDOW_LIBRARY}" 
+                    "${SFML_GRAPHICS_LIBRARY}"
+                    "${SFML_AUDIO_LIBRARY}"
+                    )
+            else (SFML_AUDIO_LIBRARY)
+                message(FATAL_ERROR "sfml-audio library not found")
+            endif (SFML_AUDIO_LIBRARY)
         else (SFML_GRAPHICS_LIBRARY)
             message(FATAL_ERROR "sfml-graphics library not found")
         endif (SFML_GRAPHICS_LIBRARY)
