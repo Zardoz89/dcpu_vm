@@ -5,18 +5,28 @@ set(dcpu-vm_SRCS
     main.cpp
     dcpu.cpp
     disassembler.cpp  
-    gclock.cpp
-    gkeyboard.cpp
-    lem1802.cpp
-    lem1803.cpp
-    cgm.cpp
     binasm.cpp
     file.c
-    ./audio/speaker.cpp
+    )
+
+set(dcpu-vm_DEVICES_SRCS
+    ./devices/gclock.cpp
+    ./devices/gkeyboard.cpp
+    ./devices/lem1802.cpp
+    ./devices/lem1803.cpp
+    ./devices/cgm.cpp
+    ./devices/speaker.cpp
+    )
+
+set(dcpu-vm_AUDIO_SRCS
     ./audio/square_gen.cpp
     )
 
-add_executable(dcpu-vm ${dcpu-vm_SRCS})
+add_executable(dcpu-vm 
+    ${dcpu-vm_SRCS}
+    ${dcpu-vm_DEVICES_SRCS}
+    ${dcpu-vm_AUDIO_SRCS}
+    )
 
 include_directories(dcpu-vm
     ${DCPU-VM_INCLUDE_DIRS}

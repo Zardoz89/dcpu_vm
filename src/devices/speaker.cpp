@@ -1,4 +1,4 @@
-#include "speaker.hpp"
+#include <devices/speaker.hpp>
 
 namespace cpu {
 

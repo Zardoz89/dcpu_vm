@@ -1,8 +1,7 @@
-#include "gkeyboard.hpp"
-
-#include <iostream>
+#include <devices/gkeyboard.hpp>
 
 #include <algorithm>
+
 namespace cpu {
 
 namespace keyboard {

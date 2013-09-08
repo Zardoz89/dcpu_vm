@@ -2,10 +2,10 @@
 #ifndef _G_CLOCK_HPP_
 #define _G_CLOCK_HPP_ 1
 
+#include <dcpu.hpp>
+
 #include <cstdint>
 #include <SFML/System.hpp>
-
-#include "dcpu.hpp"
 
 namespace cpu {
 

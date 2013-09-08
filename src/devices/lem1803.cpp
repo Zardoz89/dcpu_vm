@@ -1,6 +1,7 @@
-#include "lem1803.hpp"
+#include <devices/lem1803.hpp>
 
 #include <algorithm>
+
 namespace cpu {
 
 namespace lem {

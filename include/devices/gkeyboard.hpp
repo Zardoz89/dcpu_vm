@@ -2,7 +2,7 @@
 #ifndef _GENERIC_KEYBOARD_HPP_
 #define _GENERIC_KEYBOARD_HPP_ 1
 
-#include "dcpu.hpp"
+#include <dcpu.hpp>
 
 #include <cstdint>
 #include <deque>

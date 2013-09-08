@@ -1,4 +1,4 @@
-#include "gclock.hpp"
+#include <devices/gclock.hpp>
 
 //#include <iostream>
 

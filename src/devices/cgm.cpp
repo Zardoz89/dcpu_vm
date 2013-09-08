@@ -1,4 +1,4 @@
-#include "cgm.hpp"
+#include <devices/cgm.hpp>
 
 #include <algorithm>
 #include <cctype>

@@ -1,4 +1,4 @@
-#include "square_gen.hpp"
+#include <audio/square_gen.hpp>
 
 #include <algorithm>
 #include <cmath>

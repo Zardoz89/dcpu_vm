@@ -1,12 +1,13 @@
-#include "dcpu.hpp"
-#include "dcpu_opcodes.hpp"
+#include <dcpu.hpp>
+#include <dcpu_opcodes.hpp>
+
 #include <iostream>
 #include <algorithm>
 #include <sstream>
 #include <cstdio>
 #include <iomanip>
 
-#include <assert.h>
+#include <cassert>
 
 namespace cpu {
 

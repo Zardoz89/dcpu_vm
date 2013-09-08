@@ -1,12 +1,11 @@
 #pragma once
 #ifndef _LEM1802_HPP
 #define _LEM1802_HPP
-#include "config.hpp"
+#include <dcpu.hpp> 
+#include <devices/monitor.hpp> //base class AbstractMonitor
 
 #include <cstdint>
 
-#include "dcpu.hpp" 
-#include "monitor.hpp" //base class AbstractMonitor
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Image.hpp>
 

@@ -1,7 +1,8 @@
 #pragma once
 #ifndef _MONITOR_HPP_
 #define _MONITOR_HPP_ 1
-#include "dcpu.hpp"
+#include <dcpu.hpp>
+
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Image.hpp>
 

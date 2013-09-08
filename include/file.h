@@ -1,5 +1,6 @@
-#ifndef __FILE
-#define __FILE
+#ifndef __FILE__H_
+#define __FILE__H_ 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -17,4 +18,5 @@ void fswitchendian(uint16_t* f, unsigned int size);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // __FILE__H_

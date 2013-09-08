@@ -1,9 +1,10 @@
-#include "disassembler.hpp"
+#include <disassembler.hpp>
+#include <dcpu_opcodes.hpp>
 
-#include <assert.h>
+#include <cassert>
 #include <sstream>
 #include <iomanip>
-#include "dcpu_opcodes.hpp"
+
 
 namespace cpu {
 

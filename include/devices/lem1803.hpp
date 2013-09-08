@@ -1,7 +1,7 @@
 #ifndef _LEM1803_HPP
 #define _LEM1803_HPP
 
-#include "lem1802.hpp"
+#include <devices/lem1802.hpp>
 
 namespace cpu {
 

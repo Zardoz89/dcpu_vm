@@ -1,13 +1,14 @@
 #pragma once
-#ifndef DCPU_HPP
-#define DCPU_HPP 1
+#ifndef _DCPU_HPP_
+#define _DCPU_HPP_ 1
+
+#include <file.h>
 
 #include <memory>
 #include <cstdint>
 #include <vector>
 #include <deque>
 #include <string>
-#include "file.h"
 
 namespace cpu {
 
@@ -310,4 +311,4 @@ protected:
 
 } // END OF NAMESPACE
 
-#endif // DCPU_HPP
+#endif // _DCPU_HPP_

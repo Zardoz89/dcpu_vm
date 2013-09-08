@@ -1,12 +1,13 @@
 #ifndef ____BIN__ASM
 #define ____BIN__ASM
 
+#include <dcpu_opcodes.hpp>
+#include <file.h>
+
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <map>
-#include "dcpu_opcodes.hpp"
-#include "file.h"
 #include <cstdlib>
 #include <cstring>
 

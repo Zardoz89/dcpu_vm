@@ -8,23 +8,25 @@
 #include "config.hpp"
 
 // Machine core
-#include "dcpu_opcodes.hpp"
-#include "dcpu.hpp"
+#include <dcpu_opcodes.hpp>
+#include <dcpu.hpp>
 
 // Devices
-#include "gclock.hpp"
-#include "gkeyboard.hpp"
-#include "lem1802.hpp"
-#include "lem1803.hpp"
-#include "cgm.hpp"
-#include <audio/speaker.hpp>
+#include <devices/gclock.hpp>
+#include <devices/gkeyboard.hpp>
+
+#include <devices/lem1802.hpp>
+#include <devices/lem1803.hpp>
+#include <devices/cgm.hpp>
+
+#include <devices/speaker.hpp>
 
 // Audio
-#include "audio/square_gen.hpp"
+#include <audio/square_gen.hpp>
 
 // Util
-#include "disassembler.hpp"
-#include "binasm.hpp"
+#include <disassembler.hpp>
+#include <binasm.hpp>
 
 
 using namespace cpu;

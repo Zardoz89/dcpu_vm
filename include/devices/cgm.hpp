@@ -2,10 +2,10 @@
 #ifndef _CGM_HPP
 #define _CGM_HPP
 
-#include <cstdint>
+#include <dcpu.hpp> // Base class: cpu::IHardware
+#include <devices/monitor.hpp>
 
-#include "dcpu.hpp" // Base class: cpu::IHardware
-#include "monitor.hpp"
+#include <cstdint>
 
 #include <SFML/Graphics.hpp>
 
