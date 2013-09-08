@@ -278,9 +278,9 @@ public:
     }
     
     /**
-     * @brief Checks a interrupt from the CPU
+     * @brief Checks if need to trigger a intterupt to the CPU
      * @param msg Ref. to the message
-     * @return
+     * @return True if trigger a interrupt
     */
     virtual bool checkInterrupt (uint16_t &msg) {
         return false;
@@ -295,6 +295,11 @@ public:
      * @brief Does a Clock Tick
      */
     virtual void tick() = 0;
+
+    /**
+     * @brief Return attached Hardware Dev. Index
+     */
+    const size_t& getDevIndex() const { return index; }
     
 protected:
     DCPU* cpu;
