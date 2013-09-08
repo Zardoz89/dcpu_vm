@@ -19,7 +19,7 @@ endif (CMAKE_HOST_APPLE)
 
 if (CMAKE_HOST_WIN32)
     message(WARNING "This build has only been tested on MinGW 4.7")
-    set(DCPU_VM_PATHS
+    set(DCPU_VM_SEARCH_PATHS
         C:/MinGW
     )
 endif (CMAKE_HOST_WIN32)
