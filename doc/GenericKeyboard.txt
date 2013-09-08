@@ -1,6 +1,6 @@
 Name: Generic Keyboard (compatible)
 ID: 0x30cf7406
-Version: 1.1
+Version: 1.2a
 
 Interrupts do different things depending on contents of the A register:
 
@@ -26,19 +26,18 @@ Key-code event Format:
   -  -  -  -  -  -  -  A  k  k  k  k  k  k  k  k
 
 Where :
- - A if the bit is at 1, this means that key is being pressed (Key Down). If is
-      0, means that the key was released (Key Up)
- - kkkkkkkk Scan code of the key pressed or released 
+ - A (Action Bit) If the bit is at 1, this means that key is being pressed 
+     (Key Down). If is 0, means that the key was released (Key Up).
+ - kkkkkkkk Key code of the key pressed or released 
  - Bits 15-9 Unused. Ignored it, but can be used in future advanced keyboards.
 
-Scan codes are:
+Key codes are:
   0x10: Backspace
   0x11: Return
   0x12: Insert
   0x13: Delete
   0x1B: Escape/Break
-  0x20-0x40: ASCII characters
-  0x5B-0x7f: ASCII characters
+  0x20-0x7f: ASCII characters
   0x80: Arrow up
   0x81: Arrow down
   0x82: Arrow left
@@ -49,29 +48,57 @@ Scan codes are:
 
 Status LEDs:
   A keyboard must have at least this LED state: Caps Locks Enable.
-  Commands 4 and 5, uses the LSB bit 0 to get/set the Caps Locks Enable state
+  Commands 4 and 5, uses the LSB bit 0 to get/set the Caps Locks Enable state 
+  led.
+
+Key code events buffer:
+  The buffer can store at least 64 key code events. Each time that a key is 
+  pressed or released, the appropriate key code event is pushed to the buffer.
+  The buffer operates in FIFO mode, in addition if the buffer is filled, then
+  the oldest key code stored is deleted.
+  The commands POP and PUSH works over the buffer in LIFO mode. POP reads the 
+  most old key code event stored and PUSH inserts a key code like it was the 
+  oldest. So POP followed by a PUSH, can be used to inspect the last key 
+  pressed/released, without changing the buffer. Also, PUSH can be used to 
+  simulate keyboard typing by some programs or by the OS.
+
+
+PUSH inserts here          
+----------------->       
+                   |---|
+-----------------> |   | Oldest key code event
+POP extract this   |---|
+                   |   |
+                   |---|
+                   .   .
+                   .   .
+                   .   .
+                   |---|
+                   |   | Last key code event
+                   |---|  
+                         <----------------------
+                           Keyboard inserts here
+
+Shift and Upper case letters and symbols:
+  The keyboard generates alone the appropriate symbol or upper case letter when 
+  a key is pressed/released at same time that Shift key is being keep pressed. 
 
 Caps Locks Mode : 
-  When Caps Locks key is pushed, the keyboard enters in Caps Locks mode.
-  In Caps Locks mode, the Caps Locks Enable status LED is set to On, and when
-  leaves this mode, is set to Off. 
-  When enters in this mode, inserts the event that Shift key is being pressed in
-  the buffer. If the Shift key is being pressed before entering the mode, then 
-  inserts in the buffer, the event of Shift key being released (Key Up).
-  When leaves this mode, insert the event that Shift key is being released in 
-  the buffer. If the Shift key is being pressed before leaving this mode, then
-  inserts in the buffer, the event of Shift key being pressed (Key Down).
-  In this mode, when the Shift key is pressed, is registered with the A flag 
-  inverted. Aka, the Key Down event is registered like Key Up and vice versa. 
+  When Caps Locks key is pressed, the keyboard enters in Caps Locks mode. The 
+  next time that the Caps Lock key is pressed, then the keyboard leaves the 
+  mode. In Caps Locks mode, the Caps Locks Enable status LED is set to On, and 
+  when leaves this mode, is set to Off. 
+
+
 
 Example of Use:
-  Writing a ISR that uses POP to get the keycode pressed/released. This ISR 
-  remembers the last Shift key event, and is being pressed, process 
-  ASCII keycodes like ASCII upper-case equivalent characters, or symbols mapped 
-  to Shift+Key. Similar behaviour can be do with Alt key or used to detect 
-  Ctrl+Key.
-
-   
+  A basic type program can use a ISR that uses POP command to extract key code
+  events store in the keyboard buffer. If the Action Bit is On in each key
+  code event, then writes in screen or stores in a string buffer if is an 
+  appropriate character, if not ignores it.
+  A more advanced ISR can store if Ctrl or Shift keys are being pressed, to 
+  detect Ctrl+Key or Shift+Key special actions.
+  
 
 
 
