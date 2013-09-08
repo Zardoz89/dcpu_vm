@@ -12,6 +12,7 @@ set(dcpu-vm_SRCS
     cgm.cpp
     binasm.cpp
     file.c
+    ./audio/speaker.cpp
     )
 
 add_executable(dcpu-vm ${dcpu-vm_SRCS})

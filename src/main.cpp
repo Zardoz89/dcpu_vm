@@ -6,16 +6,22 @@
 #include <chrono>
 
 #include "config.hpp"
+
+// Machine core
 #include "dcpu_opcodes.hpp"
 #include "dcpu.hpp"
-#include "disassembler.hpp"
+
+// Devices
 #include "gclock.hpp"
 #include "gkeyboard.hpp"
 #include "lem1802.hpp"
 #include "lem1803.hpp"
 #include "cgm.hpp"
-#include "binasm.hpp"
+#include <audio/speaker.hpp>
 
+// Util
+#include "disassembler.hpp"
+#include "binasm.hpp"
 
 
 using namespace cpu;
@@ -126,6 +132,8 @@ int main (int argc, char **argv)
     auto dcpu = std::make_shared<DCPU>();
     auto gclock = std::make_shared<Generic_Clock>();
     auto gkeyboard = std::make_shared<keyboard::GKeyboard>();
+    auto speaker = std::make_shared<speaker::Speaker>();
+
     std::shared_ptr<AbstractMonitor> monitor;
     switch (monitor_type)
     {
@@ -149,6 +157,7 @@ int main (int argc, char **argv)
     dcpu->attachHardware (monitor);
     dcpu->attachHardware (gclock);
     dcpu->attachHardware (gkeyboard);
+    dcpu->attachHardware (speaker);
     dcpu->reset();
     dcpu->loadProgramFromFile(filename);
    

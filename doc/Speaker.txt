@@ -1,0 +1,23 @@
++------------------+
+| Speaker Hardware |
++------------------+
+
+
+DCPU-16 Hardware Info:
+    Name:         PC-Style Speaker
+    ID:           0x02060001
+    Version:      1
+    Manufacturer: 0x5672746B  (VARTOK_HW)
+
+
+Description:
+    This hardware can generate beeps with variable frequency between 1 to 
+    10Khz. The amplitude is fixed.
+
+
+Interrupt Behavior:
+    When a HWI is received, register B is read and sets the desired frecuency 
+    to be generated.i If the value in B is 0, that genration of sound is turned
+    off (which is the default state assumed at start-up). Any value bigger that
+    10000 is converted to 10000.
+
