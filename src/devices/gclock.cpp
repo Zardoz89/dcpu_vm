@@ -1,13 +1,12 @@
 #include <devices/gclock.hpp>
 
-//#include <iostream>
+#include <iostream>
 
 namespace cpu {
 
     
     Generic_Clock::Generic_Clock() : 
-        cpu_ticks(0), max_ticks(0), ticks(0), msg(0), trigger(false), 
-        acum(0), max_acum(0), divider(0) 
+        ticks(0), msg(0), trigger(false), acum(0), max_acum(0), divider(0) 
     {
         clock.restart();
     }
@@ -25,15 +24,10 @@ namespace cpu {
         case 0:
             divider = cpu->GetB();
             if (cpu->GetB() > 0) {
-                this->max_acum =  sf::seconds(60.0 / divider).asMicroseconds();
+                this->max_acum =  sf::seconds(60.0f / divider).asMicroseconds();
                 clock.restart();
-                //max_ticks = (cpu->cpu_clock * 60) / cpu->GetB();
-                // std::cerr << "Max :" << max_ticks << "B= " << cpu->GetB();
-                // std::cerr << std::endl; 
-            } else {
-                max_ticks = 0;
-            }
-            cpu_ticks = ticks = 0;
+            } 
+            ticks = 0;
             break;
 
         case 1:
@@ -52,22 +46,18 @@ namespace cpu {
 
     void Generic_Clock::tick() 
     {
-        // We use CPU clock ticks to measure time relative to DCPU core
-        //if (max_ticks >0 && msg > 0) {
         if (divider >0) {
-            /*cpu_ticks++;
-            if (cpu_ticks >= max_ticks) {
-                cpu_ticks -= max_ticks;
-            }*/
 
             acum += clock.getElapsedTime().asMicroseconds();
             clock.restart();
 
-            if (acum >= max_acum ) {
+            if (acum > max_acum ) {
+                //std::cerr << "\t\tMax: " << this->max_acum;
+                //std::cerr << "  preacum "<< acum << std::endl;
                 acum -= max_acum;
+                //std::cerr << "  postacum "<< acum << std::endl;
                 ticks++;
                 trigger = msg > 0;
-                //std::cerr << "TICK! " << acum << std::endl;
             }
         }
     }

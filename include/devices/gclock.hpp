@@ -35,8 +35,6 @@ public:
 
 private:
 
-    uint_fast32_t cpu_ticks;    /// CPU Tick counter
-    uint_fast32_t max_ticks;    /// Ticks needed to launch a interrupt
     uint_fast32_t ticks;        /// Clock ticks
     uint16_t msg;               /// Mesage to send when a interrupt hapens
     bool trigger;               /// Trigered
