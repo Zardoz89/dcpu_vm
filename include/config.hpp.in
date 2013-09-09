@@ -15,7 +15,12 @@
 
 #endif
 
+// Should enable the logger modules ?
 #define _DEBUG @LOG_ENABLE@
 #include <log.hpp>
+
+// Version of the program
+static const char _VERSION[] = "@PACKAGE_VERSION@";
+static const char _PRG_NAME[] = "@PACKAGE_NAME@";
 
 #endif // __CONFIG__HPP_

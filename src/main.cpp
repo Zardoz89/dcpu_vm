@@ -34,6 +34,7 @@ using namespace cpu;
 
 void print_help(std::string program_name)
 {
+    std::cout << _PRG_NAME << " " << _VERSION << std::endl;
     std::cout << "usage : " << program_name << " [-options] <dcpu16-exe>\n";
     std::cout << "--------------------------------------------------------\n";
     std::cout << "  options:" << std::endl;
