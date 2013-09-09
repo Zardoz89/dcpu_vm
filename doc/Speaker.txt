@@ -18,6 +18,6 @@ Description:
 Interrupt Behavior:
     When a HWI is received, register B is read and sets the desired frecuency 
     to be generated.i If the value in B is 0, that genration of sound is turned
-    off (which is the default state assumed at start-up). Any value bigger that
+    off (which is the default state assumed at start-up). Any value bigger than
     10000 is converted to 10000.
 
