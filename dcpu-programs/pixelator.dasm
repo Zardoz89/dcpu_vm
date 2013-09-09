@@ -1,0 +1,2853 @@
+;  _ _ _   _   _   _    _ _ _   _           _    _ _ _ _ _   _ _ _   _ _ _
+; |  _  | | |  \ \/ /  |  _ _| | |         / \  |_ _   _ _| |  _  | |  _  |
+; | |_| | | |   \  /   | |_ _  | |        / _ \     | |     | | | | | |_| |
+; |  _ _| | |   /  \   |  _ _| | |       / /_\ \    | |     | | | | |    _|
+; | |     | |  / /\ \  | |_ _  | |_ _   /  _ _  \   | |     | |_| | | |\ \
+; |_|     |_| /_/  \_\ |_ _ _| |_ _ _| /_/     \_\  |_|     |_ _ _| |_| \_\
+; = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+;
+;PIXELATOR
+;Per-pixel image editor
+;By Fen-ok
+;Version: 3.0
+;Date: 27 July 2013
+;---------------------
+;CURRENT FEATURES:
+;---------------------
+;- GUI (where possible).
+;- Fullscreen.
+;- Per-pixel editing.
+;- Up to 128 different editable symbols.
+;- Foreground and background colors.
+;- Border color.
+;- Blinking.
+;- Drawing lines.
+;- Drawing ellipses (not perfect yet).
+;- Changeable palette.
+;- Disk support.
+;- Compatible with PSI File Type (File Format) and PUS File System.
+;- Contains documentation within itself.
+;- Handmade numbers!
+;---------------------
+;CONTROLS:
+;---------------------
+;Controls (and description) can be viewed within the program.
+;---------------------
+;CHANGELOG FROM 2.1 TO 3.0:
+;---------------------
+;- GUI is added (where possible).
+;- Controls are shown within the program now.
+;- Palette can be changed now.
+;- Disk support (saving, loading).
+;- New symbol-drawing mode is added.
+;- Default font can be viewed while drawing now.
+;- An area can be made blinking now.
+;- Border color can be changed now.
+;- The background symbol can be changed now.
+;- Holding buttons for drawing/erasing and applying colors is processed
+;  correctly now.
+;- Behaviour while drawing line/ellipse is improved (correct reaction to
+;  holding buttons, changing colors, etc).
+;- Some optimization.
+;- Maybe some less important changes which I can't remember.
+;---------------------
+;KNOWN ISSUES
+;---------------------
+;- The algorithm of drawing ellipse doesn't work properly in a lot of
+;  cases. And it isn't going to be fixed due to tons of overflows I'm too
+;  lazy to deal with.
+;- The "DISK" section potentially contain bugs, because it will be remade
+;  after implementing some real File System (in version 3.1.).
+;- When you exit the program, it just reloads. It's ok and can be "fixed"
+;  by deleting the last (non-commentary) line of this code.
+;---------------------
+;LAST WORDS:
+;---------------------
+;I hope my english wasn't so bad. Enjoy.
+;---------------------
+;BRUTAL RUSSIAN JUNK CODE BELOW. KEEP OUT.
+;---------------------
+
+;//ОЧИЩЕНИЕ ПАМЯТИ ОТ ПРЕДЫДУЩИХ ЗАПУСКОВ//
+:memory_preparing
+SET J, null_start
+:null_loop
+SET [J], 0x0
+ADD J, 0x1
+IFN J, null_end
+    SET PC, null_loop
+SET [SPACEEXISTFLAG], 0x1
+SET [FIGUREFCOLFLAG], 0x1
+SET [FIGUREBCOLFLAG], 0x1
+SET [BCOL], 0xf
+SET [BORDERCOL], 0x7
+
+;//ПОЛУЧЕНИЕ УСТРОЙСТВ//
+HWN J
+
+:get_devices
+SUB J, 0x1
+HWQ J
+IFE A, 0xf615
+    IFE B, 0x7349
+        SET [MONITOR], J
+IFE A, 0x7406
+    IFE B, 0x30cf
+        SET [KEYBOARD], J
+IFE A, 0x24c5
+    IFE B, 0x4fd5
+        SET [FLOPPY], J
+IFN J, 0x0
+    SET PC, get_devices
+
+;//ИНИЦИАЛИЗАЦИЯ МОНИТОРА//
+:initialize_monitor
+SET A, 0x0
+SET B, SCREEN
+HWI [MONITOR]
+SET A, 0x1
+SET B, FONT
+HWI [MONITOR]
+SET A, 0x5
+SET B, DEFAULTPALETTE
+HWI [MONITOR]
+SET B, PALETTE
+HWI [MONITOR]
+SET A, 0x2
+HWI [MONITOR]
+
+;//НАЧАЛЬНАЯ ПОДГОТОВКА К РИСОВАНИЮ//
+:screen_preparing
+SET J, 0x0
+:prepare_screenmem
+SET [SCREENMEM+J], 0xf00
+ADD J, 0x1
+IFN J, 0x180
+    SET PC, prepare_screenmem
+SET [WORD0], 0x0
+SET [WORD1], 0x0		
+SET X, 0x0; Координаты пикселя внутри символа
+SET Y, 0x0;
+SET [IMEM], 0x0; Позиция символа на экране
+
+;//////////////////////////////////////////ГЛАВНОЕ МЕНЮ/////
+:main_menu
+SET A, 0x1
+SET B, FONT
+HWI [MONITOR]
+SET A, 0x2
+SET B, 0x0
+HWI [MONITOR]
+SET A, 0x3
+SET B, 0x0
+HWI [MONITOR]
+SET J, 0x0
+:set_startscreen	
+SET [SCREEN+J], [STARTSCREEN+J]			
+ADD J, 0x1
+IFN J, 0x180
+    SET PC, set_startscreen		
+
+SET J, 0x0
+:set_startfont	
+SET [FONT+J], [STARTFONT+J]		
+ADD J, 0x1
+IFN J, 0x100
+    SET PC, set_startfont	
+
+;/////////////	
+SET I, 0xa2 
+SET J, 0x2 ;зеленый цвет
+SHL J, 0x8
+SET [SCREEN+I],J
+
+;////////////
+:wait_key_press_start
+SET A, 0x1
+HWI [KEYBOARD]
+IFE C, 0x83 ; ->
+    JSR main_choice
+IFE C, 0x82; <-
+    JSR main_choice
+IFE C, 0x11
+    SET PC, choose_selection
+IFE C, 0x1b
+    SET PC, exit_pixelator
+SET PC, wait_key_press_start  	
+
+:main_choice
+SET J, 0x4 ;красный цвет
+SHL J, 0x8
+SET [SCREEN+I],J
+IFE C, 0x83
+    ADD I, 0x7
+IFE C, 0x82
+    SUB I, 0x7
+IFL I, 0xa2
+    ADD I, 0x1c
+IFG I, 0xb7
+    SUB I, 0x1c
+SET J, 0x2
+SHL J, 0x8
+SET [SCREEN+I], J
+SET PC, POP
+
+:choose_selection
+IFE I, 0xa2
+    SET PC, begin_drawing
+IFE I, 0xa9
+    SET PC, change_palette
+IFE I, 0xb0
+    SET PC, disc
+IFE I, 0xb7
+    SET PC, show_controls
+SET PC, wait_key_press_start
+
+;//////////////////////////////ВЫВОД УПРАВЛЕНИЯ/////
+:show_controls
+SET A, 0x1
+SET B, 0x0
+HWI [MONITOR]
+SET A, 0x3
+SET B, 0x7
+HWI [MONITOR]
+SET I, 0x0
+:disc_clearscreen_cont
+SET [SCREEN+I], 0xf20
+ADD I, 0x1
+IFN I, 0x180
+    SET PC, disc_clearscreen_cont
+
+SET I, 0x0
+:output_start_controls_loop
+AND [SCREEN+I], 0xff00
+BOR [SCREEN+I], [CONTROLSMSG+I]
+ADD I, 0x1
+IFN I, 0x180
+    SET PC, output_start_controls_loop
+SET I, 0x0
+
+:wait_key_press_controls
+SET A, 0x1
+HWI [KEYBOARD]
+IFE C, 0x81;\/
+    JSR controls_choice_down
+IFE C, 0x80; /\
+    JSR controls_choice_up
+IFE C, 0x1b ;esc
+    SET PC, main_menu
+IFE C, 0x0
+    SET PC, wait_key_press_controls
+SET A, 0x0
+HWI [KEYBOARD]
+SET PC, wait_key_press_controls
+
+:controls_choice_down
+SET J, I
+ADD J, 0x180
+IFE [CONTROLSMSG+J], 0x0
+    SET PC, POP
+ADD I, 0x20
+JSR update_controls_output
+SET PC, POP
+
+:controls_choice_up
+IFE I, 0x0
+    SET PC, POP
+SUB I, 0x20
+JSR update_controls_output
+SET PC, POP
+
+:update_controls_output
+SET Z, 0x0
+SET J, I
+:update_controls_output_loop
+AND [SCREEN+Z], 0xff00
+BOR [SCREEN+Z], [CONTROLSMSG+J]
+ADD Z, 0x1
+ADD J, 0x1
+IFN Z, 0x180
+    SET PC, update_controls_output_loop
+SET PC, POP
+
+;////////////////////////////////////////ДИСК/////
+:disc
+SET A, 0x1
+SET B, 0x0
+HWI [MONITOR]
+SET A, 0x3
+SET B, 0x7
+HWI [MONITOR]
+SET I, 0x0
+:disc_clearscreen
+SET [SCREEN+I], 0xf20
+ADD I, 0x1
+IFN I, 0x180
+    SET PC, disc_clearscreen
+SET I, 0x0
+:output_discstate_header
+AND [SCREEN+I], 0xff00
+BOR [SCREEN+I], [DISCSTATEHEADER+I]
+ADD I, 0x1
+IFN I, 0xc
+    SET PC, output_discstate_header
+SET I, 0x20
+SET J, 0x0
+:output_discfs_header
+AND [SCREEN+I], 0xff00
+BOR [SCREEN+I], [DISCFSHEADER+J]
+ADD I, 0x1
+ADD J, 0x1
+IFN J, 0xc
+    SET PC, output_discfs_header
+SET I, 0x40
+SET J, 0x0
+:output_disc_header
+AND [SCREEN+I], 0xff00
+BOR [SCREEN+I], [DISCHEADER+J]
+ADD I, 0x1
+ADD J, 0x1
+IFN J, 0x20
+    SET PC, output_disc_header
+SET I, 0x140
+SET J, 0x0
+:output_disc_down
+AND [SCREEN+I], 0xff00
+BOR [SCREEN+I], [DISCDOWN+J]
+ADD I, 0x1
+ADD J, 0x1
+IFN J, 0x20
+    SET PC, output_disc_down
+
+
+SET [DISCSTATECODE], 0xa
+SET [DISCFSCODE], 0x0
+SET [DISCERRORCODE], 0x0
+
+SET A, 0x0
+IAQ A
+SET A, disc_interrupt
+IAS A
+SET A, 0x1
+SET X, 0x1
+HWI [FLOPPY]
+
+SET A, 0x1
+INT A
+;//////////////////////ОТСЛЕЖИВАНИЕ КНОПОК ДЛЯ ДИСКА////
+:wait_key_press_disc
+SET A, 0x1
+HWI [KEYBOARD]
+IFE C, [FORMAT]
+    JSR format_disc
+IFE C, [INFO]
+    JSR disc_get_info
+IFE C, [LOAD]
+    JSR disc_load
+IFE C, [SAVE]
+    JSR disc_save
+IFE C, 0x83 ; ->
+    JSR disc_choice_right
+IFE C, 0x81;\/
+    JSR disc_choice_down
+IFE C, 0x82; <-
+    JSR disc_choice_left
+IFE C, 0x80; /\
+    JSR disc_choice_up
+IFE C, 0x11
+    JSR disc_choose_selection
+IFE C, 0x1b ;esc
+    SET PC, from_disc_to_main_menu
+IFE C, 0x0
+    SET PC, wait_key_press_disc
+SET A, 0x0
+HWI [KEYBOARD]
+SET PC, wait_key_press_disc
+
+:from_disc_to_main_menu
+SET A, 0x0
+IAS A
+SET A, 0x1
+SET X, 0x0
+HWI [FLOPPY]
+SET PC, main_menu
+
+;///////////////////СОХРАНЕНИЕ ФАЙЛА/////
+:disc_save
+IFN [DISCFSCODE], 0x1
+    SET PC, POP
+JSR get_filename
+SET [DISCMSGCODE], 0x3
+JSR output_discmsg
+SET [DISCBUF], 0xf00f
+SET J, 0x1
+SET [DISCBUF+J], 0x5034
+ADD J, 0x1
+SET Z, 0x0
+:save_name_loop
+SET [DISCBUF+J], [FILENAME+Z]
+ADD J, 0x1
+ADD Z, 0x1
+IFN J, 0x11
+    SET PC, save_name_loop
+SET Z, 0x0
+:save_font_loop
+SET [DISCBUF+J], [FONTMEMTWO+Z]
+ADD J, 0x1
+ADD Z, 0x1
+IFN Z, 0x100
+    SET PC, save_font_loop
+SET Z, 0x0
+:save_palette_loop
+SET [DISCBUF+J], [PALETTE+Z]
+ADD J, 0x1
+ADD Z, 0x1
+IFN Z, 0x10
+    SET PC, save_palette_loop
+SET [DISCBUF+J], [BORDERCOL]
+ADD J, 0x1
+SET Z, 0x0
+:save_screen_loop
+SET [DISCBUF+J], [SCREENMEM+Z]
+ADD J, 0x1
+ADD Z, 0x1
+IFN Z, 0x180
+    SET PC, save_screen_loop
+
+SET A, 0x3
+SET X, 0x0
+SET Y, DISCBUF
+HWI [FLOPPY]
+IFN B, 0x1
+    SET PC, saving_failed
+:saving_wait
+IFE [DISCSTATECODE], 0x3
+    SET PC, saving_wait
+
+SET A, 0x3
+SET X, 0x1
+SET Y, DISCBUF1
+HWI [FLOPPY]
+IFN B, 0x1
+    SET PC, saving_failed
+:saving_wait_two
+IFE [DISCSTATECODE], 0x3
+    SET PC, saving_wait_two
+
+IFN [DISCERRORCODE], 0
+    SET PC, saving_failed
+SET [DISCMSGCODE], 0x0
+JSR clear_discfs
+JSR output_discmsg
+SET PC, POP
+:saving_failed
+SET [DISCMSGCODE], 0x1
+JSR output_discmsg
+JSR output_discerror
+SET PC, POP
+
+;///////////////////ВВОД ИМЕНИ ФАЙЛА//////
+:get_filename
+SET J, 0x0
+:null_filename_loop
+SET [FILENAME+J], 0x0
+ADD J, 0x1
+IFN J, 0xf
+    SET PC, null_filename_loop
+SET [DISCMSGCODE], 0x6
+JSR output_discmsg
+SET Z, 0x16c
+SET J, 0x0
+AND [SCREEN+Z], 0xff00
+BOR [SCREEN+Z], 0x5f
+XOR [SCREEN+Z], 0x80
+:wait_key_press_get_name
+SET A, 0x1
+HWI [KEYBOARD]
+;//////отслеживание буквенно-цифровых символов, "_", ".". Может пригодится потом
+;IFG C, 0x2f
+;    IFL C, 0x3a
+;        JSR add_letter
+;IFG C, 0x40
+;    IFL C, 0x5b
+;        JSR add_letter
+;IFG C, 0x60
+;    IFL C, 0x7b
+;        JSR add_letter
+;IFE C, 0x5f
+;    JSR add_letter
+;IFE C, 0x2e
+;    JSR add_letter
+;/////////////
+IFG C, 0x1f
+    IFL C, 0x7f
+        JSR add_letter
+IFE C, 0x10
+    JSR remove_letter
+IFE C, 0x11
+    SET PC, POP
+IFE C, 0x0
+    SET PC, wait_key_press_get_name
+SET A, 0x0
+HWI [KEYBOARD]
+SET PC, wait_key_press_get_name
+
+:add_letter
+IFE J, 0xf
+    SET PC, POP
+SET [FILENAME+J], C
+AND [SCREEN+Z], 0xff00
+BOR [SCREEN+Z], C
+ADD J, 0x1
+ADD Z, 0x1
+AND [SCREEN+Z], 0xff00
+BOR [SCREEN+Z], 0x5f
+XOR [SCREEN+Z], 0x80
+SET PC, POP
+
+:remove_letter
+IFE J, 0x0
+    SET PC, POP
+SET [SCREEN+Z], 0xf20
+SUB J, 0x1
+SUB Z, 0x1
+SET [FILENAME+J], 0x0
+AND [SCREEN+Z], 0xff00
+BOR [SCREEN+Z], 0x5f
+XOR [SCREEN+Z], 0x80
+SET PC, POP
+
+;///////////////////ЗАГРУЗКА ФАЙЛА/////
+:disc_load
+IFN [DISCFSCODE], 0x1
+    SET PC, POP
+SET [DISCMSGCODE], 0x2
+JSR output_discmsg
+SET A, 0x2
+SET X, 0x1
+SET Y, DISCBUF1
+HWI [FLOPPY]
+IFN B, 0x1
+    SET PC, loading_failed
+:loading_wait
+IFE [DISCSTATECODE], 0x3
+    SET PC, loading_wait
+IFN [DISCERRORCODE], 0
+    SET PC, loading_failed
+SET [DISCMSGCODE], 0x0
+JSR output_discmsg
+SET PC, cont_loading
+:loading_failed
+SET [DISCMSGCODE], 0x1
+JSR output_discmsg
+JSR output_discerror
+SET PC, POP
+
+:cont_loading
+SET J, 0x1
+IFN [DISCBUF+J], 0x5034
+    SET PC, POP
+SET J, 0x11
+SET Z, 0x0
+:load_font_loop
+SET [FONTMEMTWO+Z], [DISCBUF+J]
+ADD Z, 0x1
+ADD J, 0x1
+IFN Z, 0x100
+    SET PC, load_font_loop
+SET Z, 0x0
+:load_palette_loop
+SET [PALETTE+Z], [DISCBUF+J]
+ADD Z, 0x1
+ADD J, 0x1
+IFN Z, 0x10
+    SET PC, load_palette_loop
+SET [BORDERCOL], [DISCBUF+J]
+ADD J, 0x1
+SET Z, 0x0
+:load_screen_loop
+SET [SCREENMEM+Z], [DISCBUF+J]
+ADD Z, 0x1
+ADD J, 0x1
+IFN Z, 0x180
+    SET PC, load_screen_loop
+SET [XMEM], 0x0
+SET [YMEM], 0x0
+SET Z, 0x0
+:null_fontmem_loop
+SET [FONTMEM+Z], 0x0
+ADD Z, 0x1
+IFN Z, 0x80
+    SET PC, null_fontmem_loop
+SET Z, 0x0
+:find_fontmem_loop
+SET J, [SCREENMEM+Z]
+SHL J, 0x9
+SHR J, 0x9
+ADD [FONTMEM+J], 0x1
+ADD Z, 0x1
+IFN Z, 0x180
+    SET PC, find_fontmem_loop
+SET Z, 0x1
+:find_imem_loop_one
+IFE [FONTMEM+Z], 0x0
+    SET PC, load_ok_one
+ADD Z, 0x1
+IFN Z, 0x80
+    SET PC, find_imem_loop_one
+SET Z, 0x1
+:find_imem_loop_two
+IFE [FONTMEM+Z], 0x1
+    SET PC, load_ok_two
+ADD Z, 0x1
+IFN Z, 0x80
+    SET PC, find_imem_loop_two
+SET [SMBMODEFLAG], 0x1
+SET J, 0xffff
+:find_imem_for_mode
+ADD J, 0x1
+SET Z, [SCREENMEM+J]
+SHL Z, 0x9
+SHR Z, 0x9
+IFE Z, 0x0
+    SET PC, find_imem_for_mode
+SET [IMEM], J
+:load_end
+SET PC, POP
+
+:load_ok_one
+SET [IMEM], 0x0
+SET [SMBMODEFLAG], 0x0
+SET PC, load_end
+
+:load_ok_two
+SET [IMEM], Z
+SET J, 0xffff
+:find_imem_loop_add
+ADD J, 0x1
+SET Z, [SCREENMEM+J]
+SHL Z, 0x9
+SHR Z, 0x9
+IFN Z, [IMEM]
+    SET PC, find_imem_loop_add
+SET [IMEM], J
+SET [SMBMODEFLAG], 0x0
+SET PC, load_end
+
+;//////////////////////ВЫБОР ФАЙЛОВ И ПАПОК И Т.Д. (на будущее)/////////
+:disc_choice_right
+SET PC, POP
+
+:disc_choice_down
+SET PC, POP
+
+:disc_choice_left
+SET PC, POP
+
+:disc_choice_up
+SET PC, POP
+
+:disc_choose_selection
+SET PC, POP
+
+;/////////////////////////ЗАГРУЗКА И ВЫВОД ФАЙЛОВОЙ СИСТЕМЫ (без файлов-папок)/////
+:get_and_output_discfs
+SET A, 0x2
+SET X, 0x0
+SET Y, DISCBUF
+HWI [FLOPPY]
+IFN B, 0x1
+    SET PC, getting_discfs_failed
+:getting_discfs_wait
+IFE [DISCSTATECODE], 0x3
+    SET PC, getting_discfs_wait
+IFN [DISCERRORCODE], 0
+    SET PC, getting_discfs_failed
+SET [DISCMSGCODE], 0x0
+JSR output_discmsg
+IFE [DISCBUF], 0xf00f
+    SET [DISCFSCODE], 0x1
+JSR output_discfs
+SET PC, POP
+:getting_discfs_failed
+SET [DISCMSGCODE], 0x1
+JSR output_discmsg
+JSR output_discerror
+SET PC, POP
+
+;/////////////////////ВЫВОД СООБЩЕНИЯ ДИСКА///////////
+:output_discmsg
+SET Z, 0x16c
+:null_error_output_loop
+SET [SCREEN+Z], 0xf20
+ADD Z, 0x1
+IFN Z, 0x180
+    SET PC, null_error_output_loop
+SET J, [DISCMSGCODE]
+MUL J, 0xc
+SET Z, 0x160
+:output_discmsg_loop
+AND [SCREEN+Z], 0xff00
+BOR [SCREEN+Z], [DISCMSGSUCCESS+J]
+ADD Z, 0x1
+ADD J, 0x1
+IFN Z, 0x16c
+    SET PC, output_discmsg_loop
+SET PC, POP
+
+;///////////////////ВЫВОД ОШИБКИ ДИСКА//////////
+:output_discerror
+SET J, [DISCERRORCODE]
+MUL J, 0x14
+SET Z, 0x16c
+:output_discerror_loop
+AND [SCREEN+Z], 0xff00
+BOR [SCREEN+Z], [DISCERROR0+J]
+ADD Z, 0x1
+ADD J, 0x1
+IFN Z, 0x180
+    SET PC, output_discerror_loop
+SET [DISCERRORCODE], 0x0
+SET PC, POP
+
+;///////////////////ВЫВОД ФАЙЛОВОЙ СИСТЕМЫ (без файлов-папок)////
+:output_discfs
+SET J, [DISCFSCODE]
+MUL J, 0x14
+SET Z, 0x2c
+:output_discfs_loop
+AND [SCREEN+Z], 0xff00
+BOR [SCREEN+Z], [DISCFS0+J]
+ADD Z, 0x1
+ADD J, 0x1
+IFN Z, 0x40
+    SET PC, output_discfs_loop
+SET PC, POP
+
+;///////////////////ВЫВОД СОСТОЯНИЯ ДИСКА//////
+:output_discstate
+SET J, [DISCSTATECODE]
+MUL J, 0x14
+SET Z, 0xc
+:output_discstate_loop
+AND [SCREEN+Z], 0xff00
+BOR [SCREEN+Z], [DISCSTATE0+J]
+ADD Z, 0x1
+ADD J, 0x1
+IFN Z, 0x20
+    SET PC, output_discstate_loop
+SET PC, POP
+
+;///////////////////ОБРАБОТКА ПРЕРЫВАНИЯ ДЛЯ ДИСКА////
+:disc_interrupt
+IFN A, 0x1
+    SET PC, exit_interrupt
+SET PUSH, C
+SET PUSH, B
+SET A, 0x0
+HWI [FLOPPY]
+IFN [DISCSTATECODE], B
+    JSR update_discstate
+IFN C, 0x0
+    SET [DISCERRORCODE], C
+:exit_interrupt
+SET B, POP
+SET C, POP
+RFI A
+
+:update_discstate
+SET [DISCSTATECODE], B
+JSR output_discstate
+IFE B, 0x0
+    JSR clear_discfs
+SET PC, POP
+
+;//////////////////////УДАЛЕНИЕ С ЭКРАНА ФАЙЛОВОЙ СИСТЕМЫ (с файлами-папками)////
+:clear_discfs
+SET [DISCFSCODE], 0x0
+SET Z, 0x2c
+:clear_discfs_loop
+SET [SCREEN+Z], 0xf20
+ADD Z, 0x1
+IFN Z, 0x40
+    SET PC, clear_discfs_loop
+SET Z, 0x60
+:clear_filenames_loop
+SET [SCREEN+Z], 0xf20
+ADD Z, 0x1
+IFN Z, 0x140
+    SET PC, clear_filenames_loop
+SET PC, POP
+
+;////////////////////ОЧИЩЕНИЕ БУФЕРА ДЛЯ ДИСКА/////
+:clear_buf
+SET J, 0x0
+:clear_buf_loop
+SET [DISCBUF+J], 0x0
+ADD J, 0x1
+IFN J, 0x200
+    SET PC, clear_buf_loop
+SET PC, POP
+
+;////////////////////ФОРМАТИРОВАНИЕ ДИСКА/////////
+:format_disc
+SET [DISCMSGCODE], 0x4
+JSR output_discmsg
+JSR clear_discfs
+JSR clear_buf
+SET [DISCBUF], 0xf00f
+SET A, 0x3
+SET X, 0x0
+SET Y, DISCBUF
+HWI [FLOPPY]
+IFN B, 0x1
+    SET PC, formatting_failed
+:formatting_wait
+IFE [DISCSTATECODE], 0x3
+    SET PC, formatting_wait
+IFN [DISCERRORCODE], 0
+    SET PC, formatting_failed
+SET [DISCMSGCODE], 0x0
+JSR output_discmsg
+SET PC, POP
+:formatting_failed
+SET [DISCMSGCODE], 0x1
+JSR output_discmsg
+JSR output_discerror
+SET PC, POP
+
+;///////////////////ЗАГРУЗКА И ВЫВОД ВСЕЙ ФАЙЛОВОЙ СИСТЕМЫ/////
+:disc_get_info
+SET [DISCMSGCODE], 0x5
+JSR output_discmsg
+JSR get_and_output_discfs
+IFE [DISCFSCODE], 0x0
+    SET PC, POP
+SET J, 0x1
+IFN [DISCBUF+J], 0x5034
+    SET PC, POP
+ADD J, 0x1
+SET Z, 0x60
+IFE [DISCBUF+J], 0x0
+    SET PC, POP
+:output_names_loop
+AND [SCREEN+Z], 0xff00
+BOR [SCREEN+Z], [DISCBUF+J]
+ADD Z, 0x1
+ADD J, 0x1
+IFE J, 0x11
+    SET PC, POP
+IFN [DISCBUF+J], 0x0
+    SET PC, output_names_loop
+SET PC, POP
+
+;//////////////////////////////////ПАЛИТРА////////////
+:change_palette
+SET A, 0x2
+SET B, PALETTE
+HWI [MONITOR]
+SET A, 0x3
+SET B, 0x7
+HWI [MONITOR]
+SET J, 0x0
+:load_palette_screen
+SET [SCREEN+J], [PALETTESCREEN+J]
+ADD J, 0x1
+IFN J, 0x180
+    SET PC, load_palette_screen  	
+
+SET J, 0x0  					
+:load_palette_font
+SET [FONT+J], [PALETTEFONT+J]	
+ADD J, 0x1	
+IFN J, 0x100
+    SET PC, load_palette_font
+
+JSR null_key_symbols_red
+JSR null_key_symbols_green
+JSR null_key_symbols_blue
+
+SET I, 0x0
+SET [COUNTER0], 0x0
+JSR palette_activate
+
+;На разных эмуляторах по-разному, иногда срабатывает enter
+;Очищаем клавиатуру во избежание
+SET A, 0x0
+HWI [KEYBOARD]
+
+:wait_key_press_palette
+SET A, 0x1
+HWI [KEYBOARD]
+IFE C, 0x83 ; ->
+    JSR palette_choice_right
+IFE C, 0x81;\/
+    JSR palette_choice_down
+IFE C, 0x82; <-
+    JSR palette_choice_left
+IFE C, 0x80; /\
+    JSR palette_choice_up
+IFE C, 0x11
+    SET PC, palette_choose_selection
+IFE C, 0x1b ;esc
+    SET PC, main_menu
+SET PC, wait_key_press_palette  	
+
+:palette_activate
+XOR [SCREEN+I], 0xf000
+ADD I, 0x1
+XOR [SCREEN+I], 0xf000
+ADD I, 0x1
+XOR [SCREEN+I], 0xf000
+ADD I, 0x1
+XOR [SCREEN+I], 0xf000
+ADD I, 0x20
+XOR [SCREEN+I], 0xf000
+SUB I, 0x1
+XOR [SCREEN+I], 0xf000
+SUB I, 0x1
+XOR [SCREEN+I], 0xf000
+SUB I, 0x1
+XOR [SCREEN+I], 0xf000
+SUB I, 0x20
+SET PC, POP
+
+:palette_choice_right
+JSR palette_activate
+ADD I, 0x4
+ADD [COUNTER0], 0x1
+IFE I, 0x20
+    JSR p_c_r_correction_up
+IFE I, 0x60
+    JSR p_c_r_correction_down
+JSR palette_activate
+SET PC, POP
+
+:p_c_r_correction_up
+SET I, 0x0
+SET [COUNTER0], 0x0
+SET PC, POP
+
+:p_c_r_correction_down
+SET I, 0x40
+SET [COUNTER0], 0x8
+SET PC, POP
+
+:palette_choice_down
+JSR palette_activate
+ADD I, 0x40
+ADD [COUNTER0], 0x8
+IFG I, 0x5c
+    JSR p_c_d_correction
+JSR palette_activate
+SET PC, POP
+
+:p_c_d_correction
+SUB I, 0x80
+SUB [COUNTER0], 0x10
+SET PC, POP
+
+:palette_choice_left
+JSR palette_activate
+SUB I, 0x4
+SUB [COUNTER0], 0x1
+IFG I, 0x5c
+    JSR p_c_l_correction_up
+IFE I, 0x3c
+    JSR p_c_l_correction_down
+JSR palette_activate
+SET PC, POP
+
+:p_c_l_correction_up
+SET I, 0x1c
+SET [COUNTER0], 0x7
+SET PC, POP
+
+:p_c_l_correction_down
+SET I, 0x5c
+SET [COUNTER0], 0xf
+SET PC, POP
+
+:palette_choice_up
+JSR palette_activate
+SUB I, 0x40
+SUB [COUNTER0], 0x8
+IFG I, 0x5c
+    JSR p_c_u_correction
+JSR palette_activate
+SET PC, POP
+
+:p_c_u_correction
+ADD I, 0x80
+ADD [COUNTER0], 0x10
+SET PC, POP
+
+:null_key_symbols_red
+SET Z, 0x38
+:null_key_symbols_red_loop
+SET [FONT+Z], 0x0
+ADD Z, 0x1
+IFN Z, 0x3c
+    SET PC, null_key_symbols_red_loop
+SET PC, POP
+
+:null_key_symbols_green
+SET Z, 0x3c
+:null_key_symbols_green_loop
+SET [FONT+Z], 0x0
+ADD Z, 0x1
+IFN Z, 0x40
+    SET PC, null_key_symbols_green_loop
+SET PC, POP
+
+:null_key_symbols_blue
+SET Z, 0x40
+:null_key_symbols_blue_loop
+SET [FONT+Z], 0x0
+ADD Z, 0x1
+IFN Z, 0x44
+    SET PC, null_key_symbols_blue_loop
+SET PC, POP
+
+:output_red
+SET J, [PALETTERED]
+IFL [PALETTERED], 0xa
+    SET PC, palette_no_decade_red
+SET Z, 0x38
+SET J, 0x2
+SET [FONT+Z], [CUSTOMNUMBERS+J]
+ADD Z, 0x1
+ADD J, 0x1
+SET [FONT+Z], [CUSTOMNUMBERS+J]
+SET J, [PALETTERED]
+SUB J, 0xa
+:palette_no_decade_red
+MUL J, 0x2
+SET Z, 0x3a
+SET [FONT+Z], [CUSTOMNUMBERS+J]
+ADD J, 0x1
+ADD Z, 0x1
+SET [FONT+Z], [CUSTOMNUMBERS+J]
+SET PC, POP
+
+:output_green
+SET J, [PALETTEGREEN]
+IFL [PALETTEGREEN], 0xa
+    SET PC, palette_no_decade_green
+SET Z, 0x3c
+SET J, 0x2
+SET [FONT+Z], [CUSTOMNUMBERS+J]
+ADD Z, 0x1
+ADD J, 0x1
+SET [FONT+Z], [CUSTOMNUMBERS+J]
+SET J, [PALETTEGREEN]
+SUB J, 0xa
+:palette_no_decade_green
+MUL J, 0x2
+SET Z, 0x3e
+SET [FONT+Z], [CUSTOMNUMBERS+J]
+ADD J, 0x1
+ADD Z, 0x1
+SET [FONT+Z], [CUSTOMNUMBERS+J]
+SET PC, POP
+
+:output_blue
+SET J, [PALETTEBLUE]
+IFL [PALETTEBLUE], 0xa
+    SET PC, palette_no_decade_blue
+SET Z, 0x40
+SET J, 0x2
+SET [FONT+Z], [CUSTOMNUMBERS+J]
+ADD Z, 0x1
+ADD J, 0x1
+SET [FONT+Z], [CUSTOMNUMBERS+J]
+SET J, [PALETTEBLUE]
+SUB J, 0xa
+:palette_no_decade_blue
+MUL J, 0x2
+SET Z, 0x42
+SET [FONT+Z], [CUSTOMNUMBERS+J]
+ADD J, 0x1
+ADD Z, 0x1
+SET [FONT+Z], [CUSTOMNUMBERS+J]
+SET PC, POP
+
+:palette_choose_selection
+SET J, [COUNTER0]
+SET [DP], I
+SET [PALETTERED], [PALETTE+J]
+SET [PALETTEGREEN], [PALETTE+J]
+SET [PALETTEBLUE], [PALETTE+J]
+SHR [PALETTERED], 0x8
+SHL [PALETTEGREEN], 0x8
+SHR [PALETTEGREEN], 0xc
+SHL [PALETTEBLUE], 0xc
+SHR [PALETTEBLUE], 0xc
+
+JSR output_red
+JSR output_green
+JSR output_blue
+
+SET I, 0xcb
+SET [COUNTER1], 0x0
+XOR [SCREEN+I], 0xf000
+
+:wait_key_press_palette_color
+SET A, 0x1
+HWI [KEYBOARD]
+IFE C, 0x83 ; ->
+    JSR palette_color_choice_horisontal
+IFE C, 0x81;\/
+    JSR palette_color_choice_vertical
+IFE C, 0x82; <-
+    JSR palette_color_choice_horisontal
+IFE C, 0x80; /\
+    JSR palette_color_choice_vertical
+IFE C, 0x11
+    JSR, palette_color_choose_selection
+IFE C, 0x1b ;esc
+    SET PC, return_to_palette
+SET PC, wait_key_press_palette_color
+
+:palette_color_choose_selection
+IFN [COUNTER1], 0x3
+    SET PC, POP
+SET J, [COUNTER0]
+SET [PALETTE+J], [DEFAULTPALETTE+J]
+
+SET [PALETTERED], [PALETTE+J]
+SET [PALETTEGREEN], [PALETTE+J]
+SET [PALETTEBLUE], [PALETTE+J]
+SHR [PALETTERED], 0x8
+SHL [PALETTEGREEN], 0x8
+SHR [PALETTEGREEN], 0xc
+SHL [PALETTEBLUE], 0xc
+SHR [PALETTEBLUE], 0xc
+
+JSR null_key_symbols_red
+JSR null_key_symbols_green
+JSR null_key_symbols_blue
+
+JSR output_red
+JSR output_green
+JSR output_blue
+SET PC, POP
+
+:palette_color_choice_vertical
+XOR [SCREEN+I], 0xf000
+IFE C, 0x80
+    SUB I, 0x20
+IFE C, 0x80
+    SUB [COUNTER1], 0x1
+IFE C, 0x81
+    ADD I, 0x20
+IFE C, 0x81
+    ADD [COUNTER1], 0x1
+IFE I, 0x14b
+    SET [COUNTER1], 0x0
+IFE I, 0x14b
+    SET I, 0xcb
+IFE I, 0xab
+    SET [COUNTER1], 0x3
+IFE I, 0xab
+    SET I, 0x12b
+XOR [SCREEN+I], 0xf000
+SET PC, POP
+
+:palette_color_choice_horisontal
+IFE [COUNTER1], 0x3
+    SET PC, POP
+IFE [COUNTER1], 0x0
+    JSR change_red
+IFE [COUNTER1], 0x1
+    JSR change_green
+IFE [COUNTER1], 0x2
+    JSR change_blue
+SET Z, [PALETTERED]
+SHL Z, 0x4
+BOR Z, [PALETTEGREEN]
+SHL Z, 0x4
+BOR Z, [PALETTEBLUE]
+SET J, [COUNTER0]
+SET [PALETTE+J], Z
+SET PC, POP
+
+:change_red
+IFE C, 0x83
+    ADD [PALETTERED], 0x1
+IFE C, 0x82
+    SUB [PALETTERED], 0x1
+IFE [PALETTERED], 0xffff
+    SET [PALETTERED], 0xf
+IFE [PALETTERED], 0x10
+    SET [PALETTERED], 0x0
+JSR null_key_symbols_red
+JSR output_red
+SET PC, POP
+
+:change_green
+IFE C, 0x83
+    ADD [PALETTEGREEN], 0x1
+IFE C, 0x82
+    SUB [PALETTEGREEN], 0x1
+IFE [PALETTEGREEN], 0xffff
+    SET [PALETTEGREEN], 0xf
+IFE [PALETTEGREEN], 0x10
+    SET [PALETTEGREEN], 0x0
+JSR null_key_symbols_green
+JSR output_green
+SET PC, POP
+
+:change_blue
+IFE C, 0x83
+    ADD [PALETTEBLUE], 0x1
+IFE C, 0x82
+    SUB [PALETTEBLUE], 0x1
+IFE [PALETTEBLUE], 0xffff
+    SET [PALETTEBLUE], 0xf
+IFE [PALETTEBLUE], 0x10
+    SET [PALETTEBLUE], 0x0
+JSR null_key_symbols_blue
+JSR output_blue
+SET PC, POP
+
+:return_to_palette
+XOR [SCREEN+I], 0xf000
+JSR null_key_symbols_red
+JSR null_key_symbols_green
+JSR null_key_symbols_blue
+SET I, [DP]
+SET PC, wait_key_press_palette
+
+
+;//////////////////////////РИСОВАНИЕ////////////////
+:begin_drawing
+SET A, 0x2
+SET B, PALETTE
+HWI [MONITOR]
+SET A, 0x3
+SET B, [BORDERCOL]
+HWI [MONITOR]
+
+SET J, 0x0	
+	
+:restore_screen
+SET [SCREEN+J], [SCREENMEM+J]
+ADD J, 0x1
+IFN J, 0x180
+    SET PC, restore_screen  	
+
+SET J, 0x0  					
+:restore_font
+SET [FONT+J], [FONTMEMTWO+J]	
+ADD J, 0x1	
+IFN J, 0x100
+    SET PC, restore_font		
+
+SET X, [XMEM]; Координаты пикселя внутри символа
+SET Y, [YMEM];
+SET I, [IMEM]; Позиция символа на экране
+
+IFE [SMBMODEFLAG], 0x1
+    SET PC, mode_income
+
+JSR find_place
+SET [SCREENMEM+I], [SCREEN+I]
+
+JSR update_symbol
+
+JSR set_colors
+JSR create_cursor_pixel
+
+;//ОТСЛЕЖИВАНИЕ НАЖАТЫХ КНОПОК
+:key_press
+SET A, 0x2
+SET B, [DRAWBUTTON]
+SUB B, 0x20;//перевод в верхний регистр
+HWI [KEYBOARD]
+IFE C, 0x0
+    SET [DRAWFLAG], 0x0		
+SET B, [ERAISEBUTTON]
+SUB B, 0x20;//перевод в верхний регистр
+HWI [KEYBOARD]
+IFE C, 0x0
+    SET [ERAISEFLAG], 0x0	
+SET B, [APPLYFCOL]
+SUB B, 0x20;//перевод в верхний регистр
+HWI [KEYBOARD]
+IFE C, 0x0
+    SET [APPLYFCOLFLAG], 0x0
+SET B, [APPLYBCOL]
+SUB B, 0x20;//перевод в верхний регистр
+HWI [KEYBOARD]
+IFE C, 0x0
+    SET [APPLYBCOLFLAG], 0x0	
+SET A, 0x1
+HWI [KEYBOARD]
+IFE C, 0x83 ; ->
+    JSR right
+IFE C, 0x81;\/
+    JSR down
+IFE C, 0x82; <-
+    JSR left
+IFE C, 0x80; /\
+    JSR up
+IFE C, 0x1b ;esc
+    SET PC, return_to_main_menu
+IFE C, [CHANGENULLSMB]
+    JSR change_null_smb
+IFE C, [CHANGEMODE]
+    IFN [WORD0], 0x0
+        SET PC, change_mode
+IFE C, [CHANGEMODE]
+    IFN [WORD1], 0x0
+        SET PC, change_mode
+IFE C, [DEFFONT]
+    SET PC, show_default_font
+IFE C, [DRAWBUTTON]
+    JSR set_draw_flag
+IFE C, [ERAISEBUTTON]
+    JSR set_erase_flag
+IFE C, [APPLYFCOL]
+    JSR set_fcolor_flag
+IFE C, [APPLYBCOL]
+    JSR set_bcolor_flag
+IFE C, [BLINK]
+    JSR set_blinking
+IFE C, [LINE]
+    JSR draw_figure
+IFE C, [ELLIPS]
+    JSR draw_figure
+IFE C, [SPACEBUTTON]
+    JSR output_space
+IFE C, [COLUP]
+    JSR fcolor_up
+IFE C, [COLDOWN]
+    JSR fcolor_up
+IFE C, [BCOLUP]
+    JSR bcolor_up
+IFE C, [BCOLDOWN]
+    JSR bcolor_up
+IFE C, [BORDCOLCH]
+    JSR border_color_up
+;кривоватый момент. нужно, чтобы курсор не вис при достижении лимита символов
+IFE C, 0x0
+    SET PC, key_press
+IFE [SPACEEXISTFLAG], 0x1
+    SET PC, key_press	
+SET A, 0x0
+HWI [KEYBOARD]
+SET PC, key_press
+
+:return_to_main_menu
+SET [XMEM], X
+SET [YMEM], Y
+SET [ZMEM], Z
+SET [IMEM], I
+SET [SCREEN+I], [SCREENMEM+I]
+JSR leave_symbol
+SET [SCREENMEM+I], [SCREEN+I]
+
+SET J, 0x0
+:copy_font_return
+SET [FONTMEMTWO+J], [FONT+J]
+ADD J, 0x1
+IFN J, 0x100
+    SET PC, copy_font_return
+SET PC, main_menu
+
+;/////////////////ИЗМЕНЕНИЕ ФОНОВОГО СИМВОЛА///
+:change_null_smb
+SET J, 0x1
+SET [FONTMEMTWO], [WORD0]
+SET [FONT], [WORD0]
+SET [FONTMEMTWO+J], [WORD1]
+SET [FONT+J], [WORD1]
+SET PC, POP
+
+;////////////////ПОКАЗАТЬ ИСТИННОЕ ЛИЦО////
+:show_default_font
+SET A, 0x1
+SET B, 0x0
+HWI [MONITOR]
+:default_font_continue
+HWI [KEYBOARD]
+IFE C, 0x0
+    SET PC, default_font_continue
+SET B, FONT
+HWI [MONITOR]
+SET PC, key_press
+
+;///////////////РЕЖИМ ПОСИМВОЛЬНОГО РИСОВАНИЯ/////
+:change_mode
+SET [SMBMODEFLAG], 0x1
+SET [ZMEM], Z
+SET [IMEM], I
+SET [SCREEN+I], [SCREENMEM+I]
+JSR leave_symbol
+SET [SCREENMEM+I], [SCREEN+I]
+:mode_income
+SET Z, [SCREEN+I]
+SHL Z, 0x9
+SHR Z, 0x9
+XOR [SCREEN+I], 0xff00
+
+:wait_key_press_mode
+SET A, 0x1
+HWI [KEYBOARD]
+IFE C, 0x83 ; ->
+    JSR mode_choice_right
+IFE C, 0x81;\/
+    JSR mode_choice_down
+IFE C, 0x82; <-
+    JSR mode_choice_left
+IFE C, 0x80; /\
+    JSR mode_choice_up
+IFE C, [DRAWBUTTON]
+    JSR draw_mode
+IFE c, [ERAISEBUTTON]
+    JSR erase_mode
+IFE C, [CHANGESYMBOL]
+    JSR change_symbol_mode
+IFE C, [CHANGEMODE]
+    SET PC, escape_mode
+IFE C, 0x1b ;esc
+    SET PC, mode_return_to_main_menu
+SET PC, wait_key_press_mode
+
+:mode_return_to_main_menu
+SET [XMEM], X
+SET [YMEM], Y
+SET J, 0x0
+:copy_font_return_mode
+SET [FONTMEMTWO+J], [FONT+J]
+ADD J, 0x1
+IFN J, 0x100
+    SET PC, copy_font_return_mode
+SET PC, main_menu
+
+:change_symbol_mode
+IFE I, [IMEM]
+    SET PC, POP
+SET J, [SCREENMEM+I]
+SHL J, 0x9
+SHR J, 0x9
+IFE J, 0x0
+    SET PC, POP
+SET [SCREEN+I], [SCREENMEM+I]
+SET J, [IMEM]
+XOR [SCREEN+J], 0xff00
+SET [IMEM], I
+SET Z, [SCREEN+I]
+SHL Z, 0x9
+SHR Z, 0x9
+XOR [SCREEN+I], 0xff00
+SET PC, POP
+
+:mode_choice_right
+IFE I, 0x17f
+    SET PC, POP
+IFN I, [IMEM]
+    SET [SCREEN+I], [SCREENMEM+I]
+ADD I, 0x1
+SHR [SCREEN+I], 0x7
+SHL [SCREEN+I], 0x7
+BOR [SCREEN+I], Z
+IFN I, [IMEM]
+    XOR [SCREEN+I], 0xff00
+SET PC, POP
+
+:mode_choice_left
+IFE I, 0x0
+    SET PC, POP
+IFN I, [IMEM]
+    SET [SCREEN+I], [SCREENMEM+I]
+SUB I, 0x1
+SHR [SCREEN+I], 0x7
+SHL [SCREEN+I], 0x7
+BOR [SCREEN+I], Z
+IFN I, [IMEM]
+    XOR [SCREEN+I], 0xff00
+SET PC, POP
+
+:mode_choice_up
+IFL I, 0x20
+    SET PC, POP
+IFN I, [IMEM]
+    SET [SCREEN+I], [SCREENMEM+I]
+SUB I, 0x20
+SHR [SCREEN+I], 0x7
+SHL [SCREEN+I], 0x7
+BOR [SCREEN+I], Z
+IFN I, [IMEM]
+    XOR [SCREEN+I], 0xff00
+SET PC, POP
+
+:mode_choice_down
+IFG I, 0x15f
+    SET PC, POP
+IFN I, [IMEM]
+    SET [SCREEN+I], [SCREENMEM+I]
+ADD I, 0x20
+SHR [SCREEN+I], 0x7
+SHL [SCREEN+I], 0x7
+BOR [SCREEN+I], Z
+IFN I, [IMEM]
+    XOR [SCREEN+I], 0xff00
+SET PC, POP
+
+:draw_mode
+IFE I, [IMEM]
+    SET PC, POP
+SET J, [SCREENMEM+I]
+SHL J, 0x9
+SHR J, 0x9
+IFN J, 0x0
+    SET PC, POP
+XOR [SCREEN+I], 0xff00
+SET [SCREENMEM+I], [SCREEN+I]
+XOR [SCREEN+I], 0xff00
+ADD [FONTMEM+Z], 0x1
+SET PC, POP
+
+:erase_mode
+IFE I, [IMEM]
+    SET PC, POP
+SET J, [SCREENMEM+I]
+SHL J, 0x9
+SHR J, 0x9
+IFE J, 0x0
+    SET PC, POP
+SHR [SCREENMEM+I], 0x7
+SHL [SCREENMEM+I], 0x7
+SUB [FONTMEM+J], 0x1
+IFE [FONTMEM+J], 0x0
+    JSR null_unused_smb
+SET PC, POP
+
+:null_unused_smb
+MUL J, 0x2
+SET [FONT+J], 0x0
+ADD J, 0x1
+SET [FONT+J], 0x0
+SUB J, 0x1
+DIV J, 0x2
+SET PC, POP
+
+:escape_mode
+SET [SCREEN+I], [SCREENMEM+I]
+SET J, [IMEM]
+SET [SCREEN+J], [SCREENMEM+J]
+
+SET J, 0x1
+:escape_loop_one
+IFE [FONTMEM+J], 0x0
+    SET PC, return_correct
+ADD J, 0x1
+IFN J, 0x80
+    SET PC, escape_loop_one
+
+SET J, 0x1
+:escape_loop_two
+IFE [FONTMEM+J], 0x1
+    SET PC, return_misplaced
+ADD J, 0x1
+IFN J, 0x80
+    SET PC, escape_loop_two
+
+SHR [SCREEN+I], 0x7
+SHL [SCREEN+I], 0x7
+BOR [SCREEN+I], Z
+SET J, [IMEM]
+XOR [SCREEN+I], 0xff00
+XOR [SCREEN+J], 0xff00
+SET PC, wait_key_press_mode
+
+:return_misplaced
+SET I, 0xffff
+:return_misplaced_loop
+ADD I, 0x1
+SET Z, [SCREEN+I]
+SHL Z, 0x9
+SHR Z, 0x9
+IFN Z, J
+    SET PC, return_misplaced_loop
+SET [IMEM], I
+:return_correct
+SET I, [IMEM]
+JSR find_place
+SET [SCREENMEM+I], [SCREEN+I]
+
+JSR update_symbol
+
+JSR set_colors
+JSR create_cursor_pixel
+SET [SMBMODEFLAG], 0x0
+SET PC, key_press
+
+;////////////////////УСТАНОВКА МЕРЦАНИЯ////
+:set_blinking
+XOR [SCREEN+I], 0x80
+XOR [SCREENMEM+I], 0x80
+SET PC, POP
+
+;///ВЫВОД КОЛ-ВА СВОБОДНЫХ СИМВОЛОВ
+;Сохраняет три первых позиции экрана, очищает их, находит свободные символы, заносит в них цифры, выводит эти цифры на экран до нажатия любой кнопки, после чего очищает "цифровые" символы и восстанавливает экран.
+:output_space
+SET J, 0x1
+SET [UNIT], 0x0
+SET [DECADE], 0x0
+SET [CENTURY], 0x0
+SET [UNITFONTNUM], 0x0
+SET [DECADEFONTNUM], 0x0
+SET [CENTURYFONTNUM], 0x0
+:loop_space
+IFN [FONTMEM+J], 0x0
+    SET PC, continue_space
+IFN [UNIT], 0x9
+    SET PC, unit_ok
+SET [UNIT], 0x0
+IFN [DECADE], 0x9
+    SET PC, decade_ok
+ADD [CENTURY], 0x1
+SET [DECADE], 0x0
+SET PC, continue_space
+:decade_ok
+ADD [DECADE], 0x1
+SET PC, continue_space
+:unit_ok
+ADD [UNIT], 0x1
+:continue_space
+ADD J, 0x1
+IFE J, 0x80
+    SET PC, exit_loop_space
+SET PC, loop_space
+:exit_loop_space
+
+IFE [UNIT], 0x0
+    IFE [DECADE], 0x0
+        IFE [CENTURY], 0x0
+            SET PC, POP
+
+SET J, 0x1
+SET [THREESCRMEM], [SCREEN]
+SET [SCREEN], 0xf00
+SET [THREESCRMEM+J], [SCREEN+J]
+SET [SCREEN+J], 0xf00
+ADD J, 0x1
+SET [THREESCRMEM+J], [SCREEN+J]
+SET [SCREEN+J], 0xf00
+
+SET J, 0x0
+
+IFE [CENTURY], 0x0
+    SET PC, no_century
+:loop_century
+ADD J, 0x1
+IFE [FONTMEM+J], 0x0
+    SET PC, do_century 
+SET PC, loop_century
+:no_century
+IFE [CENTURY], 0x0
+    IFE [DECADE], 0x0
+        SET PC, no_decade
+        
+:loop_decade
+ADD J, 0x1
+IFE [FONTMEM+J], 0x0
+    SET PC, do_decade
+SET PC, loop_decade
+:no_decade
+
+:loop_unit
+ADD J, 0x1
+IFE [FONTMEM+J], 0x0
+    SET PC, do_unit
+
+SET PC, loop_unit
+:wait_key_press
+HWI [KEYBOARD]
+IFE C, 0x0
+    SET PC, wait_key_press   
+SET J, [CENTURYFONTNUM]
+SET [FONT+J], 0x0
+ADD J, 0x1
+SET [FONT+J], 0x0
+
+SET J, [DECADEFONTNUM]
+SET [FONT+J], 0x0
+ADD J, 0x1
+SET [FONT+J], 0x0
+
+SET J, [UNITFONTNUM]
+SET [FONT+J], 0x0
+ADD J, 0x1
+SET [FONT+J], 0x0
+
+SET J, 0x1
+SET [SCREEN], [THREESCRMEM]
+SET [SCREEN+J], [THREESCRMEM+J]
+ADD J, 0x1
+SET [SCREEN+J], [THREESCRMEM+J]
+
+SET PC, POP
+
+:do_century
+SET [DP], J
+BOR [SCREEN], J
+MUL J, 0x2
+SET [CENTURYFONTNUM], J
+SET [FONT+J], 0x44
+ADD J, 0x1
+SET [FONT+J], 0x7e40
+SET J, [DP]
+SET PC, no_century
+
+:do_decade
+SET [DP], J
+SET J, 0x1
+BOR [SCREEN+J], [DP]
+SET J, [DP]
+MUL J, 0x2
+SET [DECADEFONTNUM], J
+SET C, [DECADE]
+MUL C, 0x2
+SET [FONT+J], [CUSTOMNUMBERS+C]
+ADD J, 0x1
+ADD C, 0x1
+SET [FONT+J], [CUSTOMNUMBERS+C]
+SET J, [DP]
+SET PC, no_decade
+
+:do_unit
+SET [DP], J
+SET J, 0x2
+BOR [SCREEN+J], [DP]
+SET J, [DP]
+MUL J, 0x2
+SET [UNITFONTNUM], J
+SET C, [UNIT]
+MUL C, 0x2
+SET [FONT+J], [CUSTOMNUMBERS+C]
+ADD J, 0x1
+ADD C, 0x1
+SET [FONT+J], [CUSTOMNUMBERS+C]
+SET J, [DP]
+SET PC, wait_key_press
+
+;///УСТАНОВКА ФЛАГА ДЛЯ ДЛИТЕЛЬНОГО ПРИМЕНЕНИЯ ЦВЕТА ПЕРЕДНЕГО ФОНА
+:set_fcolor_flag
+SET [APPLYFCOLFLAG], 0x1
+JSR apply_fcolor
+SET PC, POP
+
+;///УСТАНОВКА ФЛАГА ДЛЯ ДЛИТЕЛЬНОГО ПРИМЕНЕНИЯ ЦВЕТА ЗАДНЕГО ФОНА
+:set_bcolor_flag
+SET [APPLYBCOLFLAG], 0x1
+JSR apply_bcolor
+SET PC, POP
+
+;///ПРИМЕНЕНИЕ ЦВЕТА ЗАДНЕГО ФОНА 
+:apply_bcolor
+SET J, [SCREENMEM+I]
+SHR J, 0xc
+SHL J, 0xc
+SHL [BCOL], 0x8
+BOR J, [BCOL]
+SHL [SCREENMEM+I], 0x8
+SHR [SCREENMEM+I], 0x8
+BOR [SCREENMEM+I], J
+SHR [BCOL], 0x8
+SET PC, POP
+
+;///ПРИМЕНЕНИЕ ЦВЕТА ПЕРЕДНЕГО ФОНА
+:apply_fcolor
+SET J, [FCOL]
+SHL J, 0xc
+SHL [SCREENMEM+I], 0x4
+SHR [SCREENMEM+I], 0x4
+BOR [SCREENMEM+I], J
+SET PC, POP
+
+;///УСТАНОВКА ФЛАГА ДЛИТЕЛЬНОГО СТИРАНИЯ
+:set_erase_flag
+SET [ERAISEFLAG], 0x1
+SET [DRAWFLAG], 0x0
+BOR [WORD0], [PIXWORD0]
+BOR [WORD1], [PIXWORD1]
+XOR [WORD0], [PIXWORD0]
+XOR [WORD1], [PIXWORD1]
+SET PC, POP
+
+;///УСТАНОВКА ФЛАГА ДЛИТЕЛЬНОГО РИСОВАНИЯ
+:set_draw_flag
+SET [DRAWFLAG], 0x1
+SET [ERAISEFLAG], 0x0
+BOR [WORD0], [PIXWORD0]
+BOR [WORD1], [PIXWORD1]
+SET PC, POP
+
+;///СМЕНА ЦВЕТА ГРАНИЦЫ//
+:border_color_up
+SET [BORDERCOL], [BCOL]
+SET A, 0x3
+SET B, [BORDERCOL]
+HWI [MONITOR]
+SET PC, POP
+
+;///ИЗМЕНЕНИЕ ЦВЕТА ЗАДНЕГО ФОНА
+:bcolor_up
+SET J, [BCOL]
+IFE C, [BCOLUP]
+    JSR increase_J
+IFE C, [BCOLDOWN]
+    JSR decrease_J
+SET [BCOL], J
+SHL J, 0x8
+SHL [SCREEN+I], 0x8
+SHR [SCREEN+I], 0x8
+BOR [SCREEN+I], J
+SET J, [FCOL]
+SHL J, 0xc
+BOR [SCREEN+I], J
+SET PC, POP
+
+;/////ИЗМЕНЕНИЕ ЦВЕТА СИМВОЛА/////
+:fcolor_up
+SET J, [FCOL]
+IFE C, [COLUP]
+    JSR increase_J
+IFE C, [COLDOWN]
+    JSR decrease_J
+SET [FCOL], J
+SHL J, 0xc
+SHL [SCREEN+I], 0x4
+SHR [SCREEN+I], 0x4
+BOR [SCREEN+I], J
+SET PC, POP
+
+:increase_J
+IFE J, 0xf
+    SUB J, 0x10
+ADD J, 0x1
+SET PC, POP
+
+:decrease_J
+IFE J, 0x0
+    ADD J, 0x10
+SUB J, 0x1
+SET PC, POP
+
+;//РИСОВАНИЕ ФИГУР
+;Идея: координаты изменяются внутри функции, из неё вызывается drawline. Курсор сохраняет за собой отдельный символ, это учитывается в putpixel. Курсор не меняет позиции во время рисования. Перед рисованием каждой новой линии экран и шрифт восстанавливаются из памяти. При выходе из функции экран и шрифт копируются в память
+;Это универсальная подготовка для рисования любой фигуры
+:draw_figure
+JSR clear_symbol
+SET [APPLYFCOLFLAG], 0x0
+SET [APPLYBCOLFLAG], 0x0
+
+SET J, 0x0
+:copy_font
+SET [FONTMEMTWO+J], [FONT+J]
+ADD J, 0x1
+IFN J, 0x100
+    SET PC, copy_font
+SET J, 0x0
+:copy_fontmem
+SET [FONTMEMMEM+J], [FONTMEM+J]
+ADD J, 0x1
+IFN J, 0x80
+    SET PC, copy_fontmem
+SET [ZMEMTWO], Z
+SET [XMEM], X
+SET [YMEM], Y
+SET [IMEM], I
+
+SET Z, I
+DIV Z, 0x20
+MUL Z, 0x8
+SET [LINEY0], Z
+ADD [LINEY0], Y
+DIV Z, 0x8
+MUL Z, 0x20
+SUB I, Z
+MUL I, 0x4
+SET [LINEX0], I
+ADD [LINEX0], X
+SET [LINEX1], [LINEX0]
+SET [LINEY1], [LINEY0]
+JSR load_screen
+IFE C, [LINE]
+    JSR draw_line
+IFE C, [ELLIPS]
+    JSR draw_ellips
+SET J, 0x0
+:save_figure
+SET [SCREENMEM+J], [SCREEN+J]
+ADD J, 0x1
+IFN J, 0x180
+    SET PC, save_figure   
+;///////////
+SET Z, [ZMEMTWO]
+SET X, [XMEM]
+SET Y, [YMEM]
+SET I, [IMEM]
+SET [ZMEMTWO], 0xffff
+JSR update_symbol
+JSR set_colors
+JSR create_cursor_pixel
+SET PC, POP
+
+;///РИСОВАНИЕ ЭЛЛИПСА
+;из-за переполнения большой эллипс - не совсем эллипс
+;LINEX0, Y0 - хранят координаты центра
+;LINEX1, Y1 - через них вычисляем a,b
+;DELTAX, Y - a, b
+:draw_ellips
+IFN [LINEX0], [LINEX1]
+    IFN [LINEY0], [LINEY1]
+        SET PC, it_is_ellips
+
+ADD [LINEX1], 0x1
+ADD [LINEY1], 0x1
+SET PC, keys_checked_ellips
+:it_is_ellips
+HWI [KEYBOARD]
+IFE C, [ELLIPS]
+    SET PC, POP
+IFE C, 0x0
+    SET PC, draw_ellips
+:change_ellips
+IFE C, 0x83 ; ->
+    ADD [LINEX1], 0x1
+IFE C, 0x81;\/
+    ADD [LINEY1], 0x1
+IFE C, 0x82; <-
+    IFG [LINEX1], [LINEX0]
+        SUB [LINEX1], 0x1
+IFE [LINEX1], [LINEX0]
+    ADD [LINEX1], 0x1
+IFE C, 0x80; /\
+    IFG [LINEY1], [LINEY0]
+        SUB [LINEY1], 0x1
+IFE [LINEY1], [LINEY0]
+    ADD [LINEY1], 0x1
+IFE C, [APPLYFCOL]
+    XOR [FIGUREFCOLFLAG], 0x1
+IFE C, [APPLYBCOL]
+    XOR [FIGUREBCOLFLAG], 0x1
+IFE C, [COLUP]
+    IFE [FIGUREFCOLFLAG], 0x1
+        JSR fcolor_up
+IFE C, [COLDOWN]
+    IFE [FIGUREFCOLFLAG], 0x1
+        JSR fcolor_up
+IFE C, [BCOLUP]
+    IFE [FIGUREBCOLFLAG], 0x1
+        JSR bcolor_up
+IFE C, [BCOLDOWN]
+    IFE [FIGUREBCOLFLAG], 0x1
+        JSR bcolor_up
+JSR load_screen
+
+IFE C, [UNDO]
+    SET PC, POP
+
+:keys_checked_ellips
+SET [DELTAX], [LINEX1]
+SUB [DELTAX], [LINEX0]
+SET [DELTAY], [LINEY1]
+SUB [DELTAY], [LINEY0]
+
+SET [BSQR], [DELTAY]
+MUL [BSQR], [BSQR]
+
+SET [ASQR], [DELTAX]
+MUL [ASQR], [ASQR]
+
+SET [ROW], [DELTAY]
+SET [COL], 0x0
+
+SET [TWOASQR], [ASQR]
+SET [TWOBSQR], [BSQR]
+SET [FOURASQR], [ASQR]
+SET [FOURBSQR], [BSQR]
+
+SHL [TWOASQR], 0x1
+SHL [FOURASQR], 0x2
+SHL [FOURBSQR], 0x2
+SHL [TWOBSQR], 0x1
+
+SET [DP], [ROW]
+SUB [DP], 0x1
+MUL [DP], [ROW]
+MUL [DP], [TWOASQR]
+
+SET J, 0x1
+SUB J, [ASQR]
+MUL J, [TWOBSQR]
+
+ADD J, [ASQR]
+
+ADD [DP], J
+
+:loop_ellips
+SET Z, [ROW]
+MUL Z, [ASQR]
+
+SET J, [COL]
+MUL J, [BSQR]
+;IFA B, A = B>A
+IFA Z, J
+    SET PC, while
+
+SET [DP], [COL]
+ADD [DP], 0x1
+MUL [DP], [TWOBSQR]
+MUL [DP], [COL]
+
+SET J, [ROW]
+SUB J, 0x2
+MUL J, [ROW]
+ADD J, 0x1
+MUL J, [TWOASQR]
+
+ADD [DP], J
+
+SET J, 0x1
+SUB J, [TWOASQR]
+MUL J, [BSQR]
+ADD [DP], J
+
+:loop_ellips_2
+SET J, [ROW]
+ADD J, 0x1
+IFA J, 0x0
+    SET PC, while_2
+SET PC, draw_ellips
+
+:while_2
+HWI [KEYBOARD]
+IFE C, 0x0
+    SET PC, ellips_ok_one
+SET A, 0x0
+HWI [KEYBOARD]
+SET A, 0x1
+SET PC, change_ellips
+
+:ellips_ok_one
+SET X, [LINEX0]
+ADD X, [COL]
+SET Y, [LINEY0]
+ADD Y, [ROW]
+JSR putpixel
+SET X, [LINEX0]
+ADD X, [COL]
+SET Y, [LINEY0]
+SUB Y, [ROW]
+JSR putpixel
+SET X, [LINEX0]
+SUB X, [COL]
+SET Y, [LINEY0]
+ADD Y, [ROW]
+JSR putpixel
+SET X, [LINEX0]
+SUB X, [COL]
+SET Y, [LINEY0]
+SUB Y, [ROW]
+JSR putpixel
+
+IFA [DP], 0x0
+    SET PC, pass_ellips_2
+ADD [COL], 0x1
+SET J, [COL]
+MUL J, [FOURBSQR]
+ADD [DP], J
+:pass_ellips_2
+SUB [ROW], 0x1
+SET J, 0x3
+SUB J, [ROW]
+SUB J, [ROW]
+MUL J, [TWOASQR]
+ADD [DP], J
+
+SET PC, loop_ellips_2
+
+:while
+HWI [KEYBOARD]
+IFE C, 0x0
+    SET PC, ellips_ok_two
+SET A, 0x0
+HWI [KEYBOARD]
+SET A, 0x1
+SET PC, change_ellips
+
+:ellips_ok_two
+SET X, [LINEX0]
+ADD X, [COL]
+SET Y, [LINEY0]
+ADD Y, [ROW]
+JSR putpixel
+SET X, [LINEX0]
+ADD X, [COL]
+SET Y, [LINEY0]
+SUB Y, [ROW]
+JSR putpixel
+SET X, [LINEX0]
+SUB X, [COL]
+SET Y, [LINEY0]
+ADD Y, [ROW]
+JSR putpixel
+SET X, [LINEX0]
+SUB X, [COL]
+SET Y, [LINEY0]
+SUB Y, [ROW]
+JSR putpixel
+
+IFU [DP], 0x0
+    SET PC, pass_ellips
+SUB [ROW], 0x1
+SET J, [ROW]
+MUL J, [FOURASQR]
+SUB [DP], J
+:pass_ellips
+SET J, [COL]
+SHL J, 0x1
+ADD J, 0x3
+MUL J, [TWOBSQR]
+ADD [DP], J
+ADD [COL], 0x1
+
+SET PC, loop_ellips
+
+;////////////
+;///РИСОВАНИЕ ЛИНИИ
+;из linex,y0 в linex,y1
+
+:change_line_right
+IFE [LINEX1], 0x7f
+    SET PC, line_restricted
+ADD [LINEX1], 0x1
+SET PC, line_size_changed
+
+:change_line_down
+IFE [LINEY1], 0x5f
+    SET PC, line_restricted
+ADD [LINEY1], 0x1
+SET PC, line_size_changed
+
+:change_line_left
+IFE [LINEX1], 0x0
+    SET PC, line_restricted
+SUB [LINEX1], 0x1
+SET PC, line_size_changed
+
+:change_line_up
+IFE [LINEY1], 0x0
+    SET PC, line_restricted
+SUB [LINEY1], 0x1
+SET PC, line_size_changed
+
+:line_restricted
+SET A, 0x0
+HWI [KEYBOARD]
+SET A, 0x1
+SET PC, line_size_changed
+
+:draw_line
+IFN [LINEX0], [LINEX1]
+    SET PC, it_is_line
+IFN [LINEY0], [LINEY1]
+    SET PC, it_is_line
+SET X, [LINEX0]
+SET Y, [LINEY0]
+JSR putpixel
+:it_is_line
+HWI [KEYBOARD]
+IFE C, [LINE]
+    SET PC, POP
+IFE C, 0x0
+    SET PC, it_is_line
+:change_line
+IFE C, 0x83 ; ->
+    SET PC, change_line_right
+IFE C, 0x81;\/
+    SET PC, change_line_down
+IFE C, 0x82; <-
+    SET PC, change_line_left
+IFE C, 0x80; /\
+    SET PC, change_line_up
+:line_size_changed
+IFE C, [APPLYFCOL]
+    XOR [FIGUREFCOLFLAG], 0x1
+IFE C, [APPLYBCOL]
+    XOR [FIGUREBCOLFLAG], 0x1
+IFE C, [COLUP]
+    JSR fcolor_up
+IFE C, [COLDOWN]
+    JSR fcolor_up
+IFE C, [BCOLUP]
+    JSR bcolor_up
+IFE C, [BCOLDOWN]
+    JSR bcolor_up
+JSR load_screen
+IFE C, [UNDO]
+    SET PC, POP
+SET X, [LINEX1]
+SET Y, [LINEY1]
+JSR putpixel
+SET [LINEXADDER], 0x1
+SET [LINEYADDER], 0x1
+SET [REVLINEFLAG], 0x0
+;
+SET [DELTAY], [LINEY1]
+SUB [DELTAY], [LINEY0]
+SET J, [DELTAY]
+AND J, 0x8000
+IFN J, 0x8000
+    SET PC, calculate_deltax;значит число +
+;BOR Z, 0x2; то есть dy=-
+SET [LINEYADDER], 0xffff
+SUB [DELTAY], 0x1;дополнительный код, переводим в +
+XOR [DELTAY], 0xffff;
+;
+:calculate_deltax
+SET [DELTAX], [LINEX1]
+SUB [DELTAX], [LINEX0]
+SET J, [DELTAX]
+AND J, 0x8000
+IFN J, 0x8000
+    SET PC, continue_line;значит число +
+;BOR Z, 0x1;то есть dx=-
+SET [LINEXADDER], 0xffff
+SUB [DELTAX], 0x1;дополнительный код, переводим в +
+XOR [DELTAX], 0xffff;
+:continue_line
+IFE [DELTAY], 0x0
+    IFE [DELTAX], 0x0
+        SET PC, draw_line
+IFG [DELTAY], [DELTAX]
+    SET [REVLINEFLAG], 0x1
+SET [ERROR], 0x0
+IFE [REVLINEFLAG], 0x1
+    SET PC, revlineflag_true
+SET [DELTAERROR], [DELTAY]
+SET [LINEY], [LINEY0]
+SET [LINEX], [LINEX0]
+SET [LINECHECKER], [LINEX1]
+SET PC, loop_line
+:revlineflag_true
+SET J, [LINEXADDER]
+SET [LINEXADDER], [LINEYADDER]
+SET [LINEYADDER], J
+SET [LINEX], [LINEY0]
+SET [LINEY], [LINEX0]
+SET J, [DELTAX]
+SET [DELTAX], [DELTAY]
+SET [DELTAY], J
+SET [DELTAERROR], [DELTAY]
+SET [LINECHECKER], [LINEY1]
+:loop_line
+JSR do_putpixel
+ADD [ERROR], [DELTAERROR]
+SET J, [ERROR]
+AND J, 0x8000
+IFE J, 0x8000
+    SET PC, continue_loop_line
+SET J, [ERROR]
+MUL J, 0x2
+IFG J, [DELTAX]
+    SET PC, deal_with_error
+:continue_loop_line
+HWI [KEYBOARD]
+IFE C, 0x0
+    SET PC, line_ok_one
+SET A, 0x0
+HWI [KEYBOARD]
+SET A, 0x1
+    SET PC, change_line
+:line_ok_one
+ADD [LINEX], [LINEXADDER]
+IFN [LINEX], [LINECHECKER]
+    SET PC, loop_line
+JSR do_putpixel
+SET PC, draw_line
+
+:deal_with_error
+ADD [LINEY], [LINEYADDER]
+SUB [ERROR], [DELTAX]
+SET PC, continue_loop_line
+
+:do_putpixel
+IFE [REVLINEFLAG], 0x1
+    SET PC, revlineflag_true_2
+SET X, [LINEX]
+SET Y, [LINEY]
+SET PC, put_the_pixel
+:revlineflag_true_2
+SET X, [LINEY]
+SET Y, [LINEX]
+:put_the_pixel
+JSR putpixel
+SET PC, POP
+
+;//ОЧИЩЕНИЕ ЭКРАНА (очищение экрана от текущей фигуры)
+:load_screen
+SET J, 0x0
+:update_screen
+SET [SCREEN+J], [SCREENMEM+J]
+ADD J, 0x1
+IFN J, 0x180
+    SET PC, update_screen
+SET J, 0x0
+:update_fontmemtwo
+SET [FONT+J], [FONTMEMTWO+J]
+ADD J, 0x1
+IFN J, 0x100
+    SET PC, update_fontmemtwo
+SET J, 0x0
+:update_fontmemmem
+SET [FONTMEM+J], [FONTMEMMEM+J]
+ADD J, 0x1
+IFN J, 0x80
+    SET PC, update_fontmemmem
+SET PC, POP
+
+;//РИСОВАНИЕ ПИКСЕЛЯ ПО КООРДИНАТАМ
+;Координаты поставляются в регистрах X, Y, внутри функции переводятся в тройку X, Y, I. Кроме того портится и Z. Соответственно, все 4 регистра портятся и должны быть сохранены до вызова
+:putpixel
+IFL X, 0x0
+    SET PC, POP
+IFG X, 0x7f
+    SET PC, POP
+IFL Y, 0x0
+    SET PC, POP
+IFG Y, 0x5f
+    SET PC, POP
+
+SET J, X
+DIV J, 0x4
+SET I, J
+MUL J, 0x4
+SUB X, J
+
+SET J, Y
+DIV J, 0x8
+MUL J, 0x20
+ADD I, J
+DIV J, 0x20
+MUL J, 0x8
+SUB Y, J
+
+IFE [FIGUREFCOLFLAG], 0x0
+    SET PC, try_bcolor
+SET J, [FCOL]
+SHL J, 0xc
+AND [SCREEN+I], 0x0fff
+BOR [SCREEN+I], J
+
+:try_bcolor
+IFE [FIGUREBCOLFLAG], 0x0
+    SET PC, no_colors
+SET J, [SCREEN+I]
+AND J, 0xf000
+SHL [BCOL], 0x8
+BOR J, [BCOL]
+AND [SCREEN+I], 0x00ff
+BOR [SCREEN+I], J
+SHR [BCOL], 0x8
+
+:no_colors
+
+JSR find_place
+IFE [SPACEEXISTFLAG], 0x0
+    SET PC, POP
+JSR update_symbol
+SET [ERAISEFlAG], 0x0
+SET [DRAWFLAG], 0x1
+JSR create_cursor_pixel
+SET [ZMEM], Z
+IFN [ZMEMTWO], Z
+    JSR leave_symbol
+SET [DRAWFLAG], 0x0
+SET PC, POP
+
+;//////ОБРАБОТКА СТРЕЛКИ ВВЕРХ////////////
+:up
+IFL I, 0x20
+    IFE Y, 0x0
+        SET PC, POP
+IFE Y, 0x0
+    SET PC, decrease_I_up    
+SUB Y, 0x1
+JSR clear_symbol
+:continue_up
+JSR set_colors
+JSR create_cursor_pixel
+SET PC, POP
+
+:decrease_I_up
+SET [SCREEN+I], [SCREENMEM+I]
+SET [ZMEM], Z
+JSR leave_symbol
+SET [SCREENMEM+I], [SCREEN+I]
+SUB I, 0x20
+JSR find_place
+IFE [SPACEEXISTFLAG], 0x0
+    SET PC, no_more_space_up
+ADD Y, 0x7
+SET [SCREENMEM+I], [SCREEN+I]
+JSR update_symbol
+SET PC, continue_up
+:no_more_space_up
+ADD I, 0x20
+SET Z, [ZMEM]
+SET PC, continue_up
+
+;//////ОБРАБОТКА СТРЕЛКИ ВЛЕВО////////////
+:left
+IFE I, 0x0
+    IFE X, 0x0
+        SET PC, POP
+IFE X, 0x0
+    SET PC, decrease_I_left    
+SUB X, 0x1
+JSR clear_symbol
+:continue_left
+JSR set_colors
+JSR create_cursor_pixel
+SET PC, POP
+
+:decrease_I_left
+SET [SCREEN+I], [SCREENMEM+I]
+SET [ZMEM], Z
+JSR leave_symbol
+SET [SCREENMEM+I], [SCREEN+I]
+SUB I, 0x1
+JSR find_place
+IFE [SPACEEXISTFLAG], 0x0
+    SET PC, no_more_space_left
+ADD X, 0x3
+SET [SCREENMEM+I], [SCREEN+I]
+JSR update_symbol
+SET PC, continue_left
+:no_more_space_left
+ADD I, 0x1
+SET Z, [ZMEM]
+SET PC, continue_left
+
+;/////////ОБРАБОТКА СТРЕЛКИ ВНИЗ//////////
+:down
+IFG I, 0x15f
+    IFE Y, 0x7
+        SET PC, POP
+ADD Y, 0x1
+IFG Y, 0x7
+    SET PC, increase_I_down
+JSR clear_symbol
+:continue_down
+JSR set_colors
+JSR create_cursor_pixel
+SET PC, POP
+
+:increase_I_down
+SET [SCREEN+I], [SCREENMEM+I]
+SET [ZMEM], Z
+JSR leave_symbol
+SET [SCREENMEM+I], [SCREEN+I]
+ADD I, 0x20
+JSR find_place
+IFE [SPACEEXISTFLAG], 0x0
+    SET PC, no_more_space_down
+SUB Y, 0x8
+SET [SCREENMEM+I], [SCREEN+I]
+JSR update_symbol
+SET PC, continue_down
+:no_more_space_down
+SUB I, 0x20
+SUB Y, 0x1
+SET Z, [ZMEM]
+SET PC, continue_down
+
+;///////ОБРАБОТКА СТРЕЛКИ ВПРАВО///////
+:right
+IFE I, 0x17f
+    IFE X, 0x3
+        SET PC, POP
+ADD X, 0x1
+IFG X, 0x3
+    SET PC, increase_I_right
+JSR clear_symbol
+:continue_right
+JSR set_colors
+JSR create_cursor_pixel
+SET PC, POP
+
+:increase_I_right
+SET [SCREEN+I], [SCREENMEM+I]
+SET [ZMEM], Z
+JSR leave_symbol
+SET [SCREENMEM+I], [SCREEN+I]
+ADD I, 0x1
+JSR find_place
+IFE [SPACEEXISTFLAG], 0x0
+    SET PC, no_more_space_right
+SUB X, 0x4
+SET [SCREENMEM+I], [SCREEN+I]
+JSR update_symbol
+SET PC, continue_right
+:no_more_space_right
+SUB I, 0x1
+SUB X, 0x1
+SET Z, [ZMEM]
+SET PC, continue_right
+
+;///УСТАНОВКА ЦВЕТОВ ТЕКУЩЕМУ МЕСТУ
+:set_colors
+SHL [SCREEN+I], 0x8
+SHR [SCREEN+I], 0x8
+SET J, [BCOL]
+SHL J, 0x8
+BOR [SCREEN+I], J
+SET J, [FCOL]
+SHL J, 0xc
+BOR [SCREEN+I], J
+SET PC, POP
+
+;//ПРОВЕРКА ПОКИДАЕМОГО СИМВОЛА, ИЗМЕНЕНИЕ FONTMEM, ПРИВЯЗКА СИМВОЛА К МЕСТУ НА ЭКРАНЕ, ОЧИЩЕНИЕ СИМВОЛА ОТ КУРСОРА//
+:leave_symbol
+IFE [WORD0], 0x0
+    IFE [WORD1], 0x0
+        SET PC, null
+SET Z, 0x2
+SET J, 0x3
+:loop_leave
+IFE [FONT+Z], [WORD0]
+    IFE [FONT+J], [WORD1]
+        IFN Z, [ZMEM]
+            IFN Z, [ZMEMTWO]
+                SET PC, catch
+ADD Z, 0x2
+ADD J, 0x2
+IFE Z, 0x100
+    SET PC, break
+SET PC, loop_leave
+:break
+SET Z, [ZMEM]
+JSR clear_symbol
+SET PC, POP
+:catch
+SHR [SCREEN+I], 0x7
+SHL [SCREEN+I], 0x7
+DIV Z, 0x2
+BOR [SCREEN+I], Z
+ADD [FONTMEM+Z], 0x1
+SET Z, [ZMEM]
+DIV Z, 0x2
+SET [FONTMEM+Z], 0x0
+MUL Z, 0x2
+SET [FONT+Z], 0x0
+ADD Z, 0x1
+SET [FONT+Z], 0x0
+SET PC, POP    
+:null
+SHR [SCREEN+I], 0x7
+SHL [SCREEN+I], 0x7
+DIV Z, 0x2
+SET [FONTMEM+Z], 0x0
+MUL Z, 0x2
+SET [FONT+Z], 0x0
+ADD Z, 0x1
+SET [FONT+Z], 0x0
+SET PC, POP
+
+;//СУТЬ - НАХОЖДЕНИЕ НОВОГО Z. С ИЗМЕНЕНИЕМ FONTMEM, ПРИВЯЗКОЙ НОВОГО СИМВОЛА И Т.Д.//
+:find_place
+SET J, [SCREEN+I]
+SHL J, 0x9
+SHR J, 0x9
+IFE [FONTMEM+J], 0x1
+    SET PC, one_symbol
+SET Z, 0x1
+:loop_find
+IFE [FONTMEM+Z], 0x0
+    SET PC, exist
+ADD Z, 0x1
+IFE Z, 0x80
+    SET PC, report_no_space
+SET PC, loop_find
+:exist
+SET [SPACEEXISTFLAG], 0x1
+IFE J, 0x0
+    SET PC, new
+SUB [FONTMEM+J], 0x1
+SET [FONTMEM+Z], 0x1
+SHR [SCREEN+I], 0x7
+SHL [SCREEN+I], 0x7
+BOR [SCREEN+I], Z
+MUL Z, 0x2
+MUL J, 0x2
+SET [FONT+Z], [FONT+J]
+ADD Z, 0x1
+ADD J, 0x1
+SET [FONT+Z], [FONT+J]
+SUB Z, 0x1
+SET PC, POP
+:new
+SET [FONTMEM+Z], 0x1
+BOR [SCREEN+I], Z
+MUL Z, 0x2
+SET PC, POP
+:one_symbol
+SET [SPACEEXISTFLAG], 0x1
+SET Z, J
+MUL Z, 0x2
+SET PC, POP
+:report_no_space
+SET [SPACEEXISTFLAG], 0x0
+SET PC, POP
+
+;//////ВОССТАНОВЛЕНИЕ ТЕКУЩЕГО СИМВОЛА//////
+:clear_symbol
+SET [FONT+Z], [WORD0]
+ADD Z, 0x1
+SET [FONT+Z], [WORD1]
+SUB Z, 0x1
+SET PC, POP
+
+;/////ЗАНЕСЕНИЕ В ПАМЯТЬ НОВОГО СИМВОЛА/////
+:update_symbol
+SET [WORD0], [FONT+Z]
+ADD Z, 0x1
+SET [WORD1], [FONT+Z]
+SUB Z, 0x1
+SET PC, POP
+
+;//СОЗДАНИЕ ПИКСЕЛЯ-КУРСОРА ПО КООРДИНАТАМ, ДЕЙСТВИЯ В СООТВЕТСТВИИ С ФЛАГАМИ РИСОВАНИЯ/СТИРАНИЯ И ФЛАГАМИ ПРИМЕНЕНИЯ ЦВЕТОВ////
+:create_cursor_pixel
+SET [PIXWORD0], 0x0
+SET [PIXWORD1], 0x0
+IFE X, 0x0
+    JSR line0
+IFE X, 0x1
+    JSR line1
+IFE X, 0x2
+    JSR line2
+IFE X, 0x3
+    JSR line3
+BOR [FONT+Z], [PIXWORD0]
+ADD Z, 0x1
+BOR [FONT+Z], [PIXWORD1]
+SUB Z, 0x1
+
+IFE [ERAISEFLAG], 0x1
+    SET PC, erase_pixel
+IFE [DRAWFLAG], 0x1
+    SET PC, draw_pixel
+    
+:continue_create
+IFE [APPLYFCOLFLAG], 0x1
+    JSR apply_fcolor
+IFE [APPLYBCOLFLAG], 0x1
+    JSR apply_bcolor
+SET PC, POP
+
+:erase_pixel
+BOR [WORD0], [PIXWORD0]
+BOR [WORD1], [PIXWORD1]
+XOR [WORD0], [PIXWORD0]
+XOR [WORD1], [PIXWORD1]
+SET PC, continue_create
+
+:draw_pixel
+BOR [WORD0], [PIXWORD0]
+BOR [WORD1], [PIXWORD1]
+SET PC, continue_create
+
+:line0
+SET [PIXWORD0], 0x1
+SET J, 0x8
+ADD J, Y
+SHL [PIXWORD0], J
+SET PC, POP
+:line1
+SET [PIXWORD0], 0x1
+SHL [PIXWORD0], Y
+SET PC, POP
+:line2
+SET [PIXWORD1], 0x1
+SET J, 0x8
+ADD J, Y
+SHL [PIXWORD1], J
+SET PC, POP
+:line3
+SET [PIXWORD1], 0x1
+SHL [PIXWORD1], Y
+SET PC, POP
+;Переменные
+;/////////////////////////////////////////////
+:CHANGEMODE DAT 0x64 ; Клавиша смены режима (d)
+:CHANGESYMBOL DAT 0x66; Клавиша смены символа в режиме символа (f)
+:DRAWBUTTON DAT 0x61;Клавиша прод. рисования(a)
+:ERAISEBUTTON DAT 0x73;Клавиша прод. стирания(s)
+:COLUP DAT 0x71;Клавиша цвет-вверх (q)
+:COLDOWN DAT 0x77;Клавиша цвет-вниз (w)
+:BCOLUP DAT 0x65;Клавиша фон-цвет-вверх (e)
+:BCOLDOWN DAT 0x72; Клавиша фон-цвет-вниз (r)
+:APPLYFCOL DAT 0x7a;Клавиша-применить цвет(z)
+:APPLYBCOL DAT 0x78;Клавиша-применить цв.фона(x)
+:BORDCOLCH DAT 0x74;Клавиша смены цвета границы (t)
+:BLINK DAT 0x62; Клавиша мерцания (b)
+:DEFFONT DAT 0x63;ПОКАЗАТЬ ИСТИННОЕ ЛИЦО(c)
+:LINE DAT 0x6c;Рисовка линии(l)
+:ELLIPS DAT 0x6b;Клавиша рисования эллипса (k)
+:UNDO DAT 0x6a; Клавиша отмены рисования фигуры (j)
+:CHANGENULLSMB DAT 0x67; Клавиша смены нулевого (фонового) символа (g)
+:SPACEBUTTON DAT 0x68;клавиша вывода кол-ва оставшихся символов(h)
+:FORMAT DAT 0x66;Клавиша форматирования диска (f)
+:INFO DAT 0x69; Клавиша получения информации о диске (i)
+:LOAD DAT 0x6c; Клавиша загрузки (l)
+:SAVE DAT 0x73; Клавиша сохранения (s)
+:DELETE DAT 0x64; Клавиша удаления (d)
+:null_start
+:WORD0 DAT 0x0; Слова для хранения символа
+:WORD1 DAT 0x0;
+:PIXWORD0 DAT 0x0;Слова хранения симв. пикселя
+:PIXWORD1 DAT 0x0;
+:MONITOR DAT 0x0
+:KEYBOARD DAT 0x0
+:FLOPPY DAT 0x0
+:ZMEM DAT 0x0; Хранит зн. текущего-прошлого Z
+:ZMEMTWO DAT 0x0
+:XMEM DAT 0x0
+:YMEM DAT 0x0
+:IMEM DAT 0x0
+:BORDERCOL DAT 0x0; Цвет границы монитора
+:FCOL DAT 0x0;Текущий цвет переднего фона
+:BCOL DAT 0xf;Текущий цвет заднего фона
+:DRAWFLAG DAT 0x0;Флаг длительного рисования
+:ERAISEFLAG DAT 0x0;Флаг длительного стирания
+:SPACEEXISTFLAG DAT 0x1;Есть ли место для симв.
+:FIGUREFCOLFLAG DAT 0x1;Флаг, определяющий, применится ли цвет переднего фона после рисования фигуры
+:FIGUREBCOLFLAG DAT 0x1;аналогично
+:APPLYFCOLFLAG DAT 0x0;Флаг прод. применения
+:APPLYBCOLFLAG DAT 0x0;Флаг прод. применения
+:SMBMODEFLAG DAT 0x0; Флаг доп. режима (1-есть)
+:UNIT DAT 0x0;подсчет единиц
+:DECADE DAT 0x0;десятков
+:CENTURY DAT 0x0;сотен для вывода десятичного числа
+:THREESCRMEM DAT 0 0 0;хранит первые три области экрана
+:CENTURYFONTNUM DAT 0x0
+:DECADEFONTNUM DAT 0x0
+:UNITFONTNUM DAT 0x0
+:COL DAT 0x0;это
+:DP DAT 0x0;все ; также используется для кратковременного хранения других данных
+:ROW DAT 0x0;для
+:ASQR DAT 0x0;эллипса
+:BSQR DAT 0x0;сложного
+:TWOASQR DAT 0x0;противного
+:TWOBSQR DAT 0x0;эллипса
+:FOURASQR DAT 0x0;и это
+:FOURBSQR DAT 0x0;тоже
+:LINEX0 DAT 0x0;От x0,y0 до x1, y1 рисуется линия
+:LINEY0 DAT 0x0;вообще отсюда и ниже - для линии или для общего
+:LINEX1 DAT 0x0;использования фигурами
+:LINEY1 DAT 0x0;
+:LINEX DAT 0x0
+:LINEY DAT 0x0
+:DELTAX DAT 0x0
+:DELTAY DAT 0x0
+:ERROR DAT 0x0
+:DELTAERROR DAT 0x0
+:REVLINEFLAG DAT 0x0;0-наклон меньше 45 градусов
+:LINECHECKER DAT 0x0
+:LINEXADDER DAT 0x0
+:LINEYADDER DAT 0x0
+;Запоминает, сколько раз определенный символ встречается на экране. Нулевой - фон
+:FONTMEM DAT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+;С названиями беда. Это копия FONTMEM. Для восстановления.
+:FONTMEMMEM DAT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+;Шрифт
+:FONT DAT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+;Копия шрифта
+:FONTMEMTWO DAT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+;"Видеопамять"
+:SCREEN DAT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+;Копия "видеопамяти". Надо.
+:SCREENMEM DAT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+;
+:PALETTE DAT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+;
+:DEFAULTPALETTE DAT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+;
+:PALETTERED DAT 0
+;
+:PALETTEGREEN DAT 0
+;
+:PALETTEBLUE DAT 0
+;
+:COUNTER0 DAT 0
+;
+:COUNTER1 DAT 0
+;
+:DISCBUF DAT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+:DISCBUF1 DAT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+;
+:DISCMSGCODE DAT 0x0
+;
+:DISCSTATECODE DAT 0x0
+:DISCFSCODE DAT 0x0 ; 0-неизв.
+:DISCERRORCODE DAT 0x0
+;
+:FILENAME DAT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+;
+:null_end
+;
+:CUSTOMNUMBERS DAT 0x3c42, 0x423c, 0x44, 0x7e40, 0x4462, 0x524c, 0x2249, 0x4936, 0xe08, 0x7e00, 0x4e, 0x4a32, 0x3c4a, 0x4a30, 0x272, 0xa06, 0x3649, 0x4936, 0xc52, 0x523c;цифры. ручная работа!
+;
+:STARTSCREEN DAT 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0xcf00 0xcf10 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x4f00 0x4f02 0x4f03 0x2f05 0xcf21 0xcf0f 0xcf12 0xcf0e 0xcf0d 0xdf13 0xdf14 0x4f15 0x0f00 0x2f00 0x2f19 0x2f1a 0x2f1d 0xcf20 0xcf1f 0xcf22 0xdf23 0xdf26 0xdf24 0x4f28 0x4f29 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x4f00 0x4f06 0x4f04 0x2f09 0xcf0a 0xcf0e 0xcf0c 0xcf0f 0xcf12 0xdf0b 0xdf11 0x4f16 0x4f17 0x2f19 0x2f18 0x2f1b 0x2f1c 0x2f1d 0xcf1e 0xdf00 0xdf27 0xdf17 0xdf25 0x4f73 0x4f2a 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f07 0x0f2c 0x0f2d 0x0f2e 0x0f2f 0x0f30 0x0f2c 0x0f31 0x0f32 0x0f33 0x0f34 0x0f35 0x0f36 0x0f37 0x0f38 0x0f39 0x0f3a 0x0f3b 0x0f3c 0x0f2b 0x0f2b 0x0f3f 0x0f3e 0x0f3d 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f67 0x0f69 0x0f69 0x0f69 0x0f69 0x0f69 0x0f69 0x0f61 0x0f69 0x0f69 0x0f69 0x0f69 0x0f69 0x0f69 0x0f61 0x0f69 0x0f69 0x0f69 0x0f69 0x0f69 0x0f69 0x0f61 0x0f69 0x0f69 0x0f69 0x0f69 0x0f69 0x0f69 0x0f69 0x0f66 0x0f00 0x0f00 0x0f65 0x0400 0x8f00 0x2f46 0x2f45 0x8f00 0x8f00 0x0f65 0x8400 0x8f47 0x8f48 0x8f49 0x8f4a 0x8f4b 0x0f65 0x8400 0x8f00 0x1f54 0x1f58 0x1f59 0x8f00 0x0f65 0x8400 0x8f00 0x8f64 0x8f63 0x8f64 0x0f00 0x0f00 0x0f65 0x0f00 0x0f00 0x0f65 0x0f00 0x0f40 0x0f41 0x0f42 0x0f43 0x0f44 0x0f65 0x0f4c 0x0f42 0x0f4d 0x0f4e 0x0f4f 0x0f50 0x0f65 0x0f00 0x0f51 0x0f52 0x0f53 0x0f7b 0x0f00 0x0f65 0x0f5a 0x0f5b 0x0f5c 0x0f5d 0x0f5e 0x0f5b 0x0f5f 0x0f62 0x0f00 0x0f00 0x0f6a 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f68 0x0f60 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f7a 0x0f79 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f70 0x0f6e 0xcf6f 0xcf72 0xcf72 0xcf72 0xcf72 0xcf00 0xcf72 0xcf72 0xcf72 0xcf72 0x0f00 0x0f00 0x0f00 0x0f21 0x0f77 0x0f78 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f57 0x0f57 0x0f57 0x0f57 0x0f57 0x0f71 0x0f6d 0x0f6c 0x0f6b 0x0f57 0x0f57 0x0f57 0x0f57 0x0f57 0x0f57 0x0f57 0x0f57 0x0f57 0x0f57 0x0f57 0x0f57 0x0f76 0x0f75 0x0f74 0x0f57 0x0f57 0x0f7d 0x0f55 0x0f01 0x0f7c 0x0f08 0x0f7e 0x0f56 0x0056 0x0156 0x0256 0x0356 0x0456 0x0556 0x0656 0x0756 0x0856 0x0956 0x0a56 0x0b56 0x0c56 0x0d56 0x0e56 0x0f56 0x0056 0x0156 0x0256 0x0356 0x0456 0x0556 0x0656 0x0756 0x0856 0x0956 0x0a56 0x0b56 0x0c56 0x0d56 0x0e56
+;
+:STARTFONT DAT 0x0000 0x0000 0x80be 0x82bc 0xaa54 0x8204 0x8254 0xaa00 0x0001 0x0000 0x0002 0x54aa 0xaa55 0x8001 0xfa2a 0x3a02 0xbea2 0xbe80 0x0080 0x55aa 0x0000 0x0080 0x002a 0x5580 0x140a 0x0502 0x140a 0x0402 0x40a0 0x5028 0x050a 0x1428 0x1020 0x4080 0x4180 0x4180 0x50a0 0x4080 0x00a8 0x5482 0x0482 0x0482 0x0000 0x54aa 0x0000 0x55aa 0x4080 0x4080 0x2a15 0x0205 0x0000 0xa050 0x2a14 0x2a50 0x0204 0x0205 0x0215 0x2a50 0xa000 0x0000 0xaa55 0x0000 0xaa54 0x0204 0x0204 0x0204 0x0000 0x0002 0x0204 0x0200 0x00aa 0x5402 0x54aa 0x0000 0x55aa 0x0000 0x0402 0x0402 0x00aa 0x5580 0x54aa 0x0482 0x04aa 0x5400 0x1528 0x51a0 0x0202 0x0202 0xfaaa 0x02fa 0x6aba 0x0222 0x2202 0xfa2a 0x3a02 0xfa02 0xda22 0xda02 0x8202 0x0202 0xfa02 0xfa12 0x2212 0xfa02 0xf22a 0xf202 0x728a 0xaa6a 0x02fa 0xaa02 0x0202 0xfaaa 0x02fa 0x8a72 0x02fa 0x020a 0xfa0a 0x02fa 0x8afa 0x02fa 0x6aba 0x0202 0x02fa 0x8afa 0xaafa 0x0282 0x0202 0x02aa 0x3e22 0x1c00 0x3e1a 0x2e00 0x3c0a 0x3c00 0x0e30 0x0e30 0x0e00 0x0000 0x9f5f 0x3f00 0x0000 0x3f5f 0x0000 0x0038 0x4442 0x2115 0x55a1 0x8d8d 0xb1b2 0x8244 0x3800 0x0000 0x3e0a 0x0e00 0x3e20 0x003e 0x2a00 0x023e 0x0200 0x023e 0x0200 0x3e2a 0x0000 0x3e22 0x1c00 0x3e00 0x2c2a 0x1a00 0x00ff 0x81ef 0x8a80 0xbeaa 0x0000 0x00ff 0x8080 0x8080 0xa9a9 0xea84 0xf800 0x0000 0x3e22 0x003e 0x223e 0x003e 0x023c 0x0002 0x3e02 0x003e 0x1a2e 0x003e 0x2000 0x2c2a 0x0101 0x0100 0x2020 0xe020 0x1a00 0xff00 0xff99 0x99ff 0xf090 0x90f0 0x0000 0xff00 0x2020 0xe000 0x0000 0xe020 0x0101 0x0101 0x2020 0x2020 0x0000 0x0101 0xc080 0x8080 0x8990 0xa0c0 0xa090 0x8984 0x01d4 0x05d0 0x1000 0x0000 0x0054 0x025a 0x8080 0xc0c0 0x1010 0x1010 0x55aa 0x050a 0x8880 0x8080 0x8181 0x8284 0x8282 0x8281 0x0488 0x790e 0x0a11 0x2000 0x4080 0x0000 0x0000 0x8040 0x3e08 0x3600 0x8088 0x8880 0x8080 0x80be 0xbe88 0xb680 0x0000 0x0000
+;
+:PALETTESCREEN DAT 0xf008 0xf001 0xf001 0xf002 0xf108 0xf101 0xf101 0xf102 0xf208 0xf201 0xf201 0xf202 0xf308 0xf301 0xf301 0xf302 0xf408 0xf401 0xf401 0xf402 0xf508 0xf501 0xf501 0xf502 0xf608 0xf601 0xf601 0xf602 0xf708 0xf701 0xf701 0xf702 0xf006 0xf005 0xf005 0xf004 0xf106 0xf105 0xf105 0xf104 0xf206 0xf205 0xf205 0xf204 0xf306 0xf305 0xf305 0xf304 0xf406 0xf405 0xf405 0xf404 0xf506 0xf505 0xf505 0xf504 0xf606 0xf605 0xf605 0xf604 0xf706 0xf705 0xf705 0xf704 0xf808 0xf801 0xf801 0xf802 0xf908 0xf901 0xf901 0xf902 0xfa08 0xfa01 0xfa01 0xfa02 0xfb08 0xfb01 0xfb01 0xfb02 0xfc08 0xfc01 0xfc01 0xfc02 0xfd08 0xfd01 0xfd01 0xfd02 0xfe08 0xfe01 0xfe01 0xfe02 0xff08 0xff01 0xff01 0xff02 0xf806 0xf805 0xf805 0xf804 0xf906 0xf905 0xf905 0xf904 0xfa06 0xfa05 0xfa05 0xfa04 0xfb06 0xfb05 0xfb05 0xfb04 0xfc06 0xfc05 0xfc05 0xfc04 0xfd06 0xfd05 0xfd05 0xfd04 0xfe06 0xfe05 0xfe05 0xfe04 0xff06 0xff05 0xff05 0xff04 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f28 0x0f05 0x0f05 0x0f05 0x0f05 0x0f05 0x0f05 0x0f05 0x0f05 0x0f05 0x0f05 0x0f29 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f23 0xff16 0x0f0a 0x0f03 0x0f09 0x0f07 0x0f00 0x0f00 0x0f1c 0x0f1d 0x0f00 0x0f27 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f23 0xff16 0x0f10 0x0f0f 0x0f0e 0x0f0d 0x0f0c 0x0f0b 0x0f1e 0x0f1f 0x0f00 0x0f27 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f23 0xff16 0x0f0a 0x0f11 0x0f12 0x0f13 0x0f14 0x0f00 0x0f20 0x0f21 0x0f00 0x0f27 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f23 0xff16 0x0f0a 0x0f15 0x0f17 0x0f18 0x0f19 0x0f1a 0x0f1b 0x0f00 0x0f00 0x0f27 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f24 0x0f25 0x0f25 0x0f25 0x0f25 0x0f25 0x0f25 0x0f25 0x0f25 0x0f25 0x0f25 0x0f26 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00 0x0f00
+;
+:PALETTEFONT DAT 0x0000 0x0000 0x0101 0x0101 0x0101 0x01ff 0x68b8 0x00f8 0x8080 0x80ff 0x8080 0x8080 0xff80 0x8080 0x7000 0x5000 0xff01 0x0101 0xa800 0xf888 0x0000 0x00f8 0xf000 0x5000 0xa800 0xf808 0xf8a8 0x00f8 0xf868 0xb800 0x88a8 0x6800 0x0000 0x0070 0xa850 0x00f8 0x8000 0x7880 0x8078 0x00f8 0xa800 0x5000 0x8870 0x00f8 0xf090 0x90f0 0xa800 0xf828 0x00f0 0x28f0 0x0078 0x8080 0x7800 0xf880 0x0008 0xf808 0xfca4 0x94f8 0x0098 0xfc80 0x0464 0x544c 0x00a4 0xb45c 0x1c10 0x7c40 0x005c 0x5474 0x0000 0x0000 0x0000 0xff00 0x0000 0x0302 0x0202 0x0202 0x0300 0x0000 0xff00 0x0000 0x0000 0x8080 0x8000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000
+;
+:DISCSTATEHEADER DAT " Disk  State";12
+:DISCSTATE0 DAT "______STATE_NO_MEDIA";20
+:DISCSTATE1 DAT "_________STATE_READY";
+:DISCSTATE2 DAT "______STATE_READY_WP";
+:DISCSTATE3 DAT "__________STATE_BUSY";
+;
+:DISCFSHEADER DAT " File System";12
+:DISCFS0 DAT "_____________UNKNOWN";20
+:DISCFS1 DAT "_________________PUS";
+;
+:DISCERROR0 DAT "          ERROR_NONE";20
+:DISCERROR1 DAT "          ERROR_BUSY"
+:DISCERROR2 DAT "      ERROR_NO_MEDIA"
+:DISCERROR3 DAT "     ERROR_PROTECTED"
+:DISCERROR4 DAT "         ERROR_EJECT"
+:DISCERROR5 DAT "    ERROR_BAD_SECTOR"
+:DISCERROR6 DAT "        ERROR_BROKEN"
+;
+:DISCHEADER DAT "--------------Disk--------------"
+:DISCDOWN DAT "--------------------------------"
+;
+:DISCMSGSUCCESS DAT " Success    ";12
+:DISCMSGFAILURE DAT " Failure    "
+:DISCMSGLOADING DAT " Loading    "
+:DISCMSGSAVING DAT " Saving     "
+:DISCMSGFORMATTING DAT " Formatting "
+:DISCMSGGETINFO DAT " Loading FS "
+:DISCMSGINPUT DAT " Input name" 0x3a
+;
+:CONTROLSMSG DAT "           PIXELATOR                  Per-pixel image editor                 v.3.0.                   Controls description      --------------------------------0.MAIN MENU                     ---------------------------------arrow left/right- move                            selection    -enter- select                  -esc- exit the program          --------------------------------1.DRAW                          --------------------------------  An image consists of 128 (max)symbols, applied to screen,     which has 384 areas and border  color. Every area has one       symbol, foreground color and    background color. It also can   blink.                            The first symbol is backgroundsymbol, which is normally null. When some area's symbol becomes null-symbol, it is replaced withbackground symbol, even if it isnot actually null. Other 127    symbols are directly changeable.  'Show number of symbols left' option shows number of unused   symbols. It is thought that     background symbol is always used(even if it is not true). For   example, at the beginning this  option will show '126', because there will be only two symbols  on the screen- background symboland 'currently-being-edited'    symbol.                           'Change background symbol'    option makes background symbol  equal to the current symbol. Thecurrent symbol is not replaced  with background symbol.         ---------------------------------arrows- move cursor (pixel)    -a- draw pixel, can be hold     -s- erase pixel, can be hold    -q- foreground color up         -w- foreground color down       -e- background color up         -r- background color down       -z- apply foreground color, can     be hold                     -x- apply background color, can     be hold                     -t- make border color equal to      background color            -b- make an area blinking/normal-l- draw line                   -k- draw ellipse                -h- show number of symbols left -c- show default font           -g- change background symbol    -d- enter symbol-drawing mode   -esc- return to main menu       "
+:CONTROLSMSGADD DAT "--------------------------------1.1.DRAW LINE                   ---------------------------------arrows- move the line's end    -z- show/hide foreground color  -x- show/hide background color  -q,w,e,r- change colors         -l- finish drawing of line      -j- disable drawing of line     --------------------------------1.2.DRAW ELLIPSE                --------------------------------  The algorithm currently does  not work properly in a lot of   cases.                          ---------------------------------right arrow- enlarge horisont. -left arrow- reduce horisont.   -down arrow- enlarge vertical.  -up arrow- reduce vertical.     -z- show/hide foreground color  -x- show/hide background color  -q,w,e,r- change colors         -k- finish drawing of ellipse   -j- disable drawing of ellipse  --------------------------------1.3.SYMBOL-DRAWING MODE         --------------------------------  In this mode the current      symbol can be applied to any    area with background symbol.    If the current symbol is null,  you can not enter the mode.     Colors can not be changed.      Background symbol can be appliedto any area except the original one.                              You exit from this mode to theoriginal area, if there are     unused symbols. Or, you exit to an area with unique symbol, if  there is one. Otherwise you can not exit this mode, but still   can return to main menu.          This mode gives possibility toovercome restriction of having  at least one unique symbol (at  least one symbol which is       applied to only one area).        'Change the original area'    option makes the current area   original, and, hence, changes   the current symbol. If the      current area contains backgroundsymbol, the option does nothing.---------------------------------arrows- move symbol            -a- apply symbol                -s- apply background symbol     -f- change the original area        (and the current symbol)    -d- exit from the mode          -esc- return to main menu       "
+:CONTROLSMSG2 DAT "--------------------------------2.PALETTE                       --------------------------------  There are 16 colors. It is    highly recommended that black   and white colors are still      contrast after changing them.   ---------------------------------arrows- move selection         -enter- select                  -esc- return to main menu       --------------------------------2.1.COLOR CHANGING              ---------------------------------arrow up/down- move selection  -arrow left/right- change red,                     green or blue                   channel      -enter- select ('default' option        only)                   -esc- exit from changing        "
+:CONTROLSMSG3 DAT "--------------------------------3.DISK                          --------------------------------  Currently under development.  Saving and loading are only     possible after loading the File System. Only one file can be    saved. The file's type (format) is PSI. File System - PUS. It ismade just for test.             ---------------------------------i- load File System (including     file's name)                -f- format disk                 -s- save file                   -l- load file                   -esc- return to main menu       --------------------------------3.1.FILE SAVING                 --------------------------------  In order to save a file, you  must give it a name. Any non-   control characters are allowed. The maximum length of the name  is 15 characters, the minimum   length-0 characters (Untitled). ---------------------------------keys- print a character        -backspace- remove the last                 character           -enter- continue saving         "
+:CONTROLSMSG4 DAT "--------------------------------4.CONTROLS                      ---------------------------------arrow up/down- move text       -esc- return to main menu       --------------------------------" 0x0
+;
+:exit_pixelator
+SET PC, memory_preparing
+;

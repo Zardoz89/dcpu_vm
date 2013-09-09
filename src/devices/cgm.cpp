@@ -32,7 +32,7 @@ namespace cgm {
     {
         this->IHardware::attachTo(cpu, index);
 
-        blink_max = cpu->cpu_clock / CGM::BLINKPERSECOND;
+        blink_max = cpu->getClock() / CGM::BLINKPERSECOND;
         bitfield_map = attribute_map = font_map = palette_map = 0;
         blink = 0;
         border_col = 0;
@@ -46,60 +46,60 @@ namespace cgm {
             return;
 
         size_t s;
-        switch (cpu->GetA() ) {
+        switch (cpu->getA() ) {
         case MEM_BITPLANE_SCREEN:
-            if (bitfield_map == 0 && attribute_map != 0 && cpu->GetB() != 0) {
+            if (bitfield_map == 0 && attribute_map != 0 && cpu->getB() != 0) {
                 videomode = 0; 
             }
-            bitfield_map = cpu->GetB();
+            bitfield_map = cpu->getB();
             break;
 
         case MEM_ATTRIBUTE_SCREEN:
-            if (bitfield_map != 0 && attribute_map == 0 && cpu->GetB() != 0) {
+            if (bitfield_map != 0 && attribute_map == 0 && cpu->getB() != 0) {
                 videomode = 0;
             }
-            attribute_map = cpu->GetB();
+            attribute_map = cpu->getB();
             break;
 
         case MEM_MAP_PALETTE:
-            palette_map = cpu->GetB();
+            palette_map = cpu->getB();
             break;
 
         case SET_BORDER_COLOR:
-            border_col = cpu->GetB() & 0x1F;
+            border_col = cpu->getB() & 0x1F;
             break;
 
         case SET_VIDEO_MODE:
-            videomode = cpu->GetB() & 3;
+            videomode = cpu->getB() & 3;
             break;
 
         case GET_VIDEO_MODE:
-            cpu->SetB(videomode);
+            cpu->setB(videomode);
             break;
 
         case MEM_DUMP_PALETTE:
-            s = RAM_SIZE - 1 - cpu->GetB() < 16 ?
-                    RAM_SIZE - 1 - cpu->GetB() : 16 ;
+            s = RAM_SIZE - 1 - cpu->getB() < 16 ?
+                    RAM_SIZE - 1 - cpu->getB() : 16 ;
             std::copy_n (CGM:: def_palette_map, s, 
-                    cpu->getMem() + cpu->GetB() );
+                    cpu->getMem() + cpu->getB() );
             break;
         
         case MEM_DUMP_FONT:
             if (videomode == 4) {       // 4x8 fonts
-                s = RAM_SIZE - 1 - cpu->GetB() < 512 ? 
-                    RAM_SIZE - 1 - cpu->GetB() : 512 ;
+                s = RAM_SIZE - 1 - cpu->getB() < 512 ? 
+                    RAM_SIZE - 1 - cpu->getB() : 512 ;
                 std::copy_n (CGM::def_fonts, s, 
-                        cpu->getMem() + cpu->GetB() );
+                        cpu->getMem() + cpu->getB() );
             } else if (videomode == 5) { // 8x8 fonts
-                s = RAM_SIZE - 1 - cpu->GetB() < 512*2 ? 
-                    RAM_SIZE - 1 - cpu->GetB() : 512*2 ;
+                s = RAM_SIZE - 1 - cpu->getB() < 512*2 ? 
+                    RAM_SIZE - 1 - cpu->getB() : 512*2 ;
                 std::copy_n (&CGM::def_fonts[512], s, 
-                        cpu->getMem() + cpu->GetB() );
+                        cpu->getMem() + cpu->getB() );
             }
             break;
 
         case MEM_MAP_FONT:
-            font_map = cpu->GetB();
+            font_map = cpu->getB();
             break;
 
         default:
@@ -111,9 +111,9 @@ namespace cgm {
     void CGM::tick()
     {
         if (this->cpu == NULL) return;
-        if (++ticks > this->cpu->cpu_clock/60) {
+        if (++ticks > cpu->getClock() /50) {
             // Update screen at 60Hz aprox
-            ticks = 0;
+            ticks -= cpu->getClock() /50;
             this->updateScreen();
         }
         if (++blink > blink_max*2)

@@ -20,10 +20,10 @@ namespace cpu {
         if (this->cpu == NULL)
             return;
 
-        switch (cpu->GetA() ) {
+        switch (cpu->getA() ) {
         case 0:
-            divider = cpu->GetB();
-            if (cpu->GetB() > 0) {
+            divider = cpu->getB();
+            if (cpu->getB() > 0) {
                 this->max_acum =  sf::seconds(60.0f / divider).asMicroseconds();
                 clock.restart();
             } 
@@ -31,11 +31,11 @@ namespace cpu {
             break;
 
         case 1:
-            cpu->SetC(ticks);
+            cpu->setC(ticks);
             break;
 
         case 2:
-            this->msg = cpu->GetB();
+            this->msg = cpu->getB();
             break;
 
         default:

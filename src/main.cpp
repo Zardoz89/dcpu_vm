@@ -351,7 +351,7 @@ int main (int argc, char **argv)
                         if (debug && pressed)
                         {
                           std::cout << disassembly(dcpu->getMem()
-                                                +dcpu->GetPC(),3);
+                                                +dcpu->getPC(),3);
                           std::cout << std::endl;
                           dcpu->step();
                         }
@@ -360,13 +360,13 @@ int main (int argc, char **argv)
                         if (debug && !pressed)
                         {
                           printf("A : 0x%04X | B : 0x%04X | C : 0x%04X\n",
-                                            dcpu->ra,dcpu->rb,dcpu->rc);
+                                            dcpu->getA(),dcpu->getB(),dcpu->getC());
                           printf("X : 0x%04X | Y : 0x%04X | Z : 0x%04X\n",
-                                            dcpu->rx,dcpu->ry,dcpu->rz);
+                                            dcpu->getX(),dcpu->getY(),dcpu->getZ());
                           printf("I : 0x%04X | J : 0x%04X | IA: 0x%04X\n",
-                                            dcpu->ri,dcpu->rj,dcpu->ria);
+                                            dcpu->getI(),dcpu->getJ(),dcpu->getIA());
                           printf("PC: 0x%04X | SP: 0x%04X | EX: 0x%04X\n",
-                                            dcpu->rpc,dcpu->rsp,dcpu->rex);
+                                            dcpu->getPC(),dcpu->getSP(),dcpu->getEX());
                         }
                         break;
                     case sf::Keyboard::F3: 
@@ -407,7 +407,7 @@ int main (int argc, char **argv)
                 double tmp = delta / 10.0f;
                 tick_needed= std::round(tmp);
             } else {
-                double tmp = dcpu->cpu_clock/ (double)(FRAMERATE);
+                double tmp = dcpu->getClock() / (double)(FRAMERATE);
                 tick_needed= std::round(tmp);
             }
             ticks_counter += tick_needed;
@@ -417,7 +417,7 @@ int main (int argc, char **argv)
                 ticks_counter -= 100000;
                 std::cerr << "Delta: " << delta << " ms ";
                 std::cerr << "Ticks: " << tick_needed << "   ";
-                double tmp = tick_needed*(1 / (double)(dcpu->cpu_clock));
+                double tmp = tick_needed*(1 / (double)(dcpu->getClock()));
                 int64_t rtime = 1000000 * tmp;
                 std::cerr << "Speed: " << (float)(100*delta)/rtime << std::endl;
             }
