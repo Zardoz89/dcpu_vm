@@ -47,12 +47,33 @@ SUB PC, 1
 :int_handler
 SET A, 1
 HWI [keyboard_n]
+SET [var_keyevent], C
+IFE C, 0
+    SET PC, end_int_handler
+
+IFC C, 0x0100  ; Key Press event
+    SET PC, stop_note
+
+:play_note
+AND C, 0x00FF
 SHL C, 3
 SET A, C
 JSR printhex
 SET A, 0
 SET B, C
 HWI [spkr_n]
+SET PC, end_int_handler
+
+:stop_note
+SET A, 0
+JSR printhex
+SET A, 0
+SET B, 0
+HWI [spkr_n]
+
+:end_int_handler
+IFG [var_keyevent], 0  ;; Keyboard buffer isn't empty, keep reading
+    SET PC, int_handler  
 RFI 0
 
 
@@ -107,6 +128,8 @@ SET B, POP
 SET A, POP
 SET PC, POP
 
+:var_keyevent
+DAT 0
 
 :monitor_n
 DAT 0
