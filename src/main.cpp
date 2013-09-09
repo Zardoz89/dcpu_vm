@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdio.h>
 #include <chrono>
+#include <cmath>
 
 #include "config.hpp"
 
@@ -208,7 +209,7 @@ int main (int argc, char **argv)
     bool keyb_focus;
     
 
-    bool compensate_time = false; 
+    unsigned long ticks_counter = 0;
     while (window.isOpen() && keyb_win.isOpen()) 
     {   //Because non mainthread event are forbidden in OSX
     
@@ -383,25 +384,25 @@ int main (int argc, char **argv)
         
         ///DCPU emulation stuff
         monitor->prepareRender();
+        // T period of a 100KHz signal = 10 microseconds
         const auto delta=clock.getElapsedTime().asMicroseconds(); 
-        //.asSeconds();
         clock.restart();
         
         if (!debug)
         {
             unsigned int tick_needed;
-            if (use_time)
-                tick_needed= delta / 10;
-            else
-                tick_needed=dcpu->cpu_clock/50;
+            if (use_time) {
+                double tmp = delta / 10.0f;
+                tick_needed= std::round(tmp);
+            } else {
+                double tmp = dcpu->cpu_clock/50;
+                tick_needed= std::round(tmp);
+            }
+            ticks_counter += tick_needed;
 
-            // Makes simulation to float around 100% of speed
-            if (compensate_time) 
-                tick_needed++;
-            compensate_time ^= 1;
-
-            // Avoids fill the screen of data
-            if ((dcpu->getTotCycles() % 10000) <= 100) {
+            // Outputs every second (if runs to ~100% of speed)
+            if (ticks_counter > 100000) {
+                ticks_counter -= 100000;
                 std::cerr << "Delta: " << delta << " ms ";
                 std::cerr << "Ticks: " << tick_needed << "   ";
                 double tmp = tick_needed*(1 / (double)(dcpu->cpu_clock));
