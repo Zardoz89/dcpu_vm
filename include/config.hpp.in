@@ -1,6 +1,7 @@
 #ifndef __CONFIG__HPP_
 #define __CONFIG__HPP_ 1
 
+// NOTE This is necesary now ? We are self-limitng to SFML threads
 #if defined(__MINGW32__) || defined(__MINGW64__)
 
 #define __MINGW__
@@ -15,7 +16,7 @@
 
 #endif
 
-// Should enable the logger modules ?
+// Eenable/disables by build type
 #define _DEBUG @LOG_ENABLE@
 #include <log.hpp>
 

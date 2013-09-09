@@ -29,6 +29,7 @@
 #include <disassembler.hpp>
 #include <binasm.hpp>
 
+#define FRAMERATE   50
 
 using namespace cpu;
 
@@ -57,7 +58,9 @@ void print_help(std::string program_name)
 
 int main (int argc, char **argv)
 {
-    logger::LOG_level = LogLevel::INFO;
+    // TODO Debug level should be set at compile time, or have a hidden program
+    // option to set this, like the -v -vv -vvv flags
+    logger::LOG_level = LogLevel::INFO; 
 
     std::string filename;
     std::string outname="a.out"; //output assembled filename
@@ -123,7 +126,6 @@ int main (int argc, char **argv)
     
     if (assemble)
     {
-        Debug(LogLevel::INFO) << "Trying to assemble";
         BinAsm assembler;
         if (!assembler.load(filename)) return 0xdead;
         if (!assembler.assemble()) return 0xdead;
@@ -147,7 +149,7 @@ int main (int argc, char **argv)
     // Prepare the speaker device
     auto speaker = std::make_shared<speaker::Speaker>();
     audio::SquareGenerator gen;
-    gen.prepare(44100);
+    gen.prepare();
     gen.play();
     speaker->setFreqCallback(audio::SquareGenerator::WrappeCallback,
             (void *)(&gen));
@@ -195,7 +197,7 @@ int main (int argc, char **argv)
         window.setVerticalSyncEnabled(true);
     }
     else
-        window.setFramerateLimit(50);
+        window.setFramerateLimit(FRAMERATE);
     
     // We try to use a window to show a fake keyboard and capture keyboard
     // events if it have focus
@@ -210,11 +212,11 @@ int main (int argc, char **argv)
     if (keyb_image_loaded)
         keyb_sprite.setTexture(keyb_tx);
     else
-        std::cerr << "Waring: assets/keyb_img.png not found !" << std::endl;
-    bool keyb_focus;
+        Debug(LogLevel::WARN) <<  "assets/keyb_img.png not found !";
     
+    bool keyb_focus;
 
-    Debug(LogLevel::INFO) << "Initianing main loop";
+    Debug(LogLevel::INFO) << "Entering main loop";
     unsigned long ticks_counter = 0;
     while (window.isOpen() && keyb_win.isOpen()) 
     {   //Because non mainthread event are forbidden in OSX
@@ -379,6 +381,10 @@ int main (int argc, char **argv)
                     case sf::Keyboard::F12:
                         if (!pressed)
                         {
+
+                            Debug(LogLevel::INFO) << 
+                                "Entering/exiting of Debug mode";
+
                             debug = !debug;
                         }
                         break;
@@ -401,7 +407,7 @@ int main (int argc, char **argv)
                 double tmp = delta / 10.0f;
                 tick_needed= std::round(tmp);
             } else {
-                double tmp = dcpu->cpu_clock/50;
+                double tmp = dcpu->cpu_clock/ (double)(FRAMERATE);
                 tick_needed= std::round(tmp);
             }
             ticks_counter += tick_needed;
