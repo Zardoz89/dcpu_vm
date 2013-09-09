@@ -1,4 +1,5 @@
 #include <devices/gkeyboard.hpp>
+#include <config.hpp>
 
 #include <algorithm>
 
@@ -24,7 +25,9 @@ namespace keyboard {
     bool GKeyboard::checkInterrupt (uint16_t &msg)
     {
         if (event && this->msg > 0) {
+            msg = this->msg;
             event = false;
+            Debug(LogLevel::DEBUG) << "[GKeyboard] Interrupt!";
             return true;
         }
         return false;
@@ -79,6 +82,12 @@ namespace keyboard {
         while (keybuffer.size() > BUFFER_SIZE) {
             keybuffer.pop_back(); // Removes old elements
         }
+
+        if (keydown)
+            Debug(LogLevel::DEBUG) << "Pushed Key : " << scancode;
+        else
+            Debug(LogLevel::DEBUG) << "Released Key : " << scancode;
+
     }
 
 } // END OF NAMESPACE keyboard

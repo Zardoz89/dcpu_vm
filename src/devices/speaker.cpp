@@ -1,4 +1,5 @@
 #include <devices/speaker.hpp>
+#include <config.hpp>
 
 namespace cpu {
 
@@ -25,6 +26,7 @@ namespace speaker {
             if (freq > 10000)
                 freq = 10000;
 
+            Debug(LogLevel::DEBUG) << "[speaker] Freq set to " << freq;
             if (cb_function != NULL)
                 cb_function(freq, c_obj);
         }
