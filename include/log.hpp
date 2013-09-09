@@ -3,6 +3,10 @@
 
 #include <iostream>
 
+#ifndef _DEBUG
+#define _DEBUG 0
+#endif
+
 /**
  * Logging levels
  */
@@ -16,13 +20,11 @@ enum class LogLevel {
 
 
 namespace logger {
-#ifdef _DEBUG
     /**
     * @brief Desired Logging level to show. 
     * If N in "debug(N)" is <= LOG_level, when will be show
     */
     static LogLevel LOG_level = LogLevel::WARN;
-#endif    
 
     /**
     * @brief Output stream to use
@@ -34,7 +36,7 @@ class Debug
 {
 public:
     Debug( LogLevel level ) 
-#ifdef _DEBUG
+#if _DEBUG >= 1
     : m_output( level <= logger::LOG_level ), level(level)
 #endif
     { }
@@ -42,7 +44,7 @@ public:
     template<typename T>
     Debug& operator<<( T t)
     {
-        #ifdef _DEBUG
+        #if _DEBUG >= 1
         if( m_output )
         {
             switch (level) {
@@ -74,15 +76,10 @@ public:
             return *this;
     }
 private:
-#ifdef _DEBUG
+#if _DEBUG >= 1
     bool m_output;
     LogLevel level;
 #endif
 };
-
-
-#ifdef OUT
-#undef OUT
-#endif
 
 #endif // _DEBUG_HPP_

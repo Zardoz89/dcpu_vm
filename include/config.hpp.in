@@ -1,5 +1,5 @@
-#ifndef __CONFIG
-#define __CONFIG
+#ifndef __CONFIG__HPP_
+#define __CONFIG__HPP_ 1
 
 #if defined(__MINGW32__) || defined(__MINGW64__)
 
@@ -9,9 +9,13 @@
 #include <SFML/System.hpp>
 #include <cstdio>
 
-#endif
 #else
 
 #include <thread> //not working with mingw 4.7 need to wait 4.8
 
 #endif
+
+#define _DEBUG @LOG_ENABLE@
+#include <log.hpp>
+
+#endif // __CONFIG__HPP_

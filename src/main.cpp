@@ -56,6 +56,7 @@ void print_help(std::string program_name)
 
 int main (int argc, char **argv)
 {
+    logger::LOG_level = LogLevel::INFO;
 
     std::string filename;
     std::string outname="a.out"; //output assembled filename
@@ -121,6 +122,7 @@ int main (int argc, char **argv)
     
     if (assemble)
     {
+        Debug(LogLevel::INFO) << "Trying to assemble";
         BinAsm assembler;
         if (!assembler.load(filename)) return 0xdead;
         if (!assembler.assemble()) return 0xdead;
@@ -133,7 +135,9 @@ int main (int argc, char **argv)
         std::cerr <<"error: missing input file, type --help for list options\n";
         return 0;
     }
+   
     
+    Debug(LogLevel::INFO) << "Loading devices";
     sf::String window_title="dcpu_vm";
     auto dcpu = std::make_shared<DCPU>();
     auto gclock = std::make_shared<Generic_Clock>();
@@ -209,6 +213,7 @@ int main (int argc, char **argv)
     bool keyb_focus;
     
 
+    Debug(LogLevel::INFO) << "Initianing main loop";
     unsigned long ticks_counter = 0;
     while (window.isOpen() && keyb_win.isOpen()) 
     {   //Because non mainthread event are forbidden in OSX
