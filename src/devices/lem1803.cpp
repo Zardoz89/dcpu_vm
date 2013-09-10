@@ -28,7 +28,7 @@ namespace lem {
         if (this->cpu == NULL)
             return;
 
-        if (cpu->GetA() == LEGACY_MODE) {
+        if (cpu->getA() == LEGACY_MODE) {
             emulation_mode = !emulation_mode;
             font_map = palette_map = screen_map = 0;
             blink = 0;
@@ -45,16 +45,16 @@ namespace lem {
 
         size_t s;
         if (!emulation_mode) { // Only this commands are diferent 
-            if (cpu->GetA() == MEM_DUMP_FONT) {
-                s = RAM_SIZE - 1 - cpu->GetB() < 512 ? 
-                        RAM_SIZE - 1 - cpu->GetB() : 512 ;
-                std::copy_n (Lem1803::def_font_map2, s, cpu->getMem() + cpu->GetB() );
+            if (cpu->getA() == MEM_DUMP_FONT) {
+                s = RAM_SIZE - 1 - cpu->getB() < 512 ? 
+                        RAM_SIZE - 1 - cpu->getB() : 512 ;
+                std::copy_n (Lem1803::def_font_map2, s, cpu->getMem() + cpu->getB() );
                 return;
-            } else if (cpu->GetA() == MEM_DUMP_PALETTE) {
-                s = RAM_SIZE - 1 - cpu->GetB() < 64 ?
-                        RAM_SIZE - 1 - cpu->GetB() : 64 ;
+            } else if (cpu->getA() == MEM_DUMP_PALETTE) {
+                s = RAM_SIZE - 1 - cpu->getB() < 64 ?
+                        RAM_SIZE - 1 - cpu->getB() : 64 ;
                 std::copy_n (Lem1803::def_palette_map2, s, 
-                        cpu->getMem() + cpu->GetB() );
+                        cpu->getMem() + cpu->getB() );
                 return;
             }
         }

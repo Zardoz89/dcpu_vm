@@ -21,8 +21,8 @@ namespace speaker {
 
         // We ignore A register, to allow a fake compatibility with benedeck's
         // dual channel speaker specs
-        if (cpu->GetB() != freq) {
-            freq = cpu->GetB();
+        if (cpu->getB() != freq) {
+            freq = cpu->getB();
             if (freq > 10000)
                 freq = 10000;
 

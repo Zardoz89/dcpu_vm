@@ -27,10 +27,6 @@ public:
     Lem1802();
     virtual ~Lem1802();
     
-    static const uint32_t ID                    = 0x7349f615;
-    static const uint16_t REV                   = 0x1802;
-    static const uint32_t MANUFACTURER          = 0x1c6c8b36;
-
     static const unsigned int WIDTH             = 128;
     static const unsigned int HEIGHT            = 96;
     static const unsigned int BORDER_SIZE       = 10;
@@ -40,14 +36,14 @@ public:
 
     static const unsigned int BLINKPERSECOND    = 2;
 
-    virtual uint32_t getId() {
-        return ID;
+    virtual uint32_t getId() const {
+        return 0x7349f615;
     }
-    virtual uint16_t getRevision() {
-        return REV;
+    virtual uint16_t getRevision() const {
+        return 0x1802;
     }
-    virtual uint32_t getManufacturer() {
-        return MANUFACTURER;
+    virtual uint32_t getManufacturer() const {
+        return 0x1c6c8b36;
     }
     
     virtual unsigned int width() const {return WIDTH;}

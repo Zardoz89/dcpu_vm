@@ -45,20 +45,16 @@ public:
     GKeyboard();
     virtual ~GKeyboard();
 
-    static const uint32_t ID                = 0x30CF7406;
-    static const uint16_t REV               = 0x0001;
-    static const uint32_t MANUFACTURER      = 0x90099009;
-
     static const size_t BUFFER_SIZE         = 64;
 
-    uint32_t getId() {
-        return ID;
+    uint32_t getId() const {
+        return 0x30CF7406;
     }
-    virtual uint16_t getRevision() {
-        return REV;
+    virtual uint16_t getRevision() const {
+        return 0x0001;
     }
-    uint32_t getManufacturer() {
-        return MANUFACTURER;
+    uint32_t getManufacturer() const {
+        return 0x90099009;
     }
    
     bool checkInterrupt (uint16_t &msg);

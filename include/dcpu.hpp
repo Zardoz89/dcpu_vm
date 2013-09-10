@@ -19,7 +19,6 @@ const unsigned int RAM_SIZE         = 0x10000;  /// RAM size
 
 class IHardware;
 
-
 /**
  * @brief DCPU Virtual Machine
  * Based on Benedeck's DCPU VM (https://bitbucket.org/benedek/dcpu-16/overview)
@@ -30,9 +29,10 @@ public:
     DCPU();
     virtual ~DCPU();
     
-    uint16_t ra, rb, rc, rx, ry, rz , ri, rj, rex, rpc, ria, rsp; /// Registers
-    
-    const uint32_t cpu_clock = 100000;  /// CPU clock speed in Hz
+    /**
+     * Return actual CPU model clock speed
+     */
+    virtual uint32_t getClock() const {return 100000; }
     
     /**
     * @brief Sets the CPU to the initial state
@@ -111,99 +111,99 @@ public:
     
     // Get/Set for registers
     
-    inline void SetA (const uint16_t& ra) {
+    inline void setA (const uint16_t& ra) {
         this->ra = ra;
     }
     
-    inline void SetB (const uint16_t& rb) {
+    inline void setB (const uint16_t& rb) {
         this->rb = rb;
     }
     
-    inline void SetC (const uint16_t& rc) {
+    inline void setC (const uint16_t& rc) {
         this->rc = rc;
     }
     
-    inline void SetI (const uint16_t& ri) {
+    inline void setI (const uint16_t& ri) {
         this->ri = ri;
     }
     
-    inline void SetJ (const uint16_t& rj) {
+    inline void setJ (const uint16_t& rj) {
         this->rj = rj;
     }
     
-    inline void SetX (const uint16_t& rx) {
+    inline void setX (const uint16_t& rx) {
         this->rx = rx;
     }
     
-    inline void SetY (const uint16_t& ry) {
+    inline void setY (const uint16_t& ry) {
         this->ry = ry;
     }
     
-    inline void SetZ (const uint16_t& rz) {
+    inline void setZ (const uint16_t& rz) {
         this->rz = rz;
     }
     
-    inline void SetPC (const uint16_t& rpc) {
+    inline void setPC (const uint16_t& rpc) {
         this->rpc = rpc;
     }
     
-    inline void SetSP (const uint16_t& rsp) {
+    inline void setSP (const uint16_t& rsp) {
         this->rsp = rsp;
     }
     
-    inline void SetEX (const uint16_t& rex) {
+    inline void setEX (const uint16_t& rex) {
         this->rex = rex;
     }
     
-    inline void SetIA (const uint16_t& ria) {
+    inline void setIA (const uint16_t& ria) {
         this->ria = ria;
     }
     
-    inline const uint16_t& GetA() const {
+    inline const uint16_t& getA() const {
         return ra;
     }
     
-    inline const uint16_t& GetB() const {
+    inline const uint16_t& getB() const {
         return rb;
     }
     
-    inline const uint16_t& GetC() const {
+    inline const uint16_t& getC() const {
         return rc;
     }
     
-    inline const uint16_t& GetI() const {
+    inline const uint16_t& getI() const {
         return ri;
     }
     
-    inline const uint16_t& GetJ() const {
+    inline const uint16_t& getJ() const {
         return rj;
     }
     
-    inline const uint16_t& GetX() const {
+    inline const uint16_t& getX() const {
         return rx;
     }
     
-    inline const uint16_t& GetY() const {
+    inline const uint16_t& getY() const {
         return ry;
     }
     
-    inline const uint16_t& GetZ() const {
+    inline const uint16_t& getZ() const {
         return rz;
     }
     
-    inline const uint16_t& GetPC() const {
+    inline const uint16_t& getPC() const {
         return rpc;
     }
     
-    inline const uint16_t& GetSP() const {
+    inline const uint16_t& getSP() const {
         return rsp;
     }
     
-    inline const uint16_t& GetEX() const {
+    inline const uint16_t& getEX() const {
         return rex;
     }
     
-    inline const uint16_t& GetIA() const {
+    inline const uint16_t& getIA() const {
         return ria;
     }
     
@@ -218,9 +218,11 @@ public:
      * @brief Generates a pretty HEX print dump of a RAM region
      */
     std::string dumpRam (uint16_t init = 0, uint16_t end = 0);
-    
-    
+   
+protected:
+
 private:
+    uint16_t ra, rb, rc, rx, ry, rz , ri, rj, rex, rpc, ria, rsp; /// Registers
     uint16_t* ram; /// RAM
     
     uint16_t* register_table[0x1E];
@@ -258,9 +260,9 @@ public:
     IHardware() : cpu(NULL), index(-1)  { };
     virtual ~IHardware() {};
     
-    virtual uint32_t getId() = 0;               /// Hardware ID
-    virtual uint16_t getRevision() = 0;         /// Hardware Revision
-    virtual uint32_t getManufacturer() = 0;     /// Hardware Manufacturer
+    virtual uint32_t getId() const = 0;             /// Hardware ID
+    virtual uint16_t getRevision() const = 0;       /// Hardware Revision
+    virtual uint32_t getManufacturer() const = 0;   /// Hardware Manufacturer
     
     /**
      * @brief Attach the Hardware device to the CPU

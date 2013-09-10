@@ -35,38 +35,38 @@ namespace keyboard {
 
     void GKeyboard::handleInterrupt()
     {
-        switch (cpu->GetA()) {
+        switch (cpu->getA()) {
         case CLEAR_BUFFER:
             keybuffer.clear();
             break;
 
         case POP:
             if (keybuffer.empty()) {
-                cpu->SetC(0);
+                cpu->setC(0);
             } else {
-                cpu->SetC(keybuffer.back() & 0x01FF);
+                cpu->setC(keybuffer.back() & 0x01FF);
                 keybuffer.pop_back();
             }
             break;
 
         case IS_PRESSED: // PUSH...
         {   // Search the last time that key was down/up
-            unsigned char key = cpu->GetB() & 0x00FF;
+            unsigned char key = cpu->getB() & 0x00FF;
             auto result = std::find_if(keybuffer.rbegin(), keybuffer.rend(), 
                             [&key](uint16_t &i) -> bool {
                                 return (i & 0x00FF) == key;
                             } );
             // if have the KeyDown flag, then is pressed
             if (!(result == keybuffer.rend()) && (*result)& 0xFF00 ) {
-                cpu->SetC(1);
+                cpu->setC(1);
             } else {
-                cpu->SetC(0);
+                cpu->setC(0);
             }
             break;
         }
 
         case SET_MSG:
-            msg = cpu->GetB();
+            msg = cpu->getB();
             break;
 
         default:

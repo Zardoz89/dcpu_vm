@@ -26,7 +26,7 @@ namespace lem {
     void Lem1802::attachTo (DCPU* cpu, size_t index) 
     {
         this->IHardware::attachTo(cpu, index);
-        blink_max = cpu->cpu_clock / Lem1802::BLINKPERSECOND;
+        blink_max = cpu->getClock() / Lem1802::BLINKPERSECOND;
         blink = 0;
         screen_map = font_map, palette_map = 0;
         border_col = 0;
@@ -38,34 +38,34 @@ namespace lem {
             return;
         
         size_t s;
-        switch (cpu->GetA() ) {
+        switch (cpu->getA() ) {
             case MEM_MAP_SCREEN:
-                screen_map = cpu->GetB();
+                screen_map = cpu->getB();
                 break;
 
             case MEM_MAP_FONT:
-                font_map = cpu->GetB();
+                font_map = cpu->getB();
                 break;
 
             case MEM_MAP_PALETTE:
-                palette_map = cpu->GetB();
+                palette_map = cpu->getB();
                 break;
 
             case SET_BORDER_COLOR:
-                border_col = cpu->GetB() & 0xf;
+                border_col = cpu->getB() & 0xf;
                 break;
 
             case MEM_DUMP_FONT:
-                s = RAM_SIZE - 1 - cpu->GetB() < 256 ? 
-                        RAM_SIZE - 1 - cpu->GetB() : 256 ;
-                std::copy_n (Lem1802::def_font_map,s,cpu->getMem()+cpu->GetB());
+                s = RAM_SIZE - 1 - cpu->getB() < 256 ? 
+                        RAM_SIZE - 1 - cpu->getB() : 256 ;
+                std::copy_n (Lem1802::def_font_map,s,cpu->getMem()+cpu->getB());
                 break;
 
             case MEM_DUMP_PALETTE:
-                s = RAM_SIZE - 1 - cpu->GetB() < 16 ?
-                        RAM_SIZE - 1 - cpu->GetB() : 16 ;
+                s = RAM_SIZE - 1 - cpu->getB() < 16 ?
+                        RAM_SIZE - 1 - cpu->getB() : 16 ;
                 std::copy_n (Lem1802::def_palette_map, s, 
-                        cpu->getMem() + cpu->GetB() );
+                        cpu->getMem() + cpu->getB() );
                 break;
 
             default:
@@ -77,9 +77,9 @@ namespace lem {
     void Lem1802::tick()
     {
         if (this->cpu == NULL) return;
-        if (++ticks > this->cpu->cpu_clock/60) {
-            // Update screen at 60Hz aprox
-            ticks = 0;
+        if (++ticks > cpu->getClock() /50) {
+            // Update screen at 50Hz aprox
+            ticks -= cpu->getClock() / 50;
             this->updateScreen();
         }
         if (++blink > blink_max*2)

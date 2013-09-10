@@ -17,7 +17,6 @@ public:
     Lem1803();
     virtual ~Lem1803();
     
-    static const uint16_t REV2          = 0x1803;
 
     static const unsigned int WIDTH     = 384;
     static const unsigned int HEIGHT    = 288;
@@ -25,8 +24,8 @@ public:
     static const unsigned int ROWS      = 36;
     static const unsigned int COLS      = 96;
 
-    virtual uint16_t getRevision() {
-        return REV2;
+    virtual uint16_t getRevision() const {
+        return 0x1803;
     }
     
     virtual void handleInterrupt();

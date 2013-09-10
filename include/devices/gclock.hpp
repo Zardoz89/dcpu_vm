@@ -15,18 +15,14 @@ public:
     Generic_Clock();
     ~Generic_Clock();
 
-    static const uint32_t id            = 0x12d0b402;
-    static const uint16_t revision      = 0x1;
-    static const uint32_t manufacturer  = 0x90099009;
-    
-    uint32_t getId() {
-        return id;
+    uint32_t getId() const {
+        return 0x12d0b402;
     }
-    uint16_t getRevision() {
-        return revision;
+    uint16_t getRevision() const {
+        return 0x0001;
     }
-    uint32_t getManufacturer() {
-        return manufacturer;
+    uint32_t getManufacturer() const {
+        return 0x90099009;
     }
     
     bool checkInterrupt (uint16_t &msg);
