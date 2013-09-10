@@ -20,6 +20,8 @@
 #include <devices/lem1803.hpp>
 #include <devices/cgm.hpp>
 
+#include <devices/m35fd.hpp>
+
 #include <devices/speaker.hpp>
 
 // Audio
@@ -154,6 +156,9 @@ int main (int argc, char **argv)
     speaker->setFreqCallback(audio::SquareGenerator::WrappeCallback,
             (void *)(&gen));
 
+    // Floppy drive
+    auto fd = std::make_shared<m35fd::M35FD>();
+
     // Sets apropiated monitor
     std::shared_ptr<AbstractMonitor> monitor;
     switch (monitor_type)
@@ -175,9 +180,10 @@ int main (int argc, char **argv)
             break;
     }
     
-    dcpu->attachHardware (monitor);
     dcpu->attachHardware (gclock);
+    dcpu->attachHardware (monitor);
     dcpu->attachHardware (gkeyboard);
+    dcpu->attachHardware (fd);
     dcpu->attachHardware (speaker);
     dcpu->reset();
     dcpu->loadProgramFromFile(filename);

@@ -39,7 +39,7 @@ enum class ERROR_CODES : uint16_t {
     BUSY,       /// Drive is busy performning a action
     NO_MEDIA,   /// Attempted to read or write without a floppy
     PROTECTED,  /// Attempted to write to a protected floppy
-    EJECT,      /// The floppt was ejected while was reading/writing
+    EJECT,      /// The floppy was ejected while was reading/writing
     BAD_SECTOR, /// The requested sector is broken, the data on it is lost
     BROKEN,     /// There's been some major software/hardware problem. Try to 
                 /// a hard reset the debice.
@@ -103,16 +103,36 @@ public:
      * If there is a floppy disk previusly inserte, this is ejected
      * @param floppy Floppy disk
      */
-    void insertFloppy(M35_Floppy& floppy);
+    void insertFloppy(std::shared_ptr<M35_Floppy> floppy);
 
     /**
      * @brief Ejects the floppy actually isnerted if is there one
      */
-    void eject(); 
+    void eject();
+
+    /**
+     * Return floppy frive actual state
+     */
+    STATE_CODES getState() const
+    {
+        return state;
+    }
+
+    /**
+     * Return floppy drive actual error state
+     */
+    ERROR_CODES getError() const
+    {
+        return error;
+    }
 
 protected:
-    M35_Floppy* floppy; 
+    std::shared_ptr<M35_Floppy> floppy;     /// Floppy inserted
+    STATE_CODES state;      /// Floppy drive actual estatus
+    ERROR_CODES error;      /// Floppy drive actual error state
 
+    uint32_t tick_counter;  /// Tick counter for timming
+    uint16_t msg;           /// Mesg to send if need to trigger a interrupt
 };
 
 /**
@@ -123,8 +143,12 @@ public:
 
     /**
      * Creates a new floppy device
+     * @param filename Filename were the floppy data is stored
+     * @param tracks Number of tracks of the floppy medium
+     * @param wp Write protected ?
      */
-    M35_Floppy(const std::string filename , uint8_t tracks = 80);
+    M35_Floppy(const std::string filename , uint8_t tracks = 80, 
+               bool wp = false);
     virtual ~M35_Floppy();
 
     /**
@@ -141,6 +165,22 @@ public:
      * Gets the actual Track
      */
     uint16_t getTrack() const;
+
+    /**
+     * Sets Write protecction flag
+     */
+    void setProtected(bool val)
+    {
+        wp_flag = val;
+    }
+
+    /**
+     * Return if is write protected
+     */
+    bool isProtected() const
+    {
+        return wp_flag;
+    }
    
     /**
      * See if that sector is bad
@@ -172,7 +212,7 @@ public:
      * @param data Buffer were to write the data
      * @return NONE or BAD_SECTOR
      */
-    ERROR_CODES readS (uint16_t sector, unsigned& cycles, uint16_t* data, 
+    ERROR_CODES read (uint16_t sector, unsigned& cycles, uint16_t* data, 
                        size_t size);
 
 protected:
@@ -191,10 +231,14 @@ protected:
     // The RAW data will be read/write directly to the file, butthe bitmap will
     // be keep in RAM for quick read of it.
 
-    uint8_t tracks; /// Total tracks of the floppy
-    uint8_t* bad_sectors; /// Bitmap of bad sectors
+    uint8_t tracks;         /// Total tracks of the floppy
+    uint8_t* bad_sectors;   /// Bitmap of bad sectors
 
     std::iostream& datafile;
+
+
+    bool wp_flag;           /// Is write protected
+    uint16_t last_sector;   /// Last sector write/read
 
     /**
      * Moves the head to the desired track
