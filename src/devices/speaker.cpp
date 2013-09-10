@@ -5,32 +5,34 @@ namespace cpu {
 
 namespace speaker {
 
-    Speaker::Speaker() : freq(0), cb_function(NULL), c_obj(NULL)
-    { }
+Speaker::Speaker() : freq(0), cb_function(NULL), c_obj(NULL)
+{ }
 
-    void Speaker::attachTo (DCPU* cpu, size_t index)
-    {
-        this->IHardware::attachTo(cpu, index);
-        freq = 0;
+void Speaker::attachTo (DCPU* cpu, size_t index)
+{
+    this->IHardware::attachTo(cpu, index);
+    freq = 0;
+}
+
+unsigned Speaker::handleInterrupt()
+{
+    if (this->cpu == NULL)
+        return 0;
+
+    // We ignore A register, to allow a fake compatibility with benedeck's
+    // dual channel speaker specs
+    if (cpu->getB() != freq) {
+        freq = cpu->getB();
+        if (freq > 10000)
+            freq = 10000;
+
+        Debug(LogLevel::DEBUG) << "[speaker] Freq set to " << freq;
+        if (cb_function != NULL)
+            cb_function(freq, c_obj);
     }
 
-    void Speaker::handleInterrupt()
-    {
-        if (this->cpu == NULL)
-            return;
-
-        // We ignore A register, to allow a fake compatibility with benedeck's
-        // dual channel speaker specs
-        if (cpu->getB() != freq) {
-            freq = cpu->getB();
-            if (freq > 10000)
-                freq = 10000;
-
-            Debug(LogLevel::DEBUG) << "[speaker] Freq set to " << freq;
-            if (cb_function != NULL)
-                cb_function(freq, c_obj);
-        }
-    }
+    return 0;
+}
 
 
 } // END OF NAMESPACE speaker

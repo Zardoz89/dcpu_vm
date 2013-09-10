@@ -26,7 +26,7 @@ public:
     }
     
     bool checkInterrupt (uint16_t &msg);
-    void handleInterrupt();
+    unsigned handleInterrupt();
     void tick();
 
 private:

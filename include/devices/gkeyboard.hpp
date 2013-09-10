@@ -60,7 +60,7 @@ public:
    
     bool checkInterrupt (uint16_t &msg);
 
-    virtual void handleInterrupt();
+    virtual unsigned handleInterrupt();
     
     virtual void attachTo (DCPU* cpu, size_t index);
 

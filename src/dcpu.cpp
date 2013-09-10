@@ -577,7 +577,7 @@ int DCPU::realStep()
             
         case HWI:
             if (*a < attached_hardware.size() ) {
-                attached_hardware[*a]->handleInterrupt();
+                cycles += attached_hardware[*a]->handleInterrupt();
             }
             
             cycles += 4;

@@ -281,7 +281,7 @@ public:
     }
     
     /**
-     * @brief Checks if need to trigger a intterupt to the CPU
+     * @brief Checks if need to trigger a interupt to the CPU
      * @param msg Ref. to the message
      * @return True if trigger a interrupt
     */
@@ -290,12 +290,13 @@ public:
     }
     
     /**
-     * @brief Handle a interrupt
+     * @brief Handle a interrupt from DCP to Hardware
+     * @return Number of cycles that DCPU waits
      */
-    virtual void handleInterrupt() = 0;
+    virtual unsigned handleInterrupt() = 0;
     
     /**
-     * @brief Does a Clock Tick
+     * @brief Does a CPU Clock Tick
      */
     virtual void tick() = 0;
 
