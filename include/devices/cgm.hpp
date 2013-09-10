@@ -33,10 +33,6 @@ public:
     CGM();
     virtual ~CGM();
                                           
-    static const uint32_t ID                = 0x7349043C;
-    static const uint16_t REV               = 0x1084;
-    static const uint32_t MANUFACTURER      = 0x0ca0fe84;
-
     static const unsigned int WIDTH         = 256;
     static const unsigned int HEIGHT        = 192;
     static const unsigned int BORDER_SIZE   = 10;
@@ -47,14 +43,14 @@ public:
     
     static const uint16_t BLINKPERSECOND    = 10;
 
-    uint32_t getId() {
-        return ID;
+    uint32_t getId() const {
+        return 0x7349043C;
     }
-    virtual uint16_t getRevision() {
-        return REV;
+    virtual uint16_t getRevision() const {
+        return 0x1084;
     }
-    uint32_t getManufacturer() {
-        return MANUFACTURER;
+    uint32_t getManufacturer() const {
+        return 0x0ca0fe84;
     }
     
     virtual unsigned int phyWidth() const {return WIDTH;}

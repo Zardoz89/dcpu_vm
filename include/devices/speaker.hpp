@@ -25,10 +25,19 @@ public:
     virtual ~Speaker() 
     { }
 
-    uint32_t getId()                {return 0x02060001;}
-    virtual uint16_t getRevision()  {return 0x0001;}
-    uint32_t getManufacturer()      {return 0x5672746B;} // VARTOK_HW
+    uint32_t getId() const               
+    {
+        return 0x02060001;
+    }
 
+    virtual uint16_t getRevision() const 
+    {
+        return 0x0001;
+    }
+    uint32_t getManufacturer() const
+    {
+        return 0x5672746B; // VARTOK_HW
+    } 
     virtual void attachTo (DCPU* cpu, size_t index);
 
     virtual void handleInterrupt();

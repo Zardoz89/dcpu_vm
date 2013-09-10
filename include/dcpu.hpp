@@ -260,9 +260,9 @@ public:
     IHardware() : cpu(NULL), index(-1)  { };
     virtual ~IHardware() {};
     
-    virtual uint32_t getId() = 0;               /// Hardware ID
-    virtual uint16_t getRevision() = 0;         /// Hardware Revision
-    virtual uint32_t getManufacturer() = 0;     /// Hardware Manufacturer
+    virtual uint32_t getId() const = 0;             /// Hardware ID
+    virtual uint16_t getRevision() const = 0;       /// Hardware Revision
+    virtual uint32_t getManufacturer() const = 0;   /// Hardware Manufacturer
     
     /**
      * @brief Attach the Hardware device to the CPU
