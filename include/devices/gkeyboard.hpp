@@ -14,10 +14,11 @@ namespace keyboard {
 enum COMMANDS { /// A register commands
     CLEAR_BUFFER,
     POP,
-    IS_PRESSED, //PUSH
+    IS_PRESS,
     SET_MSG,
     GET_STATUS,
-    SET_STATUS
+    SET_STATUS,
+    PUSH
 };
 
 enum SCANCODES {

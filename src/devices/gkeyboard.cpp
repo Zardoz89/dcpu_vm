@@ -49,7 +49,7 @@ namespace keyboard {
             }
             break;
 
-        case IS_PRESSED: // PUSH...
+        case IS_PRESS:
         {   // Search the last time that key was down/up
             unsigned char key = cpu->getB() & 0x00FF;
             auto result = std::find_if(keybuffer.rbegin(), keybuffer.rend(), 
