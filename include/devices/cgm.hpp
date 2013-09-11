@@ -61,7 +61,7 @@ public:
         return false;
     }
 
-    virtual void handleInterrupt();
+    virtual unsigned handleInterrupt();
     
     virtual void tick();
     

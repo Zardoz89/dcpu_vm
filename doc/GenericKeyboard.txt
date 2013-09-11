@@ -1,4 +1,4 @@
-Name: Generic Keyboard (compatible)
+kName: Generic Keyboard (compatible)
 ID: 0x30cf7406
 Version: 1.2a
 
@@ -9,12 +9,14 @@ Interrupts do different things depending on contents of the A register:
  0 | CLEAR      | Clear keyboard buffer
  1 | POP        | Store next key-code event in C register, or 0 if the buffer is
    |            | empty
- 2 | PUSH       | Inserts B register value in the buffer, if is a valid key-code 
-   |            | event.
+ 2 | IS_PRESS   | Set C register to 1 if the key code specified by the B register
+   |            | is pressed, or 0 if it's not pressed.
  3 | SET-MSG    | If register B is non-zero, turn on interrupts with message B. 
    |            | If B is zero, disable interrupts
  4 | GET-STATUS | Store in C register the Status LEDs state
  5 | SET-STATUS | Reads the B register ans sets the Status LEDs state
+ 6 | PUSH       | Inserts B register value in the buffer, if is a valid key-code 
+   |            | event.
 ---+----------------------------------------------------------------------------
 
 When interrupts are enabled, the keyboard will trigger an interrupt when one or

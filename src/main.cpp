@@ -62,7 +62,7 @@ int main (int argc, char **argv)
 {
     // TODO Debug level should be set at compile time, or have a hidden program
     // option to set this, like the -v -vv -vvv flags
-    logger::LOG_level = LogLevel::INFO; 
+    logger::LOG_level = logger::LogLevel::INFO; 
 
     std::string filename;
     std::string outname="a.out"; //output assembled filename
@@ -142,7 +142,7 @@ int main (int argc, char **argv)
     }
    
     
-    Debug(LogLevel::INFO) << "Loading devices";
+    LOG << "Loading devices";
     sf::String window_title="dcpu_vm";
     auto dcpu = std::make_shared<DCPU>();
     auto gclock = std::make_shared<Generic_Clock>();
@@ -218,11 +218,11 @@ int main (int argc, char **argv)
     if (keyb_image_loaded)
         keyb_sprite.setTexture(keyb_tx);
     else
-        Debug(LogLevel::WARN) <<  "assets/keyb_img.png not found !";
+        LOG_WARN <<  "assets/keyb_img.png not found !";
     
     bool keyb_focus;
 
-    Debug(LogLevel::INFO) << "Entering main loop";
+    LOG << "Entering main loop";
     unsigned long ticks_counter = 0;
     while (window.isOpen() && keyb_win.isOpen()) 
     {   //Because non mainthread event are forbidden in OSX
@@ -388,9 +388,7 @@ int main (int argc, char **argv)
                         if (!pressed)
                         {
 
-                            Debug(LogLevel::INFO) << 
-                                "Entering/exiting of Debug mode";
-
+                            LOG << "Entering/exiting of Debug mode";
                             debug = !debug;
                         }
                         break;

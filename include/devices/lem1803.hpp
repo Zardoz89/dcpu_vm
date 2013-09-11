@@ -28,7 +28,7 @@ public:
         return 0x1803;
     }
     
-    virtual void handleInterrupt();
+    virtual unsigned handleInterrupt();
     
     virtual void updateScreen();
     

@@ -40,7 +40,7 @@ public:
     } 
     virtual void attachTo (DCPU* cpu, size_t index);
 
-    virtual void handleInterrupt();
+    virtual unsigned handleInterrupt();
     virtual void tick() 
     { }
 

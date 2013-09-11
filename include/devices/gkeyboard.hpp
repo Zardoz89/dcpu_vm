@@ -14,10 +14,11 @@ namespace keyboard {
 enum COMMANDS { /// A register commands
     CLEAR_BUFFER,
     POP,
-    IS_PRESSED, //PUSH
+    IS_PRESS,
     SET_MSG,
     GET_STATUS,
-    SET_STATUS
+    SET_STATUS,
+    PUSH
 };
 
 enum SCANCODES {
@@ -59,7 +60,7 @@ public:
    
     bool checkInterrupt (uint16_t &msg);
 
-    virtual void handleInterrupt();
+    virtual unsigned handleInterrupt();
     
     virtual void attachTo (DCPU* cpu, size_t index);
 
