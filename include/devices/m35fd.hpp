@@ -47,6 +47,9 @@ enum class ERROR_CODES : uint16_t {
                     /// Try to do a hard reset the device.
 };
 
+
+static const char FileHeader[] = {'F', 1};
+
 class M35_Floppy;
 
 /**
@@ -128,6 +131,8 @@ public:
         return error;
     }
 
+    friend class M35_Floppy;
+
 protected:
     std::shared_ptr<M35_Floppy> floppy;     /// Floppy inserted
     STATE_CODES state;      /// Floppy drive actual estatus
@@ -182,6 +187,7 @@ protected:
  */
 class M35_Floppy {
 public:
+
 
     /**
      * Creates a new floppy device
@@ -249,22 +255,27 @@ public:
     /**
      * Try to write data at the desired sector
      * @param sector Desired sector to be writed
+     * @param addr Data address (DCPU) to be written in the sector
      * @param cycles Number of cycles that takes to finish the operation
-     * @param data Data to be written in the sector
      * @return NONE, PROTECTED or BAD_SECTOR
      */
-    ERROR_CODES write (uint16_t sector, unsigned& cycles, const uint16_t* data,
-                       size_t size);
+    ERROR_CODES write (uint16_t sector, uint16_t addr, unsigned& cycles);
     
     /**
      * Try to read data at the desired sector
      * @param sector Desired sector to be writed
+     * @param addr Address (DCPU) were to write the data
      * @param cycles Number of cycles that takes to finish the operation
-     * @param data Buffer were to write the data
      * @return NONE or BAD_SECTOR
      */
-    ERROR_CODES read (uint16_t sector, unsigned& cycles, uint16_t* data, 
-                       size_t size);
+    ERROR_CODES read (uint16_t sector, uint16_t addr, unsigned& cycles);
+
+    /**
+     * Does background task every CPU cycle
+     */
+    void tick();
+
+    friend class M35FD;
 
 protected:
 
@@ -273,10 +284,14 @@ protected:
 
     std::fstream datafile;
 
-
     bool wp_flag;           /// Is write protected
     uint16_t last_sector;   /// Last sector write/read
 
+    uint16_t cursor;        /// Points to where read/write in CPU ram
+    uint16_t count;         /// Counts how many words has read/write
+    bool reading;           /// Is reading or writting
+
+    M35FD* drive;
     /**
      * Moves the head to the desired track
      * @retun Number of cycles that need to seek the desired track

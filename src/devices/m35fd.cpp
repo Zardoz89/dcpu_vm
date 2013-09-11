@@ -63,12 +63,7 @@ unsigned M35FD::handleInterrupt()
                 LOG_ERROR << "[M35FD] Something weird happen trying to Read";
                 break;
             }
-            // Bound cheeking to not write outside of RAM
-            size_t size = cpu::RAM_SIZE - cpu->getY();
-            size = size > SECTOR_SIZE ? SECTOR_SIZE : size;
-
-            floppy->read(cpu->getX(), busy_cycles, cpu->getMem()+ cpu->getY(),
-                          size);
+            floppy->read(cpu->getX(), cpu->getY(), busy_cycles);
             state = STATE_CODES::BUSY;
             cpu->setB(1);
 
@@ -94,12 +89,7 @@ unsigned M35FD::handleInterrupt()
                 LOG_ERROR << "[M35FD] Something weird happen trying to Write";
                 break;
             }
-            // Bound cheeking to not read outside of RAM
-            size_t size = cpu::RAM_SIZE - cpu->getY();
-            size = size > SECTOR_SIZE ? SECTOR_SIZE : size;
-
-            floppy->write(cpu->getX(), busy_cycles, cpu->getMem()+ cpu->getY(),
-                          size);
+            floppy->write(cpu->getX(), cpu->getY(), busy_cycles);
             state = STATE_CODES::BUSY;
             cpu->setB(1);
         } else {
@@ -128,6 +118,10 @@ void M35FD::tick()
 {
     if (busy_cycles > 0) {
         busy_cycles--;
+        // Read/write 1 word each 3 cycles. A bit more faster that the suposed
+        // specs speeds, but more easy to do
+        if (floppy && busy_cycles % 3) 
+            floppy->tick();
 
     } else if (floppy) {
         state = floppy->isProtected() ? 
@@ -143,14 +137,17 @@ void M35FD::insertFloppy (std::shared_ptr<M35_Floppy> floppy)
     this->floppy = floppy;
     state = floppy->isProtected()? STATE_CODES::READY_WP : STATE_CODES::READY;
     error = ERROR_CODES::NONE;
+    this->floppy->drive = this;
     
     LOG << "[M35FD] Disk inserted!"; 
 }
 
 void M35FD::eject()
 {
-    if (this->floppy)
+    if (this->floppy) {
+        this->floppy->drive = NULL;
         this->floppy = std::shared_ptr<M35_Floppy>(); // like = NULL
+    }
 
     LOG << "[M35FD] Disk ejected!"; 
 
@@ -165,12 +162,28 @@ void M35FD::eject()
 // M35_Floppy class ***********************************************************
 
 M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
-                        tracks(tracks), bad_sectors(NULL), 
-                        wp_flag(wp), last_sector(0)
+                        tracks(tracks), bad_sectors(NULL), wp_flag(wp), 
+                        last_sector(0), cursor(0), drive(NULL)
 {
     assert(tracks == 80 || tracks == 40);
+   
+    // Qucik and dirty way to see if file exists
+    bool create_header = false;
+    std::ifstream f(filename);
+    if (f.good()) {
+        create_header = true;
+    } 
+    f.close();
+
     datafile.open(filename, std::ios::in | std::ios::out | std::ios::binary);
     bad_sectors = new uint8_t[(tracks * SECTORS_PER_TRACK) >> 3];
+
+    if (create_header) {
+        datafile.write(&FileHeader[0], 1);
+        datafile.write(&FileHeader[1], 1);
+        datafile.seekg(1, std::fstream::cur);
+        datafile.write((const char*)(&tracks), 1);
+    }
 }
 
 M35_Floppy::~M35_Floppy()
@@ -191,30 +204,48 @@ void M35_Floppy::setSectorBad (uint16_t sector, bool state)
     return; // TODO
 }
 
-ERROR_CODES M35_Floppy::write (uint16_t sector, unsigned& cycles, 
-                                const uint16_t* data, size_t size)
+ERROR_CODES M35_Floppy::write (uint16_t sector, uint16_t addr,
+                                unsigned& cycles) 
 {
     cycles = setTrack(sector / SECTORS_PER_TRACK);
     cycles += WRITE_CYCLES_PER_SECTOR;
    
-    // TODO
+    cursor = addr;
+    count = SECTOR_SIZE;
+    reading = false;
 
     last_sector = sector;
     return ERROR_CODES::NONE;
 }
 
-ERROR_CODES M35_Floppy::read (uint16_t sector, unsigned& cycles, 
-                                uint16_t* data, size_t size)
+ERROR_CODES M35_Floppy::read (uint16_t sector, uint16_t addr,
+                                unsigned& cycles) 
 {
     cycles = setTrack(sector / SECTORS_PER_TRACK);
     cycles += READ_CYCLES_PER_SECTOR;
     
-    // TODO
+    cursor = addr;
+    count = SECTOR_SIZE;
+    reading = false;
 
     last_sector = sector;
     return ERROR_CODES::NONE;
 }
 
+void M35_Floppy::tick()
+{
+    if (count > 0) {
+        count--;
+        if (reading) {
+            // TODO
+            // drive->cpu->getMem()[cursor];
+        } else {
+            // TODO
+            // drive->cpu->getMem()[cursor];
+        }
+    cursor++;
+    }
+}
 
 } // END OF NAMESPACE m35fd
 
