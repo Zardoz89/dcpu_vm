@@ -26,7 +26,7 @@ unsigned Speaker::handleInterrupt()
         if (freq > 10000)
             freq = 10000;
 
-        Debug(LogLevel::DEBUG) << "[speaker] Freq set to " << freq;
+        LOG_DEBUG << "[speaker] Freq set to " << freq;
         if (cb_function != NULL)
             cb_function(freq, c_obj);
     }

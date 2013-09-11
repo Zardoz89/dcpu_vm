@@ -27,7 +27,7 @@ bool GKeyboard::checkInterrupt (uint16_t &msg)
     if (event && this->msg > 0) {
         msg = this->msg;
         event = false;
-        Debug(LogLevel::DEBUG) << "[GKeyboard] Interrupt!";
+        LOG_DEBUG << "[GKeyboard] Interrupt!";
         return true;
     }
     return false;
@@ -86,9 +86,9 @@ void GKeyboard::pushKeyEvent (bool keydown, unsigned char scancode)
     }
 
     if (keydown)
-        Debug(LogLevel::DEBUG) << "Pushed Key : " << scancode;
+        LOG_DEBUG << "[GKeyboard] Pushed Key : " << scancode;
     else
-        Debug(LogLevel::DEBUG) << "Released Key : " << scancode;
+        LOG_DEBUG << "[GKeyboard] Released Key : " << scancode;
 
 }
 
