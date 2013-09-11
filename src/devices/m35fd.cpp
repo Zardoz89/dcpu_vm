@@ -9,7 +9,7 @@ namespace m35fd {
 // M35FD class ****************************************************************
 
 M35FD::M35FD() : state(STATE_CODES::NO_MEDIA), error(ERROR_CODES::NONE), 
-                 tick_counter(0)
+                 busy_cycles(0)
 { }
 
 M35FD::~M35FD()
@@ -56,28 +56,63 @@ unsigned M35FD::handleInterrupt()
 
     case COMMANDS::READ_SECTOR :
         if (state == STATE_CODES::READY || state == STATE_CODES::READY_WP) {
-            // TODO Read to the floppy
-            state == STATE_CODES::BUSY;
-            cpu->setB(1);
-        } else {
-            if (state == STATE_CODES::NO_MEDIA)
-                error = ERROR_CODES::NO_MEDIA;
+            if (! floppy) { // This not should happen never, but...
+                state = STATE_CODES::NO_MEDIA;
+                error = ERROR_CODES::BROKEN;
+                cpu->setB(0);
+                LOG_ERROR << "[M35FD] Something weird happen trying to Read";
+                break;
+            }
+            // Bound cheeking to not write outside of RAM
+            size_t size = cpu::RAM_SIZE - cpu->getY();
+            size = size > SECTOR_SIZE ? SECTOR_SIZE : size;
 
+            floppy->read(cpu->getX(), busy_cycles, cpu->getMem()+ cpu->getY(),
+                          size);
+            state = STATE_CODES::BUSY;
+            cpu->setB(1);
+
+        } else {
+            if (state == STATE_CODES::NO_MEDIA) {
+                error = ERROR_CODES::NO_MEDIA;
+            } else if (state == STATE_CODES::BUSY) {
+                error = ERROR_CODES::BUSY;
+            }
+
+            LOG_DEBUG << "[M35FD] Reading set to Error: " 
+                        << static_cast<int>(error);
             cpu->setB(0);
         }
         break;
 
     case COMMANDS::WRITE_SECTOR :
         if (state == STATE_CODES::READY) {
-            // TODO Write to the floppy
-            state == STATE_CODES::BUSY;
+            if (! floppy) { // This not should happen never, but...
+                state = STATE_CODES::NO_MEDIA;
+                error = ERROR_CODES::BROKEN;
+                cpu->setB(0);
+                LOG_ERROR << "[M35FD] Something weird happen trying to Write";
+                break;
+            }
+            // Bound cheeking to not read outside of RAM
+            size_t size = cpu::RAM_SIZE - cpu->getY();
+            size = size > SECTOR_SIZE ? SECTOR_SIZE : size;
+
+            floppy->write(cpu->getX(), busy_cycles, cpu->getMem()+ cpu->getY(),
+                          size);
+            state = STATE_CODES::BUSY;
             cpu->setB(1);
         } else {
-            if (state == STATE_CODES::NO_MEDIA)
+            if (state == STATE_CODES::NO_MEDIA) {
                 error = ERROR_CODES::NO_MEDIA;
-            else if (state == STATE_CODES::READY_WP)
+            } else if (state == STATE_CODES::READY_WP) {
                 error = ERROR_CODES::PROTECTED;
+            } else if (state == STATE_CODES::BUSY) {
+                error = ERROR_CODES::BUSY;
+            }
 
+            LOG_DEBUG << "[M35FD] Writing set to Error: " 
+                        << static_cast<int>(error);
             cpu->setB(0);
         }
         break;
@@ -91,7 +126,13 @@ unsigned M35FD::handleInterrupt()
 
 void M35FD::tick()
 {
-    tick_counter++;
+    if (busy_cycles > 0) {
+        busy_cycles--;
+
+    } else if (floppy) {
+        state = floppy->isProtected() ? 
+            STATE_CODES::READY_WP : STATE_CODES::READY;
+    }
 }
 
 void M35FD::insertFloppy (std::shared_ptr<M35_Floppy> floppy)
@@ -129,12 +170,15 @@ M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
 {
     assert(tracks == 80 || tracks == 40);
     datafile.open(filename, std::ios::in | std::ios::out | std::ios::binary);
+    bad_sectors = new uint8_t[(tracks * SECTORS_PER_TRACK) >> 3];
 }
 
 M35_Floppy::~M35_Floppy()
 {
     if (datafile.is_open())
         datafile.close();
+
+    delete[] bad_sectors;
 }
 
 bool M35_Floppy::isSectorBad (uint16_t sector) const
@@ -150,12 +194,24 @@ void M35_Floppy::setSectorBad (uint16_t sector, bool state)
 ERROR_CODES M35_Floppy::write (uint16_t sector, unsigned& cycles, 
                                 const uint16_t* data, size_t size)
 {
+    cycles = setTrack(sector / SECTORS_PER_TRACK);
+    cycles += WRITE_CYCLES_PER_SECTOR;
+   
+    // TODO
+
+    last_sector = sector;
     return ERROR_CODES::NONE;
 }
 
 ERROR_CODES M35_Floppy::read (uint16_t sector, unsigned& cycles, 
                                 uint16_t* data, size_t size)
 {
+    cycles = setTrack(sector / SECTORS_PER_TRACK);
+    cycles += READ_CYCLES_PER_SECTOR;
+    
+    // TODO
+
+    last_sector = sector;
     return ERROR_CODES::NONE;
 }
 

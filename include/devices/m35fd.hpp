@@ -133,12 +133,52 @@ protected:
     STATE_CODES state;      /// Floppy drive actual estatus
     ERROR_CODES error;      /// Floppy drive actual error state
 
-    uint32_t tick_counter;  /// Tick counter for timming
+    unsigned busy_cycles;   /// CPU Cycles that the device will be busy
     uint16_t msg;           /// Mesg to send if need to trigger a interrupt
 };
 
 /**
- * M35FD floppy disk
+ * @brief M35FD floppy disk
+ *
+ * File structure must be like this :
+ * 
+ * Bytes      0          1          2          3           4
+ *            ----------------------------------------------
+ * Head:      #   Type   | Version  #  Unused  |   Tracks  |
+ *            ----------------------------------------------
+ *            |                   Data                     |
+ *            |                  size =                    |
+ *            |  Tracks * SECTORS_PER_TRACK * SECTOR_SIZE  |
+ *            |                                            |
+ *            ----------------------------------------------
+ *            |             Bad Sectors BitMap             |
+ *            |                   size =                   |
+ *            | Tracks * SECTORS_PER_TRACK *SECTOR_SIZE / 8|
+ *            |                                            |
+ *            ----------------------------------------------
+ * Header:
+ * Type = 'F' (Floppy image)
+ * Version = 1
+ * This kind of header will allow future upgrades and if we need diferent
+ * data files (cassetes, tapes, hard disk, etc...), we will share the same
+ * basic header.
+ *
+ * Floppy data:
+ * Tracks : Number of tracks, should be 40 or 80, I don't expect any other
+ * track size.
+ *
+ * Data: RAW data. To access a particular sector, you only need to read at
+ *     (4 + sector * SECTOR_SIZE)
+ * 
+ * BitMap:
+ * The bitmap stores 8 sectors state in each byte. It uses the MSB bit for 
+ * the lowest sector and LSB for the bigger sector.
+ * To read is a particular sector is bad, you read the byte at
+ *     ( ( (4 + Size of Data secction) + 
+ *         (sector * SECTOR_SIZE)/8 ) & 128 >> (sector % 8) ) != 0
+ *
+ * The RAW data will be read/write directly to the file, but the bitmap will
+ * be keep in RAM for quick read of it.
  */
 class M35_Floppy {
 public:
@@ -227,20 +267,6 @@ public:
                        size_t size);
 
 protected:
-    // Note, this vars, are what will be write to the disk file in real world
-    // To find a particular sector we use this :
-    // ptr_word = sector * SECTORS_SIZE
-
-    // File structure should be like this:
-    // Byte : Number of tracks
-    // RAW Data chunk of Tracks * SECTORS_PER_TRACK size
-    // Bitmap of bad sectors of (Tracks * SECTORS_PER_TRACK) / 8
-    //
-    // The bitmap stores 8 sectors state in a byte. It uses the MSB bit for the
-    // lowest sector and LSB for the bigger sector.
-    //
-    // The RAW data will be read/write directly to the file, butthe bitmap will
-    // be keep in RAM for quick read of it.
 
     uint8_t tracks;         /// Total tracks of the floppy
     uint8_t* bad_sectors;   /// Bitmap of bad sectors
