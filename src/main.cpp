@@ -158,6 +158,8 @@ int main (int argc, char **argv)
 
     // Floppy drive
     auto fd = std::make_shared<m35fd::M35FD>();
+    auto floppy = std::make_shared<m35fd::M35_Floppy>("disk.dsk");
+    fd->insertFloppy(floppy);
 
     // Sets apropiated monitor
     std::shared_ptr<AbstractMonitor> monitor;

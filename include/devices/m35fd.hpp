@@ -5,7 +5,7 @@
 #include <config.hpp>
 
 #include <cstdint>
-#include <iostream>
+#include <fstream>
 
 namespace cpu {
 
@@ -97,7 +97,7 @@ public:
     virtual void attachTo (DCPU* cpu, size_t index);
 
     virtual bool checkInterrupt (uint16_t& msg);
-    virtual void handleInterrupt();
+    virtual unsigned handleInterrupt();
     virtual void tick();
    
     /**
@@ -149,24 +149,33 @@ public:
      * @param tracks Number of tracks of the floppy medium
      * @param wp Write protected ?
      */
-    M35_Floppy(const std::string filename , uint8_t tracks = 80, 
+    M35_Floppy(const std::string filename, uint8_t tracks = 80, 
                bool wp = false);
     virtual ~M35_Floppy();
 
     /**
      * Total number of tracks of this floppy
      */
-    uint8_t getTotalTracks() const;
+    uint8_t getTotalTracks() const
+    {
+        return tracks;
+    }
     
     /**
      * Total number of sectors of this floppy
      */
-    uint16_t getTotalSectors() const;
+    uint16_t getTotalSectors() const
+    {
+        return tracks * SECTORS_PER_TRACK;
+    }
 
     /**
      * Gets the actual Track
      */
-    uint16_t getTrack() const;
+    uint16_t getTrack() const
+    {
+        return last_sector / SECTORS_PER_TRACK;
+    }
 
     /**
      * Sets Write protecction flag
@@ -236,7 +245,7 @@ protected:
     uint8_t tracks;         /// Total tracks of the floppy
     uint8_t* bad_sectors;   /// Bitmap of bad sectors
 
-    std::iostream& datafile;
+    std::fstream datafile;
 
 
     bool wp_flag;           /// Is write protected
@@ -246,7 +255,15 @@ protected:
      * Moves the head to the desired track
      * @retun Number of cycles that need to seek the desired track
      */
-    unsigned setTrack(uint16_t track);
+    unsigned setTrack(uint16_t track)
+    {
+        if (track > getTrack() ) {
+            return (track - getTrack()) * SEEK_CYCLES_PER_TRACK;
+        } else {
+            return (getTrack() - track) * SEEK_CYCLES_PER_TRACK;
+        }
+    }
+
 };
 
 } // END OF NAMESPACE block_device
