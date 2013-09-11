@@ -30,7 +30,48 @@ void M35FD::handleInterrupt()
     if (cpu == NULL)
         return;
 
+    switch (static_cast<COMMANDS>(cpu->getA())) {
+    case COMMANDS::POLL :
+        cpu->setB(static_cast<uint16_t>(state));
+        cpu->setC(static_cast<uint16_t>(error));
+        Debug(LogLevel::INFO) << "[M35FD] polling" 
+            << static_cast<uint16_t>(state) << " " 
+            << static_cast<uint16_t>(error);
+        break;
 
+    case COMMANDS::SET_INTERRUPT :
+        msg = cpu->getX();
+        break;
+
+    case COMMANDS::READ_SECTOR :
+        if (state == STATE_CODES::READY || state == STATE_CODES::READY_WP) {
+            // TODO Read to the floppy
+        } else {
+            if (state == STATE_CODES::NO_MEDIA)
+                error = ERROR_CODES::NO_MEDIA;
+
+            cpu->setB(0);
+        }
+        break;
+
+    case COMMANDS::WRITE_SECTOR :
+        if (state == STATE_CODES::READY) {
+            // TODO Write to the floppy
+        } else {
+            if (state == STATE_CODES::NO_MEDIA)
+                error = ERROR_CODES::NO_MEDIA;
+            else if (state == STATE_CODES::READY_WP)
+                error = ERROR_CODES::PROTECTED;
+
+            cpu->setB(0);
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return;
 }
 
 void M35FD::tick()
@@ -53,8 +94,12 @@ void M35FD::eject()
     if (this->floppy)
         this->floppy = std::shared_ptr<M35_Floppy>(); // like = NULL
 
+    if (state == STATE_CODES::BUSY) // Wops!
+        error = ERROR_CODES::EJECT;
+    else
+        error = ERROR_CODES::NONE;
+
     state = STATE_CODES::NO_MEDIA;
-    error = ERROR_CODES::NONE;
 }
 
 

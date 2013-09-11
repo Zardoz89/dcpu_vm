@@ -19,6 +19,7 @@ enum class COMMANDS : uint16_t {
     SET_INTERRUPT,
     READ_SECTOR,
     WRITE_SECTOR,
+    GET_NUMBER_TRACKS
 };
 
 /**
@@ -41,8 +42,9 @@ enum class ERROR_CODES : uint16_t {
     PROTECTED,  /// Attempted to write to a protected floppy
     EJECT,      /// The floppy was ejected while was reading/writing
     BAD_SECTOR, /// The requested sector is broken, the data on it is lost
-    BROKEN,     /// There's been some major software/hardware problem. Try to 
-                /// a hard reset the debice.
+
+    BROKEN = 0xFFFF /// There's been some major software/hardware problem. 
+                    /// Try to do a hard reset the device.
 };
 
 class M35_Floppy;
