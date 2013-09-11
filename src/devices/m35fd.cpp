@@ -13,7 +13,10 @@ M35FD::M35FD() : state(STATE_CODES::NO_MEDIA), error(ERROR_CODES::NONE),
 { }
 
 M35FD::~M35FD()
-{ }
+{
+    if (floppy)
+        eject();
+}
 
 void M35FD::attachTo (DCPU* cpu, size_t index)
 {
@@ -170,26 +173,33 @@ M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
     // Qucik and dirty way to see if file exists
     bool create_header = false;
     std::ifstream f(filename);
-    if (f.good()) {
+    if (!f.good()) {
         create_header = true;
+        LOG << "[M35FD] Datafile not exists"; 
     } 
     f.close();
 
-    datafile.open(filename, std::ios::in | std::ios::out | std::ios::binary);
     bad_sectors = new uint8_t[(tracks * SECTORS_PER_TRACK) >> 3];
 
     if (create_header) {
+        datafile.open(filename, std::ios::in | std::ios::out | 
+                                std::ios::binary | std::ios::trunc);
         datafile.write(&FileHeader[0], 1);
         datafile.write(&FileHeader[1], 1);
         datafile.seekg(1, std::fstream::cur);
         datafile.write((const char*)(&tracks), 1);
+    } else {
+        datafile.open(filename, std::ios::in | std::ios::out |
+                                std::ios::binary);
     }
 }
 
 M35_Floppy::~M35_Floppy()
 {
-    if (datafile.is_open())
+    if (datafile.is_open()) {
         datafile.close();
+        LOG << "[M35FD] Datafile closed"; 
+    }
 
     delete[] bad_sectors;
 }
