@@ -68,6 +68,7 @@ unsigned M35FD::handleInterrupt()
             }
             floppy->read(cpu->getX(), cpu->getY(), busy_cycles);
             state = STATE_CODES::BUSY;
+            error = ERROR_CODES::NONE;
             cpu->setB(1);
 
         } else {
@@ -94,6 +95,7 @@ unsigned M35FD::handleInterrupt()
             }
             floppy->write(cpu->getX(), cpu->getY(), busy_cycles);
             state = STATE_CODES::BUSY;
+            error = ERROR_CODES::NONE;
             cpu->setB(1);
         } else {
             if (state == STATE_CODES::NO_MEDIA) {
@@ -164,6 +166,11 @@ void M35FD::eject()
 
 // M35_Floppy class ***********************************************************
 
+size_t data_pos (size_t sector, size_t index)
+{
+    return 4 + sector*SECTOR_SIZE + index;   
+}
+
 M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
                         tracks(tracks), bad_sectors(NULL), wp_flag(wp), 
                         last_sector(0), cursor(0), drive(NULL)
@@ -221,7 +228,7 @@ ERROR_CODES M35_Floppy::write (uint16_t sector, uint16_t addr,
     cycles += WRITE_CYCLES_PER_SECTOR;
    
     cursor = addr;
-    count = SECTOR_SIZE;
+    count = 0;
     reading = false;
 
     last_sector = sector;
@@ -235,7 +242,7 @@ ERROR_CODES M35_Floppy::read (uint16_t sector, uint16_t addr,
     cycles += READ_CYCLES_PER_SECTOR;
     
     cursor = addr;
-    count = SECTOR_SIZE;
+    count = 0;
     reading = false;
 
     last_sector = sector;
@@ -244,16 +251,18 @@ ERROR_CODES M35_Floppy::read (uint16_t sector, uint16_t addr,
 
 void M35_Floppy::tick()
 {
-    if (count > 0) {
-        count--;
+    char buff[2];
+    if (count < SECTOR_SIZE) {
+        datafile.seekp(data_pos (last_sector, count), std::ios::beg);
+        // TODO Force endianess
         if (reading) {
-            // TODO
-            // drive->cpu->getMem()[cursor];
+            datafile.read (buff, 2);
+            drive->cpu->getMem()[cursor + count++] = *((uint16_t*)buff);
         } else {
-            // TODO
-            // drive->cpu->getMem()[cursor];
+            buff[0] = drive->cpu->getMem()[cursor + count] >> 8;
+            buff[1] = 0xFF & drive->cpu->getMem()[cursor + count++];
+            datafile.write (buff, 2);
         }
-    cursor++;
     }
 }
 
