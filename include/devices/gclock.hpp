@@ -29,11 +29,13 @@ public:
     unsigned handleInterrupt();
     void tick();
 
+    inline void update(); //test for windows
+    
 private:
 
     uint_fast32_t ticks;        /// Clock ticks
     uint16_t msg;               /// Mesage to send when a interrupt hapens
-    bool trigger;               /// Trigered
+    int trigger;               /// Trigered
     
     sf::Clock clock;            /// Measures the time
     int64_t acum;               /// Acumulates delta time
