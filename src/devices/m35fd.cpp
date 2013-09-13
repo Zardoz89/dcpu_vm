@@ -183,7 +183,7 @@ M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
     std::ifstream f(filename);
     if (!f.good()) {
         create_header = true;
-        LOG << "[M35FD] Datafile not exists"; 
+        LOG << "[M35FD] Disk datafile not exists. Creating it."; 
     } 
     f.close();
 
