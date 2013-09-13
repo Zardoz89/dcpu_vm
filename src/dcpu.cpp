@@ -58,7 +58,6 @@ bool DCPU::loadProgram (const uint16_t* prog,unsigned int size,unsigned int offs
 {
     assert (prog != NULL);
     assert (size > 0);    
-    assert (offset >= 0);  //always true not even needed
     if (RAM_SIZE < offset + size)
     {
         std::cerr << "error: cannot load the program not enough ram !\n";
@@ -73,7 +72,6 @@ bool DCPU::loadProgramFromFile(const std::string& filename,
                               bool reverse_endian,
                               unsigned int offset)
 {
-    assert (offset >= 0); //always true not even needed
 
     FILE* f = fopen(filename.c_str(),"rb");
     if (!f)
