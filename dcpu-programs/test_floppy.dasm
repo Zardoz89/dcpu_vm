@@ -1,0 +1,152 @@
+k; Find hardware
+HWN I
+:iterate_hardware
+SUB I, 1
+HWQ I
+IFE B, 0x4fd5
+  IFE A, 0x24c5
+    SET [fd], I    ; Mackapar floppy drive
+IFE B, 0x7349
+  IFE A, 0xf615
+    SET [lem], I   ; LEM180X monitor
+IFE B, 0x7349
+  IFE A, 0x043c
+    SET [cgm], I   ; CGM monitor
+IFE B, 0x30cf
+  IFE A, 0x7406
+    SET [keyb], I   ; Keyboard
+IFG I, 0
+  SET PC, iterate_hardware
+
+; Confg hardware
+IFN [lem], 0xFFFF
+  JSR conf_lem
+IFN [cgm], 0xFFFF
+  JSR conf_cgm
+IFN [fd], 0xFFFF
+  JSR conf_fd
+IFN [keyb], 0xFFFF
+  JSR conf_keyb
+
+; Write to screen
+; LEM 
+SET I, [lem_ram]
+SET J, l_cleaning
+STI [I], [J]
+STI [I], [J]
+STI [I], [J]
+STI [I], [J]
+STI [I], [J]
+STI [I], [J]
+STI [I], [J]
+STI [I], [J]
+
+; CGM
+SET I, [cgm_bitmap]
+SET J, c_cleaning
+STI [I], [J]
+STI [I], [J]
+STI [I], [J]
+STI [I], [J]
+
+SET I, [cgm_attrib]
+STI [I], 0x23C0
+STI [I], 0x03C0
+STI [I], 0x03C0
+STI [I], 0x03C0
+STI [I], 0x03C0
+STI [I], 0x03C0
+STI [I], 0x03C0
+STI [I], 0x03C0
+
+SET X, 0
+SET Y, l_cleaning ; Points to l_cleaning
+:wait_ready
+SET A, 0
+HWI [fd]
+IFN B, 0x0001 ; READY
+  SET PC, wait_Ready
+
+SET A, 3
+HWI [fd]
+
+IFN B, 1  
+  SET PC, loop  ; ERROR!
+
+ADD X, 1
+IFG X, 1440
+  SET PC, loop  ; END of DISK
+
+SET PC, wait_ready
+
+
+
+:loop
+SET PC, loop 
+
+:conf_lem
+SET A, 0
+SET B, [lem_ram]
+HWI [lem]
+SET PC, pop
+
+:conf_cgm
+SET A, 0
+SET B, [cgm_bitmap]
+HWI [cgm]    ; bitmap ram
+SET A, 1
+SET B, [cgm_attrib]
+HWI [cgm]    ; attribute ram
+
+SET A, 4
+SET B, 4 ; Text mode
+HWI [cgm]
+SET PC, pop
+
+:conf_fd
+SET A, 1
+SET X, isr_fd
+HWI [fd]
+SET PC, pop
+
+:conf_keyb
+SET A, 3
+SET B, isr_keyb
+HWI [keyb]
+SET PC, pop
+
+
+; ISRs
+:isr_fd
+RFI A
+
+:isr_keyb
+RFI A
+
+; Hardware index list
+:fd
+dat 0xFFFF
+:lem
+dat 0xFFFF
+:cgm
+dat 0xFFFF
+:keyb
+dat 0xFFFF
+
+; Pointers to videoram
+:lem_ram
+dat 0x8000
+:cgm_bitmap
+dat 0x6000
+:cgm_attrib
+dat 0x7000
+
+; LEM TEXT
+:l_cleaning
+dat 0xA043, 0xF06c, 0xF065, 0xF061, 0xF06e, 0xF069, 0xF06e, 0xF067
+
+; CGM TEXT
+:c_cleaning
+dat 0x6C43, 0x6165, 0x696e, 0x676e
+
+
