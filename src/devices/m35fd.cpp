@@ -49,8 +49,6 @@ unsigned M35FD::handleInterrupt()
     case COMMANDS::POLL :
         cpu->setB(static_cast<uint16_t>(state));
         cpu->setC(static_cast<uint16_t>(error));
-        LOG_DEBUG << "[M35FD] polling E:" << static_cast<uint16_t>(state) <<
-                                    " R:" << static_cast<uint16_t>(error);
         break;
 
     case COMMANDS::SET_INTERRUPT :
@@ -244,7 +242,7 @@ ERROR_CODES M35_Floppy::read (uint16_t sector, uint16_t addr,
     
     cursor = addr;
     count = 0;
-    reading = false;
+    reading = true;
 
     last_sector = sector;
     return ERROR_CODES::NONE;
