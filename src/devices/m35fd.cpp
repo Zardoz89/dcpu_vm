@@ -168,7 +168,8 @@ void M35FD::eject()
 
 size_t data_pos (size_t sector, size_t index)
 {
-    return 4 + sector*SECTOR_SIZE + index;   
+    return 4 + sector*SECTOR_SIZE + index*2; 
+    // We wrok with Words, but file post is in bytes!!   
 }
 
 M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
