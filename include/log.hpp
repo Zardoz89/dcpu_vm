@@ -72,7 +72,10 @@ public:
     ~Debug()
     {
 #if _DEBUG>= 1
-        logger::out << std::endl;
+        if (m_output) {
+            logger::out << std::endl;
+            logger::out.flush();
+        }
 #endif
     }
 
@@ -82,7 +85,6 @@ public:
         #if _DEBUG >= 1
         if( m_output ) {
             logger::out << t;
-            logger::out.flush();
             return *this;
         }
         #endif
