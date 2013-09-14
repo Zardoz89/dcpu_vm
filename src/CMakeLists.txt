@@ -16,6 +16,7 @@ set(dcpu-vm_DEVICES_SRCS
     ./devices/lem1803.cpp
     ./devices/cgm.cpp
     ./devices/speaker.cpp
+    ./devices/m35fd.cpp
     )
 
 set(dcpu-vm_AUDIO_SRCS
