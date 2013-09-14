@@ -38,6 +38,7 @@ HWI [fd]
 IFN B, 0x0001 ; READY
   SET PC, wait_Ready
 
+SET [test_pattern], X ; Sector number mark
 SET A, 3 ; Write
 HWI [fd]
 
@@ -45,7 +46,7 @@ IFN B, 1
   SET PC, error  ; ERROR!
 
 ADD X, 1
-IFG X, 1440
+IFE X, 1440
   SET PC, test_read  ; END of DISK
 
 SET PC, wait_ready
@@ -87,11 +88,14 @@ IFN B, 0x0001  ; READY
 ; Call to compare pattern
 SET I, read_dst
 SET J, test_pattern
-SET C, 511
+ADD I, 1
+ADD J, 1 ; skips Sector number mark
+
+SET C, 510
 JSR cmp
 
 ADD X, 1
-IFG X, 1440
+IFE X, 1440
   SET PC, end  ; END of DISK
 set PC, wait_ready2
 
@@ -199,7 +203,7 @@ dat 0x0000
 dat 0xF050, 0xF052, 0xF065, 0xF073, 0xF073, 0xF020, 0xF04B, 0xF065, 0xF079
 dat 0x0000
 :l_error        ; Error!!
-dat 0x0445, 0x0452, 0x0452, 0x044F, 0x0445, 0x0421, 0x0421, 0xF020, 0xF020
+dat 0x0445, 0x0452, 0x0452, 0x044F, 0x0452, 0x0421, 0x0421, 0xF020, 0xF020
 dat 0x0000
 
 

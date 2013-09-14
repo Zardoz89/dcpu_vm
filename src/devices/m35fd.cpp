@@ -64,10 +64,12 @@ unsigned M35FD::handleInterrupt()
                 LOG_ERROR << "[M35FD] Something weird happen trying to Read";
                 break;
             }
-            floppy->read(cpu->getX(), cpu->getY(), busy_cycles);
+            error = floppy->read(cpu->getX(), cpu->getY(), busy_cycles);
             state = STATE_CODES::BUSY;
-            error = ERROR_CODES::NONE;
-            cpu->setB(1);
+            if (error == ERROR_CODES::NONE)
+                cpu->setB(1);
+            else
+                cpu->setB(0);
 
         } else {
             if (state == STATE_CODES::NO_MEDIA) {
@@ -91,10 +93,12 @@ unsigned M35FD::handleInterrupt()
                 LOG_ERROR << "[M35FD] Something weird happen trying to Write";
                 break;
             }
-            floppy->write(cpu->getX(), cpu->getY(), busy_cycles);
+            error = floppy->write(cpu->getX(), cpu->getY(), busy_cycles);
             state = STATE_CODES::BUSY;
-            error = ERROR_CODES::NONE;
-            cpu->setB(1);
+            if (error == ERROR_CODES::NONE)
+                cpu->setB(1);
+            else
+                cpu->setB(0);
         } else {
             if (state == STATE_CODES::NO_MEDIA) {
                 error = ERROR_CODES::NO_MEDIA;
@@ -223,6 +227,10 @@ void M35_Floppy::setSectorBad (uint16_t sector, bool state)
 ERROR_CODES M35_Floppy::write (uint16_t sector, uint16_t addr,
                                 unsigned& cycles) 
 {
+    // From 0 to max
+    if (sector >= SECTORS_PER_TRACK*tracks)
+        return ERROR_CODES::BAD_SECTOR;
+
     cycles = setTrack(sector / SECTORS_PER_TRACK);
     cycles += WRITE_CYCLES_PER_SECTOR;
    
@@ -237,6 +245,10 @@ ERROR_CODES M35_Floppy::write (uint16_t sector, uint16_t addr,
 ERROR_CODES M35_Floppy::read (uint16_t sector, uint16_t addr,
                                 unsigned& cycles) 
 {
+    // From 0 to max
+    if (sector >= SECTORS_PER_TRACK*tracks)
+        return ERROR_CODES::BAD_SECTOR;
+    
     cycles = setTrack(sector / SECTORS_PER_TRACK);
     cycles += READ_CYCLES_PER_SECTOR;
     
