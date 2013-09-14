@@ -60,6 +60,10 @@ class BinAsm
         static bool is_sop(const std::string& word, uint8_t& op);
         //is the word a .dat or dat section
         static bool is_data_flag(const std::string& word);
+        //is the word a .org or org section
+        static bool is_offset_flag(const std::string& word);
+        //is the word a .res or res or .resw or resw section
+        static bool is_reserve_flag(const std::string& word);
         //is the word a register
         static char is_register(const std::string& word);
         //is the word a valid label

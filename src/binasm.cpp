@@ -68,7 +68,7 @@ void BinAsm::remove_comments(std::string& str)
 		{
 			in_comment = false;
 			str.erase(b,i);
-			i=b;
+			i=str.begin();
 		}
 	}
 	if (in_comment && !special_case) str.erase(b,str.end());
@@ -135,7 +135,8 @@ std::vector<std::string> BinAsm::split_line(const std::string& line)
 		{
             std::string word =line.substr(b,i-b);
             uint8_t u;
-            if (is_op(word,u) || is_sop(word,u) || is_data_flag(word))
+            if (is_op(word,u) || is_sop(word,u) || is_data_flag(word) ||
+                is_offset_flag(word) || is_reserve_flag(word))
             {
                 separator=',';
                 tab='\0'; //tab
@@ -582,6 +583,10 @@ bool BinAsm::assemble()
             
             if (is_valid_label_name(w[c]))
             {
+                if (w.size() >= c+2 && is_offset_flag(w[c+1]))
+                {
+                   print_error(lc,true,"a label declared before an offset have not the offset value"); 
+                }
                 _labels[w[c]]=_offset;
             }
             else
@@ -687,7 +692,7 @@ bool BinAsm::assemble()
             if (w.size() != c+2)
             {
                 err ="instruction " + w[c];
-				err += " need 2 arguments";
+				err += " need 1 arguments";
                 print_error(lc,false,err);
                 error_count++;
             }
@@ -754,6 +759,92 @@ bool BinAsm::assemble()
                 {
                     print_error(lc,true,err);
                 }
+            }
+        }
+        else if (is_offset_flag(w[c]))
+        {
+            if (w.size() != c+2)
+            {
+                err ="offset symbol " + w[c];
+				err += " need an offset value";
+                print_error(lc,false,err);
+                error_count++;
+            }
+            else
+            {
+                uint16_t off;
+                bool unresolved=false;
+                std::string we = remove_spaces(w[c+1]);
+                if (get_value(we,off,err,unresolved))
+                {
+                    if (unresolved)
+                    {
+                        err ="cannot offset with an unresolved label !";
+                        print_error(lc,false,err);
+                        error_count++;
+                    }
+                    else
+                    {
+                        if (off < _offset)
+                        {
+                            err = "offset possibly erase data/code section use reserve instead";
+                            print_error(lc,true,err);
+                        }
+                        _offset = off;
+                    }
+                }
+                else
+                {
+                    print_error(lc,false,err);
+                    error_count++;
+                }
+            }
+        }
+        else if (is_reserve_flag(w[c]))
+        {
+            uint16_t init=0;
+            uint16_t count=1;
+            bool unresolved=false;
+            if (w.size() >= c+2)
+            {
+                std::string we = remove_spaces(w[c+1]);
+                if (get_value(we,count,err,unresolved))
+                {
+                    if (unresolved)
+                    {
+                        err ="cannot reserve with an unresolved label";
+                        print_error(lc,false,err);
+                        error_count++;
+                    }
+                }
+                else
+                {
+                    print_error(lc,false,err);
+                    error_count++;
+                }
+            }
+            if (w.size() >= c+3)
+            {
+                std::string we = remove_spaces(w[c+2]);
+               if (get_value(we,count,err,unresolved))
+                {
+                    if (unresolved)
+                    {
+                        err ="cannot init reserve with an unresolved label";
+                        print_error(lc,false,err);
+                        error_count++;
+                    }
+                }
+                else
+                {
+                    print_error(lc,false,err);
+                    error_count++;
+                } 
+            }
+            for (uint16_t k=0; k<count;k++)
+            {
+                _bin[_offset]=init;
+                _offset++;
             }
         }
         else 
@@ -844,6 +935,24 @@ bool BinAsm::is_sop(const std::string& word, uint8_t& op)
 	else if (p=="HWI") op=0x12;
 	else return false;
     return true;
+}
+
+bool BinAsm::is_reserve_flag(const std::string& word)
+{
+    std::string p = word;
+	std::transform(p.begin(), p.end(), p.begin(), ::toupper);
+    if (p=="RES"|| p==".RES"||p=="RESW"||p==".RESW")
+        return true;
+    return false;
+}
+
+bool BinAsm::is_offset_flag(const std::string& word)
+{
+    std::string p = word;
+	std::transform(p.begin(), p.end(), p.begin(), ::toupper);
+    if (p=="ORG"|| p==".ORG")
+        return true;
+    return false;
 }
 
 bool BinAsm::is_data_flag(const std::string& word)
