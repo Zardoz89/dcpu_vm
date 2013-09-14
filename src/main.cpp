@@ -53,6 +53,7 @@ void print_help(std::string program_name)
     std::cout << "            cgm -> Colour Graphics Monitor (-cgm)\n";
     std::cout << "            [c] : compatible with Lem1802 0x10c programs\n";
     std::cout << "    -output <filename> (-o) : output assembled filename\n";
+    std::cout << "    -floppy <filename> (-fd) : floppy image file\n";
     std::cout << "    -time (-t) : use timed emulation (else refresh based)\n";
     std::cout << "    -vsync (-v) : use vertical synchronisation\n";
     std::cout << "                    (more accurate but may bug)\n";
@@ -65,6 +66,7 @@ int main (int argc, char **argv)
     logger::LOG_level = logger::LogLevel::INFO; 
 
     std::string filename;
+    std::string disk_filename="disk.dsk"; // Floppy disk image
     std::string outname="a.out"; //output assembled filename
     int monitor_type=0; 
     bool debug=false;
@@ -109,6 +111,16 @@ int main (int argc, char **argv)
                 k++;
             }
             else if (opt == "-output" || opt == "-o")
+            {
+                std::cout << "warning: option " << opt << " requiert";
+                std::cout << " another argument it will be ignored here";
+            }
+            else if ((opt == "-floppy" || opt == "-fd") && argc > k+1)
+            {
+                disk_filename = argv[k+1];
+                k++;
+            }
+            else if (opt == "-floppy" || opt == "-fd")
             {
                 std::cout << "warning: option " << opt << " requiert";
                 std::cout << " another argument it will be ignored here";
@@ -158,7 +170,7 @@ int main (int argc, char **argv)
 
     // Floppy drive
     auto fd = std::make_shared<m35fd::M35FD>();
-    auto floppy = std::make_shared<m35fd::M35_Floppy>("disk.dsk");
+    auto floppy = std::make_shared<m35fd::M35_Floppy>(disk_filename);
     fd->insertFloppy(floppy);
 
     // Sets apropiated monitor
