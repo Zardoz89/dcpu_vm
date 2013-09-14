@@ -18,6 +18,7 @@ II.Avalue
 The avalue is the value associated to the instruction, it
 can be a litteral value, a value get from a pointer or a 
 value contained by a register.
+There is special value POP (from the stack)
 
 III.Pointer
 ===========
@@ -28,7 +29,7 @@ You can also add a register (only A,B,C,X,Y,Z,I or J)
 on the pointer value. 
 
 IV.Basic Instructions
-====================
+=====================
 
 A basic instruction is an instruction which requiert 2
 informations : the "btarget" and the "avalue".
@@ -37,46 +38,121 @@ instructions, affectation instructions and mathematical
 instructions.
 
 Here the official list from the DCPU-16 spec:
- C | VAL  | NAME     | DESCRIPTION
----+------+----------+--------------------------------
- - | 0x00 | n/a      | special instruction - see below
- 1 | 0x01 | SET b, a | sets b to a
- 2 | 0x02 | ADD b, a | sets b to b+a
- 2 | 0x03 | SUB b, a | sets b to b-a
- 2 | 0x04 | MUL b, a | sets b to b*a(treats b and a 
-   |      |          | as unsigned)
- 2 | 0x05 | MLI b, a | like MUL, but treat b, a as signed
- 3 | 0x06 | DIV b, a | sets b to b/a,(treats b, a as unsigned)
- 3 | 0x07 | DVI b, a | like DIV, but treat b, a as signed. Rounds towards 0
- 3 | 0x08 | MOD b, a | sets b to b%a.
- 3 | 0x09 | MDI b, a | like MOD, but treat b, a as signed. (MDI -7, 16 == -7)
- 1 | 0x0a | AND b, a | sets b to b&a
- 1 | 0x0b | BOR b, a | sets b to b|a
- 1 | 0x0c | XOR b, a | sets b to b^a
- 1 | 0x0d | SHR b, a | sets b to b>>>a, sets EX to ((b<<16)>>a)&0xffff 
-   |      |          | (logical shift)
- 1 | 0x0e | ASR b, a | sets b to b>>a, sets EX to ((b<<16)>>>a)&0xffff 
-   |      |          | (arithmetic shift) (treats b as signed)
- 1 | 0x0f | SHL b, a | sets b to b<<a, sets EX to ((b<<a)>>16)&0xffff
- 2+| 0x10 | IFB b, a | performs next instruction only if (b&a)!=0
- 2+| 0x11 | IFC b, a | performs next instruction only if (b&a)==0
- 2+| 0x12 | IFE b, a | performs next instruction only if b==a 
- 2+| 0x13 | IFN b, a | performs next instruction only if b!=a 
- 2+| 0x14 | IFG b, a | performs next instruction only if b>a 
- 2+| 0x15 | IFA b, a | performs next instruction only if b>a (signed)
- 2+| 0x16 | IFL b, a | performs next instruction only if b<a 
- 2+| 0x17 | IFU b, a | performs next instruction only if b<a (signed)
- - | 0x18 | -        |
- - | 0x19 | -        |
- 3 | 0x1a | ADX b, a | sets b to b+a+EX, sets EX to 0x0001 if there is an over-
-   |      |          | flow, 0x0 otherwise
- 3 | 0x1b | SBX b, a | sets b to b-a+EX, sets EX to 0xFFFF if there is an under-
-   |      |          | flow, 0x0001 if there's an overflow, 0x0 otherwise
- - | 0x1c | -        | 
- - | 0x1d | -        |
- 2 | 0x1e | STI b, a | sets b to a, then increases I and J by 1
- 2 | 0x1f | STD b, a | sets b to a, then decreases I and J by 1
+b : btarget and a : avalue
+ name     | description
+----------+------------------------------------
+ SET b, a | sets b to a
+ ADD b, a | sets b to b+a
+ SUB b, a | sets b to b-a
+ MUL b, a | sets b to b*a(treats b and a 
+          | as unsigned)
+ MLI b, a | like MUL, but treat b, a as signed
+ DIV b, a | sets b to b/a,(treats b, a as unsigned)
+ DVI b, a | like DIV, but treat b, a as signed.
+ MOD b, a | sets b to b%a.
+ MDI b, a | like MOD, but treat b, a as signed.
+ AND b, a | sets b to b&a
+ BOR b, a | sets b to b|a
+ XOR b, a | sets b to b^a
+ SHR b, a | sets b to b>>>a
+ ASR b, a | sets b to b>>a
+ SHL b, a | sets b to b<<a
+ IFB b, a | performs next instruction only if (b&a)!=0
+ IFC b, a | performs next instruction only if (b&a)==0
+ IFE b, a | performs next instruction only if b==a 
+ IFN b, a | performs next instruction only if b!=a 
+ IFG b, a | performs next instruction only if b>a 
+ IFA b, a | performs next instruction only if b>a (signed)
+ IFL b, a | performs next instruction only if b<a 
+ IFU b, a | performs next instruction only if b<a (signed)
+ ADX b, a | sets b to b+a+EX
+ SBX b, a | sets b to b-a+EX
+ STI b, a | sets b to a, then increases I and J by 1
+ STD b, a | sets b to a, then decreases I and J by 1
 ---+------+----------+---------------------------------
+
+V.Special Instructions
+======================
+A special ionstruction is an instruction which requiert 
+only an avalue/btarget. They are : interrupts operations
+hardaware operation, call/jump.
+Here the official list from the DCPU-16 spec:
+ name  | description
+-------+-----------------------------------------------
+ JSR a | pushes the address of the next instruction 
+       | to the stack, then sets PC to a
+ INT a | triggers a software interrupt with message a
+ IAG a | sets a to IA 
+ IAS a | sets IA to a
+ RFI a | disables interrupt queueing, pops A from
+       | the stack, then pops PC from the stack
+ IAQ a | if a is nonzero, interrupts will be added 
+       | to the queue instead of triggered. if a is 
+       | zero, interrupts will be triggered as normal 
+       | again
+ HWN a | sets a to number of connected hardware devices
+ HWQ a | sets A, B, C, X, Y registers to information 
+       | about hardware a A+(B<<16) is a 32 bit word 
+       | identifying the hardware id C is the hardware version
+       | X+(Y<<16) is a 32 bit word identifying the manufacturer
+ HWI a | sends an interrupt to hardware a
+-------+----------------------------------------------
+
+
+VI.Syntax
+==========
+Bin assembler tolerate upper and lower case:
+ - instructions
+ - symbols
+ - targets (registers)
+
+The btarget and avalue (or other data values)
+must be separated with ','.
+The ';' comment the rest of the line.
+Ascii caracter values are supported if inserted
+between '"' or ''' (depend if it's a string or a char)
+The data string are NOT auto completed with the nul
+character !
+Labels are case sensitive and must not be a keyword
+(register, symbols, instructions...)
+
+
+
+VII.Labels
+==========
+A label can be declared with <labelname>: or
+:<labelname>, once it is declared the label get the
+current offset value and cannot be changed ! so a label 
+can only declared once.
+Only A-Z and 0-9 and '_' characters are autorised.
+A label can be used instead of an avalue, even if it's
+not declared at the moment, but it need to be declared
+later.
+Warning : an offset symbol after the label declaration
+doesn't modify the label offset !
+
+
+VIII.Symbols
+===========
+A symbol is a directive used to influence the final file
+but not used by the DCPU-16, they are not present on the 
+final assembled file.
+Here all symbols available:
+ - .dat (or DAT) : used to store values in the final file
+                  the next values (or strings) are stored
+                  values must be separated with ','
+ - .res (or RES or .resw) : reserve the next values. 
+                            in the file. Two opitionals 
+                            arguments : the number of word
+                            to reserve and the init value
+ - .org (or ORG) : force the offset to move at this address
+
+
+IX.Preprocessor Directives
+==========================
+The preprocessors directives are not supported yet by 
+bin assembler
+
 
 
 
