@@ -68,7 +68,7 @@ void BinAsm::remove_comments(std::string& str)
 		{
 			in_comment = false;
 			str.erase(b,i);
-			i=b;
+			i=str.begin();
 		}
 	}
 	if (in_comment && !special_case) str.erase(b,str.end());
@@ -135,7 +135,8 @@ std::vector<std::string> BinAsm::split_line(const std::string& line)
 		{
             std::string word =line.substr(b,i-b);
             uint8_t u;
-            if (is_op(word,u) || is_sop(word,u) || is_data_flag(word))
+            if (is_op(word,u) || is_sop(word,u) || is_data_flag(word) ||
+                is_offset_flag(word) || is_reserve_flag(word))
             {
                 separator=',';
                 tab='\0'; //tab
@@ -153,7 +154,11 @@ bool BinAsm::get_value(const std::string& word, uint16_t& v, std::string& err,
 {
 	unsigned int s = word.size();
     unresolved=false;
-    if (!s) return false;
+    if (!s) 
+    {
+        err = "excepted value";
+        return false;
+    }
 	else if (word[0]== '\'' && s >= 3)
 	{
         
@@ -223,10 +228,11 @@ bool BinAsm::get_value(const std::string& word, uint16_t& v, std::string& err,
             sprintf(buff,"0x%04X",_offset);
             err += std::string(" at offset :") + std::string(buff) + ')';
             unresolved=true;
-            v=0x100; //big value cause won't create optimized instruction
+            v=0; //big value cause won't create optimized instruction
         }
         return true;
     }
+    err = "excepted value or label name (" + word + ")";
     return false;
 }
 
@@ -294,6 +300,7 @@ bool BinAsm::get_data(const std::string& word,std::string& err,bool& unresolved)
 bool BinAsm::get_a(const std::string& word, uint8_t& a,
 							uint16_t& data, std::string& err,bool& unresolved)
 {
+    unresolved=false;
 	std::string u = word;
 	size_t i = u.find(' ');
     while (i != std::string::npos)
@@ -302,9 +309,11 @@ bool BinAsm::get_a(const std::string& word, uint8_t& a,
 		i = u.find(' ');
 	}
 	std::string p = u;
+    
 	std::transform(p.begin(), p.end(), p.begin(), ::toupper);
-	uint16_t code = 0;
-	if (p=="A") {a=0x00; return true; }
+    
+    //Registers/stacks/specials
+    if (p=="A") {a=0x00; return true; }
     else if (p=="B") {a=0x01; return true; }
 	else if (p=="C") {a=0x02; return true; }
 	else if (p=="X") {a=0x03; return true; }
@@ -321,75 +330,126 @@ bool BinAsm::get_a(const std::string& word, uint8_t& a,
 	else if (p=="[Z]") {a=0x0D; return true; }
 	else if (p=="[I]") {a=0x0E; return true; }
 	else if (p=="[J]") {a=0x0F; return true; }
-	
-	else if (p.find("[A+")!=std::string::npos) {code=0x10; return true; }
-	else if (p.find("[B+")!=std::string::npos) {code=0x11; return true; }
-	else if (p.find("[C+")!=std::string::npos) {code=0x12; return true; }
-	else if (p.find("[X+")!=std::string::npos) {code=0x13; return true; }
-	else if (p.find("[Y+")!=std::string::npos) {code=0x14; return true; }
-	else if (p.find("[Z+")!=std::string::npos) {code=0x15; return true; }
-	else if (p.find("[I+")!=std::string::npos) {code=0x16; return true; }
-	else if (p.find("[J+")!=std::string::npos) {code=0x17; return true; }
-	
-	
-	else if (p=="POP"||p=="[SP++]") {a=0x18; return true; }
+    else if (p=="POP"||p=="[SP++]") {a=0x18; return true; }
 	else if (p=="PUSH"||p=="[--SP]") 
 	{
 		err="cannot push ([--SP]) on avalue";
         return false;
 	}
-	else if (p=="PEEK"||p=="[SP]") {a=0x19; return true; }
-	else if (p=="PICK") {a=0x1A; return true; }
-	
-	
-	else if (p=="SP") {a=0x1B; return true; }
+    else if (p=="SP") {a=0x1B; return true; }
 	else if (p=="PC") {a=0x1C; return true; }
 	else if (p=="EX") {a=0x1D; return true; }
-	
-	
-	if (code && u.size() > 5)
-	{
-		if (get_value(u.substr(3,u.size()-4),data, err,unresolved))
-        {
-            a=code;
-            return true;
-        }
-	}
-	else if (u.size() > 2 && u[0] == '[')
-	{
-        a=0x1E; 
-		if (u[u.size()-1] == ']') {
-			return get_value(u.substr(1,u.size()-2), data, err,unresolved);
+    else if (p=="PEEK"||p=="[SP]") {a=0x19; return true; }
+	else if (p=="PICK") {a=0x1A; return true;}
+    
+    if (u.size() > 2 && u[0] == '[') //pointer
+    {
+        a=0x1E;
+        if (u[u.size()-1] == ']') {
+			u=u.substr(1,u.size()-2);
         }
 		else {
 			err="excepted ']' at the end of avalue pointer";
             return false;
         }
-		
-	}
-	if (get_value(u,data, err, unresolved))
-	{
-		if (data == 0xFFFF) a=0x20;
-		else if (data<=30)
-		{
-			a=data+0x21;
-		}
-		else
-		{
-			a=0x1F;
-		}
-        a = 0x1f;
-        return true;
-	}
-	else
-	{
-        return false;
-	}
+        unsigned int pos=0;
+        uint16_t v=0;
+        bool ok=true;
+        std::string e;
+        for (unsigned int i=0; i <= u.size();i++)
+        {
+            if (u[i]=='+' || i==u.size())
+            {
+                if (pos==i && u[i]=='+')
+                {
+                    err=" '+' unexpected on avalue pointer";
+                    return false;
+                }
+                std::string n=u.substr(pos,i-pos);
+                pos=i+1;
+                if (is_register(n)) //registers
+                {
+                    if (a!=0x1E)
+                    {
+                        err="cannot have 2 register on a single instruction";
+                        return false;
+                    }
+                    else if (n=="A"||n=="a") a=0x10; 
+                    else if (n=="B"||n=="b") a=0x11; 
+                    else if (n=="C"||n=="c") a=0x12;
+                    else if (n=="X"||n=="x") a=0x13;
+                    else if (n=="Y"||n=="y") a=0x14;
+                    else if (n=="Z"||n=="z") a=0x15;
+                    else if (n=="I"||n=="i") a=0x16;
+                    else if (n=="J"||n=="j") a=0x17;
+                }
+                else 
+                {
+                    if (ok)
+                        ok=get_value(n, data, err,unresolved);
+                    else
+                    {
+                        get_value(n, data,e ,unresolved);
+                    }
+                    v+=data;
+                }
+            }
+        } 
+        
+        data=v;
+        return ok;
+        
+    }
+    else //value
+    {
+        unsigned int pos=0;
+        uint16_t v=0;
+        bool ok=true;
+        std::string e;
+        for (unsigned int i=0; i <= u.size();i++)
+        {
+            if (u[i]=='+' || i==u.size())
+            {
+                if (pos==i && u[i]=='+')
+                {
+                    err=" '+' unexpected on avalue";
+                    return false;
+                }
+                std::string n=u.substr(pos,i-pos);
+                pos=i+1;
+                
+                if (ok)
+                    ok=get_value(n, data, err,unresolved);
+                else
+                {
+                    get_value(n, data,e ,unresolved);
+                }
+                v+=data;
+            }
+        }
+        
+        data=v;
+        
+        if (ok)
+        {
+             a = 0x1f;
+            if (unresolved);
+            else if (data == 0xFFFF) a=0x20;
+            else if (data<=30)
+                a=data+0x21;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 }
 
 bool BinAsm::get_b(const std::string& word, uint8_t& b,
 							uint16_t& data, std::string& err,bool& unresolved)
 {
+    unresolved=false;
 	std::string u = word;
 	size_t i = u.find(' ');
     while (i != std::string::npos)
@@ -398,9 +458,11 @@ bool BinAsm::get_b(const std::string& word, uint8_t& b,
 		i = u.find(' ');
 	}
 	std::string p = u;
+    
 	std::transform(p.begin(), p.end(), p.begin(), ::toupper);
-	uint16_t code = 0;
-	if (p=="A") {b=0x00; return true; }
+    
+    //Registers/stacks/specials
+    if (p=="A") {b=0x00; return true; }
     else if (p=="B") {b=0x01; return true; }
 	else if (p=="C") {b=0x02; return true; }
 	else if (p=="X") {b=0x03; return true; }
@@ -417,62 +479,79 @@ bool BinAsm::get_b(const std::string& word, uint8_t& b,
 	else if (p=="[Z]") {b=0x0D; return true; }
 	else if (p=="[I]") {b=0x0E; return true; }
 	else if (p=="[J]") {b=0x0F; return true; }
-	else if (p=="PUSH"||p=="[--SP]") {b=0x18; return true; }
+    else if (p=="PUSH"||p=="[--SP]") {b=0x18; return true; }
 	else if (p=="POP"||p=="[SP++]") 
 	{
 		err="cannot pop ([SP++]) on btarget";
         return false;
 	}
-	else if (p=="PEEK"||p=="[SP]") {b=0x19; return true; }
-	else if (p=="PICK") {b=0x1A; return true; }
-	
-	
-	else if (p=="SP") {b=0x1B; return true; }
+    else if (p=="SP") {b=0x1B; return true; }
 	else if (p=="PC") {b=0x1C; return true; }
 	else if (p=="EX") {b=0x1D; return true; }
+    else if (p=="PEEK"||p=="[SP]") {b=0x19; return true; }
+	else if (p=="PICK") {b=0x1A; return true;}
     
-    else if (p.find("[A+")!=std::string::npos) code=0x10;  
-	else if (p.find("[B+")!=std::string::npos) code=0x11; 
-	else if (p.find("[C+")!=std::string::npos) code=0x12;  
-	else if (p.find("[X+")!=std::string::npos) code=0x13;  
-	else if (p.find("[Y+")!=std::string::npos) code=0x14;  
-	else if (p.find("[Z+")!=std::string::npos) code=0x15;  
-	else if (p.find("[I+")!=std::string::npos) code=0x16; 
-	else if (p.find("[J+")!=std::string::npos) code=0x17; 
-	
-	
-	if (code && u.size() > 5)
-	{
-        b=code;
-		return get_value(u.substr(3,u.size()-4),data, err,unresolved);
-	}
-	else if (u.size() > 2 && u[0] == '[')
-	{
+    if (u.size() > 2 && u[0] == '[') //pointer
+    {
         b=0x1E;
-		if (u[u.size()-1] == ']') {
-			return get_value(u.substr(1,u.size()-2),data, err,unresolved);
-            }
+        if (u[u.size()-1] == ']') {
+			u=u.substr(1,u.size()-2);
+        }
 		else {
 			err="excepted ']' at the end of btarget pointer";
             return false;
         }
-		 
-	}
-	if (get_value(u, data,err,unresolved))
-	{
-		err="btarget must be a pointer or a register";
-		/*if (data == 0xFFFF) b=0x20;
-		else if (data<=30)
-		{
-			b=data+0x21;
-		}
-		else
-		{
-			b=0x1F;
-		}
-        //return true;*/
-	}
-	return false;
+        unsigned int pos=0;        
+        uint16_t v=0;
+        bool ok=true;
+        std::string e;
+        for (unsigned int i=0; i <= u.size();i++)
+        {
+            if (u[i]=='+' || i==u.size())
+            {
+                if (pos==i && u[i]=='+')
+                {
+                    err=" '+' unexpected on btarget";
+                    return false;
+                }
+                std::string n=u.substr(pos,i-pos);
+                pos=i+1;
+                if (is_register(n)) //registers
+                {
+                    if (b!=0x1E)
+                    {
+                        err="cannot have 2 register on a single instruction";
+                        return false;
+                    }
+                    else if (n=="A"||n=="a") b=0x10; 
+                    else if (n=="B"||n=="b") b=0x11; 
+                    else if (n=="C"||n=="c") b=0x12;
+                    else if (n=="X"||n=="x") b=0x13;
+                    else if (n=="Y"||n=="y") b=0x14;
+                    else if (n=="Z"||n=="z") b=0x15;
+                    else if (n=="I"||n=="i") b=0x16;
+                    else if (n=="J"||n=="j") b=0x17;
+                }
+                else 
+                {
+                    if (ok)
+                        ok=get_value(n, data, err,unresolved);
+                    else
+                        get_value(n, data, e,unresolved);
+                    v+=data;
+                }
+            }
+        } 
+        
+        data=v;
+        return ok;
+        
+    }
+    else //value
+    {
+        err="btarget must be a pointer or a register";
+        return false;
+    }
 }
 
 bool BinAsm::assemble()
@@ -504,6 +583,10 @@ bool BinAsm::assemble()
             
             if (is_valid_label_name(w[c]))
             {
+                if (w.size() >= c+2 && is_offset_flag(w[c+1]))
+                {
+                   print_error(lc,true,"a label declared before an offset have not the offset value"); 
+                }
                 _labels[w[c]]=_offset;
             }
             else
@@ -609,7 +692,7 @@ bool BinAsm::assemble()
             if (w.size() != c+2)
             {
                 err ="instruction " + w[c];
-				err += " need 2 arguments";
+				err += " need 1 arguments";
                 print_error(lc,false,err);
                 error_count++;
             }
@@ -676,6 +759,92 @@ bool BinAsm::assemble()
                 {
                     print_error(lc,true,err);
                 }
+            }
+        }
+        else if (is_offset_flag(w[c]))
+        {
+            if (w.size() != c+2)
+            {
+                err ="offset symbol " + w[c];
+				err += " need an offset value";
+                print_error(lc,false,err);
+                error_count++;
+            }
+            else
+            {
+                uint16_t off;
+                bool unresolved=false;
+                std::string we = remove_spaces(w[c+1]);
+                if (get_value(we,off,err,unresolved))
+                {
+                    if (unresolved)
+                    {
+                        err ="cannot offset with an unresolved label !";
+                        print_error(lc,false,err);
+                        error_count++;
+                    }
+                    else
+                    {
+                        if (off < _offset)
+                        {
+                            err = "offset possibly erase data/code section use reserve instead";
+                            print_error(lc,true,err);
+                        }
+                        _offset = off;
+                    }
+                }
+                else
+                {
+                    print_error(lc,false,err);
+                    error_count++;
+                }
+            }
+        }
+        else if (is_reserve_flag(w[c]))
+        {
+            uint16_t init=0;
+            uint16_t count=1;
+            bool unresolved=false;
+            if (w.size() >= c+2)
+            {
+                std::string we = remove_spaces(w[c+1]);
+                if (get_value(we,count,err,unresolved))
+                {
+                    if (unresolved)
+                    {
+                        err ="cannot reserve with an unresolved label";
+                        print_error(lc,false,err);
+                        error_count++;
+                    }
+                }
+                else
+                {
+                    print_error(lc,false,err);
+                    error_count++;
+                }
+            }
+            if (w.size() >= c+3)
+            {
+                std::string we = remove_spaces(w[c+2]);
+               if (get_value(we,count,err,unresolved))
+                {
+                    if (unresolved)
+                    {
+                        err ="cannot init reserve with an unresolved label";
+                        print_error(lc,false,err);
+                        error_count++;
+                    }
+                }
+                else
+                {
+                    print_error(lc,false,err);
+                    error_count++;
+                } 
+            }
+            for (uint16_t k=0; k<count;k++)
+            {
+                _bin[_offset]=init;
+                _offset++;
             }
         }
         else 
@@ -768,6 +937,24 @@ bool BinAsm::is_sop(const std::string& word, uint8_t& op)
     return true;
 }
 
+bool BinAsm::is_reserve_flag(const std::string& word)
+{
+    std::string p = word;
+	std::transform(p.begin(), p.end(), p.begin(), ::toupper);
+    if (p=="RES"|| p==".RES"||p=="RESW"||p==".RESW")
+        return true;
+    return false;
+}
+
+bool BinAsm::is_offset_flag(const std::string& word)
+{
+    std::string p = word;
+	std::transform(p.begin(), p.end(), p.begin(), ::toupper);
+    if (p=="ORG"|| p==".ORG")
+        return true;
+    return false;
+}
+
 bool BinAsm::is_data_flag(const std::string& word)
 {
     std::string p = word;
@@ -826,7 +1013,6 @@ bool BinAsm::resolve_labels()
             {
                 ok = true;
                 printf("linker: resolve 0x%04X (%s)\n",it->first,it->second.c_str());
-                _bin[it->first]-=0x100;
                 _bin[it->first]+=jt->second;
                 _unresolved.erase(it);
                 it=_unresolved.begin();

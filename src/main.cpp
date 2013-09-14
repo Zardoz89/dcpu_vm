@@ -405,7 +405,7 @@ int main (int argc, char **argv)
         // T period of a 100KHz signal = 10 microseconds
         const auto delta=clock.getElapsedTime().asMicroseconds(); 
         clock.restart();
-        
+        //gclock->update();
         if (!debug)
         {
             unsigned int tick_needed;

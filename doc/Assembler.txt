@@ -1,0 +1,161 @@
+DCPU-16 Bin assembler
+Author : Lamogui
+=========================================================
+
+The DCPU-16 Bin assembler support common symbol of 
+assembly languages, and all the DCPU-16 instructions.
+
+I.Btarget
+=========
+The btarget is the place were the result of the instruction 
+will be placed, or the target to compare in comparative
+instructions : it can be a register or a pointer.
+Register are : A,B,C,X,Y,Z,I,J,PC,SP,EX.
+There is special target PUSH (from the stack) 
+
+II.Avalue
+=========
+The avalue is the value associated to the instruction, it
+can be a litteral value, a value get from a pointer or a 
+value contained by a register.
+There is special value POP (from the stack)
+
+III.Pointer
+===========
+To declare a pointer you must use the syntax [pointer].
+Bin assembler support the '+' operator then you can put
+multiples litteral value/labels in the pointer section.
+You can also add a register (only A,B,C,X,Y,Z,I or J)
+on the pointer value. 
+
+IV.Basic Instructions
+=====================
+
+A basic instruction is an instruction which requiert 2
+informations : the "btarget" and the "avalue".
+They are : comparatives instructions, placement 
+instructions, affectation instructions and mathematical 
+instructions.
+
+Here the official list from the DCPU-16 spec:
+b : btarget and a : avalue
+ name     | description
+----------+------------------------------------
+ SET b, a | sets b to a
+ ADD b, a | sets b to b+a
+ SUB b, a | sets b to b-a
+ MUL b, a | sets b to b*a(treats b and a 
+          | as unsigned)
+ MLI b, a | like MUL, but treat b, a as signed
+ DIV b, a | sets b to b/a,(treats b, a as unsigned)
+ DVI b, a | like DIV, but treat b, a as signed.
+ MOD b, a | sets b to b%a.
+ MDI b, a | like MOD, but treat b, a as signed.
+ AND b, a | sets b to b&a
+ BOR b, a | sets b to b|a
+ XOR b, a | sets b to b^a
+ SHR b, a | sets b to b>>>a
+ ASR b, a | sets b to b>>a
+ SHL b, a | sets b to b<<a
+ IFB b, a | performs next instruction only if (b&a)!=0
+ IFC b, a | performs next instruction only if (b&a)==0
+ IFE b, a | performs next instruction only if b==a 
+ IFN b, a | performs next instruction only if b!=a 
+ IFG b, a | performs next instruction only if b>a 
+ IFA b, a | performs next instruction only if b>a (signed)
+ IFL b, a | performs next instruction only if b<a 
+ IFU b, a | performs next instruction only if b<a (signed)
+ ADX b, a | sets b to b+a+EX
+ SBX b, a | sets b to b-a+EX
+ STI b, a | sets b to a, then increases I and J by 1
+ STD b, a | sets b to a, then decreases I and J by 1
+---+------+----------+---------------------------------
+
+V.Special Instructions
+======================
+A special ionstruction is an instruction which requiert 
+only an avalue/btarget. They are : interrupts operations
+hardaware operation, call/jump.
+Here the official list from the DCPU-16 spec:
+ name  | description
+-------+-----------------------------------------------
+ JSR a | pushes the address of the next instruction 
+       | to the stack, then sets PC to a
+ INT a | triggers a software interrupt with message a
+ IAG a | sets a to IA 
+ IAS a | sets IA to a
+ RFI a | disables interrupt queueing, pops A from
+       | the stack, then pops PC from the stack
+ IAQ a | if a is nonzero, interrupts will be added 
+       | to the queue instead of triggered. if a is 
+       | zero, interrupts will be triggered as normal 
+       | again
+ HWN a | sets a to number of connected hardware devices
+ HWQ a | sets A, B, C, X, Y registers to information 
+       | about hardware a A+(B<<16) is a 32 bit word 
+       | identifying the hardware id C is the hardware version
+       | X+(Y<<16) is a 32 bit word identifying the manufacturer
+ HWI a | sends an interrupt to hardware a
+-------+----------------------------------------------
+
+
+VI.Syntax
+==========
+Bin assembler tolerate upper and lower case:
+ - instructions
+ - symbols
+ - targets (registers)
+
+The btarget and avalue (or other data values)
+must be separated with ','.
+The ';' comment the rest of the line.
+Ascii caracter values are supported if inserted
+between '"' or ''' (depend if it's a string or a char)
+The data string are NOT auto completed with the nul
+character !
+Labels are case sensitive and must not be a keyword
+(register, symbols, instructions...)
+
+
+
+VII.Labels
+==========
+A label can be declared with <labelname>: or
+:<labelname>, once it is declared the label get the
+current offset value and cannot be changed ! so a label 
+can only declared once.
+Only A-Z and 0-9 and '_' characters are autorised.
+A label can be used instead of an avalue, even if it's
+not declared at the moment, but it need to be declared
+later.
+Warning : an offset symbol after the label declaration
+doesn't modify the label offset !
+
+
+VIII.Symbols
+===========
+A symbol is a directive used to influence the final file
+but not used by the DCPU-16, they are not present on the 
+final assembled file.
+Here all symbols available:
+ - .dat (or DAT) : used to store values in the final file
+                  the next values (or strings) are stored
+                  values must be separated with ','
+ - .res (or RES or .resw) : reserve the next values. 
+                            in the file. Two opitionals 
+                            arguments : the number of word
+                            to reserve and the init value
+ - .org (or ORG) : force the offset to move at this address
+
+
+IX.Preprocessor Directives
+==========================
+The preprocessors directives are not supported yet by 
+bin assembler
+
+
+
+
+
+
+
