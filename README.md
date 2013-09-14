@@ -48,6 +48,7 @@ Just type **dcpu-vm --help** to get these infos.
                 cgm -> Colour Graphics Monitor (-cgm)
                 [c] : compatible with Lem1802 0x10c programs
         -output <filename> (-o) : output assembled filename
+        -floppy <filename> (-fd) : floppy image file
         -time (-t) : use timed emulation (else refresh based)
         -vsync (-v) : use vertical synchronization
                         (more accurate but may bug)
