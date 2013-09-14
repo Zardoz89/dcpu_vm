@@ -166,7 +166,7 @@ void M35FD::eject()
 
 size_t data_pos (size_t sector, size_t index)
 {
-    return 4 + sector*SECTOR_SIZE + index*2; 
+    return 4 + sector*SECTOR_SIZE*2 + index*2; 
     // We wrok with Words, but file post is in bytes!!   
 }
 
@@ -255,7 +255,11 @@ void M35_Floppy::tick()
         datafile.seekp(data_pos (last_sector, count), std::ios::beg);
         // TODO Force endianess
         if (reading) {
+            uint8_t tmp;
             datafile.read (buff, 2);
+            tmp = buff[0];
+            buff[0] = buff[1];
+            buff[1] = tmp;
             drive->cpu->getMem()[cursor + count++] = *((uint16_t*)buff);
         } else {
             buff[0] = drive->cpu->getMem()[cursor + count] >> 8;
