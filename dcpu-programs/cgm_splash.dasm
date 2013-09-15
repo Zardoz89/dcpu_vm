@@ -37,7 +37,7 @@
         SET I, 0 ;i=0
         SET J, 0x8000 ;j=0x8000
         :loop_bitplane
-        STI [J], [I + BITPLANE]j=i++ + BITPLANE
+        STI [J], [I + BITPLANE] ;j=i++ + BITPLANE
         IFL I, 128
            SET PC, loop_bitplane 
     
@@ -101,9 +101,7 @@
         DAT 0x0FF0, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000
         DAT 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0FF0
     
-    :DEV_SLEEP DAT 0xFFFF
-    :DEV_DISPLAY DAT 0xFFFF
-    :DEV_KEYBOARD DAT 0xFFFF
-    :DEV_CLOCK DAT 0xFFFF
-
-
+:DEV_SLEEP DAT 0xFFFF
+:DEV_DISPLAY DAT 0xFFFF
+:DEV_KEYBOARD DAT 0xFFFF
+:DEV_CLOCK DAT 0xFFFF

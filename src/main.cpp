@@ -98,8 +98,7 @@ int main (int argc, char **argv)
             else if (opt=="-cgm"||opt=="--monitor=cgm") monitor_type=2;
             else if (opt.find("--monitor") != std::string::npos)
             {
-                std::cout << "warning: unknow monitor type "; 
-                std::cout << opt << std::endl;
+                LOG_WARN << "Unknow monitor type " + opt;
             }
             else if (opt == "-vsync" || opt == "-v") use_vsync=true;
             else if (opt == "-time" || opt == "-t") use_time=true;
@@ -112,8 +111,8 @@ int main (int argc, char **argv)
             }
             else if (opt == "-output" || opt == "-o")
             {
-                std::cout << "warning: option " << opt << " requiert";
-                std::cout << " another argument it will be ignored here";
+                LOG_WARN << "Option " + opt +
+                        " requiert another argument it will be ignored here";
             }
             else if ((opt == "-floppy" || opt == "-fd") && argc > k+1)
             {
@@ -122,13 +121,12 @@ int main (int argc, char **argv)
             }
             else if (opt == "-floppy" || opt == "-fd")
             {
-                std::cout << "warning: option " << opt << " requiert";
-                std::cout << " another argument it will be ignored here";
+                LOG_WARN << "Option " + opt + 
+                        " requiert another argument it will be ignored here";
             }
             else
             {
-                std::cout << "warning: unknow option ";
-                std::cout << opt << " it will be ignored !" << std::endl;
+                LOG_WARN << "Unknow option " + opt + " it will be ignored !";
             }
         }
         else
@@ -149,7 +147,7 @@ int main (int argc, char **argv)
     }
     
     if (argc <= 1 || !filename.size()) {
-        std::cerr <<"error: missing input file, type --help for list options\n";
+        LOG_ERROR << "Missing input file, type --help for list options";
         return 0;
     }
    
@@ -179,17 +177,17 @@ int main (int argc, char **argv)
     {
         case 1:
             monitor=std::make_shared<lem::Lem1803>();
-            std::cout << "use Lem1803 Monitor" << std::endl;
+            LOG << "use Lem1803 Monitor";
             window_title = "Lem 1803";
             break;
         case 2:
             monitor=std::make_shared<cgm::CGM>();
-            std::cout << "use CGM Monitor" << std::endl;
+            LOG << "use CGM Monitor";
             window_title = "CGM";
             break;
         default :
             monitor=std::make_shared<lem::Lem1802>();
-            std::cout << "use Lem1802 Monitor" << std::endl;
+            LOG << "use Lem1802 Monitor";
             window_title = "Lem 1802";
             break;
     }
@@ -213,7 +211,7 @@ int main (int argc, char **argv)
                                 window_title);
     if (use_vsync)
     {
-        std::cout << "warning: vsync activated may bug" << std::endl;
+        LOG_WARN << "vsync activated may bug";
         window.setVerticalSyncEnabled(true);
     }
     else
@@ -393,7 +391,7 @@ int main (int argc, char **argv)
                         //No need to be in debug mode for this one
                         if (!pressed)
                         {
-                            std::cout << "reset dcpu" << std::endl;
+                            LOG << "reset dcpu";
                             dcpu->reset();
                             dcpu->loadProgramFromFile(filename);
                         }
@@ -417,7 +415,6 @@ int main (int argc, char **argv)
         // T period of a 100KHz signal = 10 microseconds
         const auto delta=clock.getElapsedTime().asMicroseconds(); 
         clock.restart();
-        //gclock->update();
         if (!debug)
         {
             unsigned int tick_needed;
@@ -433,11 +430,11 @@ int main (int argc, char **argv)
             // Outputs every second (if runs to ~100% of speed)
             if (ticks_counter > 100000) {
                 ticks_counter -= 100000;
-                std::cerr << "Delta: " << delta << " ms ";
-                std::cerr << "Ticks: " << tick_needed << "   ";
+                //std::cerr << "Delta: " << delta << " ms ";
+                //std::cerr << "Ticks: " << tick_needed << "   ";
                 double tmp = tick_needed*(1 / (double)(dcpu->getClock()));
                 int64_t rtime = 1000000 * tmp;
-                std::cerr << "Speed: " << (float)(100*delta)/rtime << std::endl;
+                //std::cerr << "Speed: " << (float)(100*delta)/rtime << std::endl;
             }
 
             dcpu->tick(tick_needed);

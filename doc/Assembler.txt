@@ -9,9 +9,11 @@ I.Btarget
 =========
 The btarget is the place were the result of the instruction 
 will be placed, or the target to compare in comparative
-instructions : it can be a register or a pointer.
+instructions : it can be a register or a pointer only.
 Register are : A,B,C,X,Y,Z,I,J,PC,SP,EX.
 There is special target PUSH (from the stack) 
+If the instruction is a conditionnal instruction
+then the btarget can be a litteral value
 
 II.Avalue
 =========

@@ -36,7 +36,7 @@ SET Y, test_pattern ; Points to test pattern
 SET A, 0
 HWI [fd]
 IFN B, 0x0001 ; READY
-  SET PC, wait_Ready
+  SET PC, wait_ready
 
 SET [test_pattern], X ; Sector number mark
 SET A, 3 ; Write

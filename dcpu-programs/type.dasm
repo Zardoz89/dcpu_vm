@@ -63,7 +63,8 @@
 ; and when we use 0x0080, this sets the ;
 ; Blink bit on.                         ;
 	bor i, 0x0080	; Make cursor blink ;
-	bor i, x		; Set cursor color  ;
+  		; Set cursor color  ;
+	bor i, x
 	set j, 0		; Cursor location   ;
 	set a, 1		; Keyboard Interrupt;
 
@@ -127,18 +128,11 @@
 	ife j, 0
 		set pc, pop
 ; If we aren't at the beginning, we get ;
-; rid of the current cursor on-screen.  ;
 	set [0x8000 + j], 0
-; We move the cursor back one position. ;
 	sub j, 1
-; And we leave this method.             ;
 	set pc, pop
 
 
-; As always, we need a place to store   ;
-; our index for our devices. We are only;
-; using the keyboard and monitor, so we ;
-; allocate space for those two devices. ;
 :MONITOR		dat 0xB00B
 :KEYBOARD		dat 0xB00B
 

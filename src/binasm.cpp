@@ -27,7 +27,7 @@ bool BinAsm::load(const std::string& filename)
 	FILE* f = fopen(filename.c_str(),"r");
 	if (!f)
 	{
-		std::cerr << "error : " << filename << " not found !" << std::endl;
+		LOG_ERROR << filename << " not found !";
 	    return false;
 	}
 
@@ -197,7 +197,7 @@ bool BinAsm::get_value(const std::string& word, uint16_t& v, std::string& err,
         v = word[1];
 	    return true;
 	}
-    else if (word[0] >= '0' && word[0] <= '9')
+    else if ((word[0] >= '0' && word[0] <= '9') || word[0]=='-')
     {
         char* c = const_cast<char*>(word.c_str());
         int number=strtol(word.c_str(),&c,0);
@@ -206,11 +206,11 @@ bool BinAsm::get_value(const std::string& word, uint16_t& v, std::string& err,
             err = "invalid numericable value \"" + word + '"';
             return false; 
         }
-        else if (number > 0xFFFF || number < -(0xFFFF))
+        /*else if (number > 0xFFFF || number < -(0xFFFF))
         {
-            err = "value " +  word + " overflow (max 0xFFFF)";
+            err = "value (" +  word + ") overflow (max 0xFFFF)";
             return false;
-        }
+        }*/
         v = static_cast<uint16_t>(number);
         return true;
     }
@@ -241,10 +241,12 @@ bool BinAsm::print_error(unsigned int line,
 				const std::string& err)
 {
 	if (!err.size()) return false;
+    char buff[33];
+    sprintf(buff,"%d",line);
 	if (warning)
-		std::cerr << "warning line " << line << ": " << err << std::endl;
+		LOG_WARN << " line " + std::string(buff) + ": " + err;
 	else
-		std::cerr << "error line " << line << ": " << err << std::endl;
+		LOG_ERROR << " line " + std::string(buff) +  ": " + err;
 	return true;
 }
 
@@ -447,7 +449,8 @@ bool BinAsm::get_a(const std::string& word, uint8_t& a,
 }
 
 bool BinAsm::get_b(const std::string& word, uint8_t& b,
-							uint16_t& data, std::string& err,bool& unresolved)
+							uint16_t& data, std::string& err,bool& unresolved,
+                                bool is_conditionnal)
 {
     unresolved=false;
 	std::string u = word;
@@ -547,7 +550,48 @@ bool BinAsm::get_b(const std::string& word, uint8_t& b,
         return ok;
         
     }
-    else //value
+    else if (is_conditionnal)//value
+    {
+        unsigned int pos=0;
+        uint16_t v=0;
+        bool ok=true;
+        std::string e;
+        for (unsigned int i=0; i <= u.size();i++)
+        {
+            if (u[i]=='+' || i==u.size())
+            {
+                if (pos==i && u[i]=='+')
+                {
+                    err=" '+' unexpected on avalue";
+                    return false;
+                }
+                std::string n=u.substr(pos,i-pos);
+                pos=i+1;
+                
+                if (ok)
+                    ok=get_value(n, data, err,unresolved);
+                else
+                {
+                    get_value(n, data,e ,unresolved);
+                }
+                v+=data;
+            }
+        }
+        
+        data=v;
+        
+        if (ok)
+        {
+            b = 0x1f;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+        
+    }
+    else
     {
         err="btarget must be a pointer or a register";
         return false;
@@ -622,7 +666,7 @@ bool BinAsm::assemble()
                     if (unresolved)
                     {
                         unresolved=false;
-                        print_error(lc,true,err);
+                        //print_error(lc,true,err);
                     }
                     if (requiert_data(a))
                     {
@@ -646,13 +690,13 @@ bool BinAsm::assemble()
                 //B Block
                 _offset++; //for get_b bug
                 if (requiert_data(a))  _offset++;
-                if (get_b(w[c+1],b,b_word,err,unresolved))
+                if (get_b(w[c+1],b,b_word,err,unresolved,is_conditionnal(op)))
                 {
                     opcode |= (b & 0x1F) << 5;
                     if (unresolved)
                     {
                         unresolved=false;
-                        print_error(lc,true,err);
+                        //print_error(lc,true,err);
                     }
                     if (requiert_data(b))
                     {
@@ -710,7 +754,7 @@ bool BinAsm::assemble()
                     if (unresolved)
                     {
                         unresolved=false;
-                        print_error(lc,true,err);
+                        //print_error(lc,true,err);
                     }
                     if (requiert_data(a))
                     {
@@ -747,7 +791,7 @@ bool BinAsm::assemble()
                 {
                     if (unresolved)
                     {
-                      print_error(lc,true,err);
+                      //print_error(lc,true,err);
                     }
                 }
                 else if (err.size())
@@ -755,7 +799,7 @@ bool BinAsm::assemble()
                     print_error(lc,false,err);
                     error_count++;
                 }
-                if (err.size()) //warnings
+                if (err.size() && !unresolved) //warnings
                 {
                     print_error(lc,true,err);
                 }
@@ -849,7 +893,7 @@ bool BinAsm::assemble()
         }
         else 
         {
-            err ="unexcepted expression " + w[c];
+            err ="unexcepted expression (" + w[c] + ")";
             print_error(lc,false,err);
             error_count++;
         }
@@ -859,8 +903,9 @@ bool BinAsm::assemble()
 	
 	if (error_count)
 	{
-		std::cerr << "assembling terminated with " << error_count; 
-		std::cerr << " error(s)" << std::endl;
+        char buff[33];
+        sprintf(buff,"%d",error_count);
+		LOG_ERROR << "assembling terminated with "+std::string(buff)+" error(s)";
         return false;
 	}
     return true;
@@ -870,16 +915,17 @@ bool BinAsm::save(const std::string& filename)
 {
     FILE* f = fopen(filename.c_str(), "wb");
     if (!f) {
-        std::cerr << "error: cannot open output file " << filename << '\n';
+        LOG_ERROR << "cannot open output file " + filename;
         return false;
     }
         
     fswitchendian(_bin, _offset);
     fwrite(_bin,2,_offset,f);
     fclose(f);
-    std::cout << "writing " << filename;
-    std::cout << " terminated final size " << _offset*2;
-    std::cout << " bytes" << std::endl;
+    char buff[33];
+    sprintf(buff,"%d",_offset*2);
+    LOG << "writing " + filename +
+                " terminated final size " + std::string(buff) + " bytes";
         
     return true;
 }
@@ -1021,7 +1067,7 @@ bool BinAsm::resolve_labels()
         }      
         if (!ok)
         {
-            std::cerr <<"linker error: unresolved symbol \""<< it->second << "\"\n";
+            std::cerr << "linker error : unresolved symbol \"" + it->second + "\"\n";
             it++;
         }
     }

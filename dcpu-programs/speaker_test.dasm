@@ -77,8 +77,7 @@ IFG [var_keyevent], 0  ;; Keyboard buffer isn't empty, keep reading
 RFI 0
 
 
-; print decimal number A to location I
-:printdec
+:printdec 
 SET PUSH, A
 SET PUSH, B
 SET PUSH, I
@@ -102,8 +101,8 @@ SET A, POP
 SET PC, POP
 
 
-; print hexadecimal number A to location I
-:printhex
+  
+:printhex 
 SET PUSH, A
 SET PUSH, B
 SET PUSH, I

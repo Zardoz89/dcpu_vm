@@ -25,7 +25,7 @@ enum class LogLevel {
 * @brief Desired Logging level to show. 
 * If N in "debug(N)" is <= LOG_level, when will be show
 */
-static LogLevel LOG_level = LogLevel::WARN;
+static LogLevel LOG_level = LogLevel::DEBUG;
 
 /**
 * @brief Output stream to use
@@ -46,7 +46,7 @@ public:
                 break;
 
             case LogLevel::WARN:
-                logger::out << "[WARN] ";
+                logger::out << "[WARNING] ";
                 break;
 
             case LogLevel::INFO:
@@ -61,8 +61,8 @@ public:
                 break;
             }
             // Auto ident more if is more severe
-            logger::out << std::string( static_cast<int>(logger::LOG_level) -
-                    static_cast<int>(level), '\t');
+            //logger::out << std::string( static_cast<int>(logger::LOG_level) -
+            //        static_cast<int>(level), '\t');
         }
 #else
     {

@@ -3,6 +3,7 @@
 
 #include <dcpu_opcodes.hpp>
 #include <file.h>
+#include <log.hpp>
 
 #include <string>
 #include <vector>
@@ -50,7 +51,8 @@ class BinAsm
                                                     ,bool& unresolved);
         bool get_b(const std::string& word, uint8_t& b,
                                     uint16_t& data, std::string& err
-                                                    ,bool& unresolved);
+                                                    ,bool& unresolved,
+                                                     bool is_conditionnal);
                             
                
                             
@@ -114,6 +116,11 @@ class BinAsm
 		bool print_error(unsigned int line, 
 						 bool warning,
 						 const std::string& err);
+                         
+        static inline bool is_conditionnal(uint8_t op)
+        {
+            return (op>=0x10 && op<=0x17);
+        }
 		
 		
 		
