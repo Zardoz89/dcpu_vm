@@ -67,9 +67,15 @@ void BinAsm::remove_comments(std::string& str)
 		else if (*i == '\n' && in_comment) 
 		{
 			in_comment = false;
+            special_case = false;
 			str.erase(b,i);
 			i=str.begin();
 		}
+        else if (*i == '\n')
+        {
+            in_comment = false;
+            special_case = false;
+        }
 	}
 	if (in_comment && !special_case) str.erase(b,str.end());
 }
@@ -253,6 +259,8 @@ bool BinAsm::print_error(unsigned int line,
 bool BinAsm::get_data(const std::string& word,std::string& err,bool& unresolved)
 {
     unresolved=false;
+    
+    
 	if (word.size() && word[0] == '"')
     {
         if (word.size() < 2 || word[word.size()-1]!='"')
@@ -787,6 +795,15 @@ bool BinAsm::assemble()
             for (c++;c<w.size();c++)
             {
                 bool unresolved = false;
+                while (w[c].size() && w[c][0]==' ') //Trash fix
+                {
+                    w[c].erase(0,1);
+                }
+                while (w[c].size() && w[c][w[c].size()-1]==' ') //Trash fix
+                {
+                    w[c].erase(w[c].size()-1,1);
+                }
+                
                 if (get_data(w[c],err,unresolved))
                 {
                     if (unresolved)
