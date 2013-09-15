@@ -15,6 +15,7 @@ namespace audio {
  */
 class SquareGenerator : public sf::SoundStream {
 public:
+	SquareGenerator() : samples(NULL) {}
     virtual ~SquareGenerator();
 
     void prepare (uint16_t samplerate = 44100);
@@ -54,7 +55,7 @@ protected:
     uint16_t freq;              /// Freq being generated
     size_t  phase;              /// Phase displazament in seconds
     
-    int16_t* samples = NULL;    /// Samples buffer
+    int16_t* samples;           /// Samples buffer
     size_t buff_size;           /// Used buffer size (sr >= buff_size)
 
     /**

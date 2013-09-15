@@ -17,20 +17,24 @@ else (CMAKE_HOST_APPLE)
     endif (CMAKE_HOST_UNIX)
 endif (CMAKE_HOST_APPLE)
 
-if (CMAKE_HOST_WIN32)
-    message(WARNING "This build has only been tested on MinGW 4.7")
-    set(DCPU_VM_SEARCH_PATHS
-        C:/MinGW
-    )
-endif (CMAKE_HOST_WIN32)
+
 
 if (MSVC)
     message(WARNING "This build has not yet been tested with VC++")
     set(PLATFORM_FLAGS)
+    set(DCPU_VM_SEARCH_PATHS
+        "C:/Program Files (x86)/Microsoft Visual Studio 11.0/VC"
+    )
 else (MSVC)
     set(PLATFORM_FLAGS "-Wall" ) # Generic flags
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+    
+    if (CMAKE_HOST_WIN32)
+      set(DCPU_VM_SEARCH_PATHS
+          C:/MinGW
+          )
+    endif (CMAKE_HOST_WIN32)
     
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")

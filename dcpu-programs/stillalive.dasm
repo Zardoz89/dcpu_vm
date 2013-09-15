@@ -332,6 +332,7 @@ DAT 0
 DAT 0
 
 
+
 ; Scroll the top part of the screen with the lyrics
 :scroll_lyrics
 SET PUSH, I

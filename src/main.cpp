@@ -52,6 +52,7 @@ void print_help(std::string program_name)
     std::cout << "            1803 -> Lem1803 [c] (-1803)" << std::endl;
     std::cout << "            cgm -> Colour Graphics Monitor (-cgm)\n";
     std::cout << "            [c] : compatible with Lem1802 0x10c programs\n";
+    std::cout << "    --no-sound : disable the sound speaker device\n";
     std::cout << "    -output <filename> (-o) : output assembled filename\n";
     std::cout << "    -floppy <filename> (-fd) : floppy image file\n";
     std::cout << "    -time (-t) : use timed emulation (else refresh based)\n";
@@ -76,6 +77,8 @@ int main (int argc, char **argv)
     bool use_time=false; 
     //need asssemble the file 
     bool assemble=false; 
+    //disable speaker
+    bool no_sound=false;
     
     //TODO make a fonction that parse argument into a program struct
     for (int k=1; k < argc; k++) //parse arguments
@@ -99,6 +102,10 @@ int main (int argc, char **argv)
             else if (opt.find("--monitor") != std::string::npos)
             {
                 LOG_WARN << "Unknow monitor type " + opt;
+            }
+            else if (opt=="--no-sound")
+            {
+                no_sound=true;
             }
             else if (opt == "-vsync" || opt == "-v") use_vsync=true;
             else if (opt == "-time" || opt == "-t") use_time=true;
@@ -196,7 +203,8 @@ int main (int argc, char **argv)
     dcpu->attachHardware (monitor);
     dcpu->attachHardware (gkeyboard);
     dcpu->attachHardware (fd);
-    dcpu->attachHardware (speaker);
+    if (!no_sound)
+        dcpu->attachHardware (speaker);
     dcpu->reset();
     dcpu->loadProgramFromFile(filename);
    
@@ -420,10 +428,10 @@ int main (int argc, char **argv)
             unsigned int tick_needed;
             if (use_time) {
                 double tmp = delta / 10.0f;
-                tick_needed= std::round(tmp);
+                tick_needed= tmp+0.5; //trash fix Visual don't know the function round lol!
             } else {
                 double tmp = dcpu->getClock() / (double)(FRAMERATE);
-                tick_needed= std::round(tmp);
+                tick_needed= tmp+0.5;
             }
             ticks_counter += tick_needed;
 
