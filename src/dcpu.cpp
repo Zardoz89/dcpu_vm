@@ -15,8 +15,8 @@ namespace cpu {
 /// Checks if a OpCode is a Branch instrucction
 #define IS_CONDITIONAL(x) ((x) >= IFB && (x) <= IFU)
 
-#define PUSH (--rsp)    /// Push the stack
-#define POP (rsp++)     /// Pop the stack
+#define PUSH ((uint16_t)(--rsp))    /// Push the stack
+#define POP ((uint16_t)(rsp++))     /// Pop the stack
 
 
 DCPU::DCPU()
