@@ -546,7 +546,7 @@ int DCPU::realStep()
             break;
             
         case IAQ:
-            int_queueing = a != 0; // interrupts will be added to queue if a != 0
+            int_queueing = (*a > 0); // interrupts will be added to queue if a != 0
             cycles += 2;
             break;
             
@@ -706,13 +706,15 @@ void DCPU::triggerInterrupt (uint16_t msg)
 }
 
 /**
- * @brief Handle a interrupt. Enqueue it if is necesary
+ * @brief Handle an interrupt. Enqueue it if is necesary
  */
 void DCPU::handleInterrupt (uint16_t msg)
 {
+
     if (int_queueing) { // Queue interrupts if  It can
         if (int_queue.size() >= QUEUE_SIZE) {
             on_fire = true; // Catch fire and dont enqueue a aditional interrupt
+            LOG_DEBUG << "[DCPU] Gets fire!!! by interrupt overlflow"; 
         } else {
             int_queue.push_back (msg);
         }
