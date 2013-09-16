@@ -46,6 +46,7 @@ void print_help(std::string program_name)
     std::cout << "            F1  : next step" << std::endl;
     std::cout << "            F2  : print registers" << std::endl;
     std::cout << "            F3  : reset (no need debug mode)" << std::endl;
+    std::cout << "            F9  : Ejects/ Inserts a floppy" << std::endl;
     std::cout << "            F12 : switch debug/run" << std::endl;
     std::cout << "    --monitor=<monitor_name> : use the following monitor\n";
     std::cout << "            1802 -> Lem1802 (default) [c] (-1802)\n";
@@ -404,6 +405,16 @@ int main (int argc, char **argv)
                             dcpu->loadProgramFromFile(filename);
                         }
                         break;
+                    case sf::Keyboard::F9:
+                        if (!pressed) {
+                            if (fd->getState() == m35fd::STATE_CODES::NO_MEDIA) {
+                                fd->insertFloppy(floppy);
+                            } else {
+                                fd->eject();
+                            }
+                        }
+                        break;
+
                     case sf::Keyboard::F12:
                         if (!pressed)
                         {
