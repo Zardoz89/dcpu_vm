@@ -23,6 +23,13 @@ IFN [fd], 0xFFFF
 IFN [keyb], 0xFFFF
   JSR conf_keyb
 
+; Installs ISR
+IAQ 1
+SET A, isr
+IAS A
+IAQ 0 ; Reneables interrupts
+
+
 ; Write to screen
 ; LEM 
 SET I, [lem_ram]
@@ -124,13 +131,13 @@ SET PC, pop
 
 :conf_fd
 SET A, 1
-SET X, isr_fd
+SET X, 10
 HWI [fd]
 SET PC, pop
 
 :conf_keyb
 SET A, 3
-SET B, isr_keyb
+SET B, 20
 HWI [keyb]
 SET PC, pop
 
@@ -170,11 +177,8 @@ SET C, pop
 SET A, pop
 SET PC, pop
 
-; ISRs
-:isr_fd
-RFI A
-
-:isr_keyb
+; ISR
+:isr
 RFI A
 
 ; Hardware index list

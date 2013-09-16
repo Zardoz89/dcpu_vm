@@ -9,7 +9,7 @@ namespace m35fd {
 // M35FD class ****************************************************************
 
 M35FD::M35FD() : state(STATE_CODES::NO_MEDIA), error(ERROR_CODES::NONE), 
-                 busy_cycles(0)
+                 busy_cycles(0), trigger(false)
 { }
 
 M35FD::~M35FD()
@@ -29,14 +29,18 @@ void M35FD::attachTo (DCPU* cpu, size_t index)
     }
 
     error = ERROR_CODES::NONE;
+    trigger = false;
 }
 
 bool M35FD::checkInterrupt (uint16_t& msg)
 {
-    if (this->msg != 0 && true) {
+    if (this->msg != 0 && trigger) {
         msg = this->msg;
+        trigger = false;
         return true;
     }
+
+    trigger = false;
     return false;
 }
 
@@ -53,6 +57,7 @@ unsigned M35FD::handleInterrupt()
 
     case COMMANDS::SET_INTERRUPT :
         msg = cpu->getX();
+        LOG_DEBUG << "[M35FD] msg set to " << msg; 
         break;
 
     case COMMANDS::READ_SECTOR :
@@ -70,12 +75,15 @@ unsigned M35FD::handleInterrupt()
                 cpu->setB(1);
             else
                 cpu->setB(0);
-
+            
+            trigger = true; // State changes, and error could
         } else {
             if (state == STATE_CODES::NO_MEDIA) {
                 error = ERROR_CODES::NO_MEDIA;
+                trigger = true; // error changes
             } else if (state == STATE_CODES::BUSY) {
                 error = ERROR_CODES::BUSY;
+                trigger = true; // error changes
             }
 
             LOG_DEBUG << "[M35FD] Reading set to Error: " 
@@ -99,13 +107,18 @@ unsigned M35FD::handleInterrupt()
                 cpu->setB(1);
             else
                 cpu->setB(0);
+            
+            trigger = true; // State changes, and error could
         } else {
             if (state == STATE_CODES::NO_MEDIA) {
                 error = ERROR_CODES::NO_MEDIA;
+                trigger = true; // error changes
             } else if (state == STATE_CODES::READY_WP) {
                 error = ERROR_CODES::PROTECTED;
+                trigger = true; // error changes
             } else if (state == STATE_CODES::BUSY) {
                 error = ERROR_CODES::BUSY;
+                trigger = true; // error changes
             }
 
             LOG_DEBUG << "[M35FD] Writing set to Error: " 
@@ -123,16 +136,18 @@ unsigned M35FD::handleInterrupt()
 
 void M35FD::tick()
 {
-    if (busy_cycles > 0) {
+    if (busy_cycles > 0 && state == STATE_CODES::BUSY) {
         busy_cycles--;
         // Read/write 1 word each 3 cycles. A bit more faster that the suposed
         // specs speeds, but more easy to do
         if (floppy && busy_cycles % 3) 
             floppy->tick();
 
-    } else if (floppy) {
+    } else if (floppy && state == STATE_CODES::BUSY ) {
         state = floppy->isProtected() ? 
             STATE_CODES::READY_WP : STATE_CODES::READY;
+
+        trigger = true; // State changes
     }
 }
 
@@ -146,6 +161,7 @@ void M35FD::insertFloppy (std::shared_ptr<M35_Floppy> floppy)
     error = ERROR_CODES::NONE;
     this->floppy->drive = this;
     
+    trigger = true; // State changes, and error could
     LOG << "[M35FD] Disk inserted!"; 
 }
 
@@ -164,6 +180,7 @@ void M35FD::eject()
         error = ERROR_CODES::NONE;
 
     state = STATE_CODES::NO_MEDIA;
+    trigger = true; // State changes, and error could
 }
 
 // M35_Floppy class ***********************************************************

@@ -140,6 +140,7 @@ protected:
 
     unsigned busy_cycles;   /// CPU Cycles that the device will be busy
     uint16_t msg;           /// Mesg to send if need to trigger a interrupt
+    bool trigger;           /// Must launch a interrupt from device to CPU ?
 };
 
 /**
