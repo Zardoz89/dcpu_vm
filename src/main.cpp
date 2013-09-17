@@ -25,7 +25,7 @@
 #include <devices/speaker.hpp>
 
 // Audio
-#include <audio/square_gen.hpp>
+#include <sfml/square_gen.hpp>
 
 // Util
 #include <disassembler.hpp>
@@ -451,8 +451,8 @@ int main (int argc, char **argv)
                 ticks_counter -= 100000;
                 //std::cerr << "Delta: " << delta << " ms ";
                 //std::cerr << "Ticks: " << tick_needed << "   ";
-                double tmp = tick_needed*(1 / (double)(dcpu->getClock()));
-                int64_t rtime = 1000000 * tmp;
+                //double tmp = tick_needed*(1 / (double)(dcpu->getClock()));
+                //int64_t rtime = 1000000 * tmp;
                 //std::cerr << "Speed: " << (float)(100*delta)/rtime << std::endl;
             }
 

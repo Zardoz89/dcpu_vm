@@ -19,14 +19,14 @@ set(dcpu-vm_DEVICES_SRCS
     ./devices/m35fd.cpp
     )
 
-set(dcpu-vm_AUDIO_SRCS
-    ./audio/square_gen.cpp
+set(dcpu-vm_SFML_SRCS
+    ./sfml/square_gen.cpp
     )
 
 add_executable(dcpu-vm 
     ${dcpu-vm_SRCS}
     ${dcpu-vm_DEVICES_SRCS}
-    ${dcpu-vm_AUDIO_SRCS}
+    ${dcpu-vm_SFML_SRCS}
     )
 
 include_directories(dcpu-vm

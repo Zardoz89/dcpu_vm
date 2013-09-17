@@ -1,4 +1,4 @@
-#include <audio/square_gen.hpp>
+#include <sfml/square_gen.hpp>
 
 #include <algorithm>
 #include <cmath>
