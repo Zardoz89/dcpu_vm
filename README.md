@@ -55,12 +55,16 @@ Just type **dcpu-vm --help** to get these infos.
                         (more accurate but may bug)
 
 
-There is a debug/step mode activate/deactivate with **F12**:
+There is a debug/step mode activate/deactivate with **System+F12**:
  
  - **F1** : Single step (print the current instruction on the console)
  - **F2** : Print registers states into console
- - **F3** : Reset the DCPU
 
+Avaliable shortcuts alltime: 
+
+ - **F3** : Reset the DCPU
+ - **F9** : Ejects/Inserts a floppy
+ - **System+F12** : Activate/Deactivate debug mode. Note that System is Windows/Apple/Super key
 
 TODO
 ----
