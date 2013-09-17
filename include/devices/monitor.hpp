@@ -11,6 +11,8 @@
 
 namespace cpu {
 
+typedef sf::Color Color; // To hide sf::Color
+
 class AbstractMonitor : public cpu::IHardware{
 public:
     AbstractMonitor() : need_render(false), pixels(NULL), _width(0), _height(0)
@@ -50,9 +52,8 @@ public:
 
     /**
      * Returns the Border color
-     * TODO do a typedef to hide sf:Color
      */
-    virtual sf::Color getBorder() const = 0;
+    virtual Color getBorder() const = 0;
 
     /**
       * @Call before render 1 frame to each frames
@@ -113,7 +114,7 @@ protected:
      * @param y Y coord must be < height
      * @param color RGBA color
      */
-    inline void setPixel(unsigned x, unsigned y, sf::Color color)
+    inline void setPixel(unsigned x, unsigned y, Color color)
     {
         assert(pixels != NULL);
         assert(x < width());

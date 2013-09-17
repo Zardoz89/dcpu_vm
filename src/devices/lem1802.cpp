@@ -102,16 +102,6 @@ void Lem1802::updateScreen()
     //screen.create(Lem1802::WIDTH, Lem1802::HEIGHT, sf::Color::Black);
 
     if (screen_map != 0) { // Update the texture
-        /*
-        for (unsigned j = 0; j < width(); j+=2) {
-            for (unsigned i = 0; i< height(); i+=2) {
-                setPixel(j, i, sf::Color::Blue);
-                setPixel(j+1, i, sf::Color::White);
-
-                setPixel(j, i+1, sf::Color::Green);
-                setPixel(j+1, i+1, sf::Color::Red);
-            }
-        }*/
 
         for (unsigned row=0; row < Lem1802::ROWS; row++) {
             for (unsigned col=0; col < Lem1802::COLS; col++) {
@@ -163,12 +153,16 @@ void Lem1802::updateScreen()
                 for (int i=0; i< 8; i++) { 
                     // *** MSB ***
                     // First word 
+
                     bool pixel = ((1<<(i+8)) & glyph[0]) > 0;
+
                     if (pixel) {
-                        setPixel (c4, r8 +1, fg); // FIXME WTF
+                        setPixel (c4, r8 +i, fg);
                     } else {
                         setPixel (c4, r8 +i, bg);
                     }
+
+
                     // Second word
                     pixel = ((1<<(i+8)) & glyph[1]) > 0;
                     if (pixel) {
