@@ -1,6 +1,7 @@
 #ifndef KEYBOARDWINDOW_HPP_
-#define KEYBOARDWINDOW_HPP_
+#define KEYBOARDWINDOW_HPP_ 1
 
+#include <sfml/AbstractWindow.hpp>
 #include <devices/gkeyboard.hpp>
 
 #include <SFML/Graphics.hpp>
@@ -15,7 +16,7 @@ typedef std::shared_ptr<cpu::keyboard::GKeyboard> sptr_GKeyboard;
 /**
  * @brief Class does the visual representation of a keyboard device
  */
-class KeyboardWindow: public sf::RenderWindow {
+class KeyboardWindow: public AbstractWindow {
 public:
     KeyboardWindow(sptr_GKeyboard keyboard);
     virtual ~KeyboardWindow();
@@ -36,7 +37,6 @@ private:
     sf::Sprite keyb_sprite;     /// Sprite that fills the window
 
     bool keyb_image_loaded;
-    bool focus;                  /// Have the focus ?
 };
 
 } // END OF NAMESPACE windows

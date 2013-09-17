@@ -12,15 +12,14 @@
 
 namespace windows {
 
-KeyboardWindow::KeyboardWindow(sptr_GKeyboard keyboard) :
-        sf::RenderWindow(sf::VideoMode(484, 196), "Keyboard",
-                         sf::Style::Titlebar | sf::Style::Close),
-        keyboard(keyboard), focus(false)
-{
+KeyboardWindow::KeyboardWindow(sptr_GKeyboard keyboard) : keyboard(keyboard)
 
+{
     char tmp[32];
     std::snprintf(tmp, 32, "Keyboard DevId=%zu", keyboard->getDevIndex());
-    this->setTitle(tmp);
+
+    this->create(sf::VideoMode(484, 196), tmp, sf::Style::Titlebar |
+                  sf::Style::Close);
 
     this->setFramerateLimit(25);
     //this->setVerticalSyncEnabled(true);
@@ -50,7 +49,7 @@ void KeyboardWindow::display()
         this->draw(keyb_sprite);
     }
 
-    this->RenderWindow::display();
+    this->AbstractWindow::display();
     this->setActive(false);
 }
 
