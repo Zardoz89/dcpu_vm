@@ -5,7 +5,8 @@
 namespace cpu {
 
 Generic_Clock::Generic_Clock() : 
-    ticks(0), msg(0), trigger(0), acum(0), max_acum(0), divider(0) 
+    clock_ticks(0), ticks(0), msg(0), trigger(0), acum(0), max_acum(0),
+    divider(0)
 {
     clock.restart();
 }
@@ -27,6 +28,7 @@ unsigned Generic_Clock::handleInterrupt()
             //this->max_acum =  sf::seconds(60.0f / divider).asMicroseconds();
             clock.restart();
         } 
+        clock_ticks=0;
         ticks=0;
         acum=0;
         break;
@@ -79,10 +81,11 @@ void Generic_Clock::update()
         
         //hope we have
         int64_t now = clock.getElapsedTime().asMilliseconds()/max_acum;
-        if (now > ticks)
+        if (now > clock_ticks)
         {
-            trigger = msg > 0 ? now - ticks : 0; //no ticks lost !
-            ticks = clock.getElapsedTime().asMilliseconds()/max_acum; 
+            trigger = msg > 0 ? now - clock_ticks : 0; //no ticks lost !
+            clock_ticks = clock.getElapsedTime().asMilliseconds()/max_acum;
+            ticks++; //Ticks the number of events since the last call command 0
         }
         
         

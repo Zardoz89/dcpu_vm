@@ -33,12 +33,13 @@ public:
     
 private:
 
-    uint_fast32_t ticks;        /// Clock ticks
-    uint16_t msg;               /// Mesage to send when a interrupt hapens
-    int trigger;               /// Trigered
+    int64_t clock_ticks;        /// Clock ticks
+    uint16_t ticks;             /// Ticks readed to DCPU (read the clock specs!)
+    uint16_t msg;               /// Message to send when a interrupt hapens
+    int trigger;                /// Trigered
     
     sf::Clock clock;            /// Measures the time
-    int64_t acum;               /// Acumulates delta time
+    int64_t acum;               /// Accumulates delta time
     int64_t max_acum;           /// If accu > max_accu -> does a Tick
     uint_fast16_t divider;      /// Frac of 60 seconds
 };
