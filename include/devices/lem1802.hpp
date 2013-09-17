@@ -19,6 +19,8 @@ static const uint16_t SET_BORDER_COLOR      = 3;
 static const uint16_t MEM_DUMP_FONT         = 4;
 static const uint16_t MEM_DUMP_PALETTE      = 5;
 
+static const unsigned REFRESHRATE           = 50;
+
 /**
  * @brief LEM1802 that uses SFML
  */
@@ -46,8 +48,6 @@ public:
         return 0x1c6c8b36;
     }
     
-    virtual unsigned int width() const {return WIDTH;}
-    virtual unsigned int height() const {return HEIGHT;}
     virtual unsigned int phyWidth() const {return WIDTH;}
     virtual unsigned int phyHeight() const {return HEIGHT;}
     unsigned int borderSize() {return BORDER_SIZE;}

@@ -24,7 +24,8 @@ MonitorWindow::MonitorWindow(sptr_AbstractMonitor monitor,
                    (monitor->phyHeight() + border_add);
     old_size = this->getSize();
 
-    screen = monitor->getScreen();
+    texture.create(monitor->width(), monitor->height());
+    //monitor->getScreen();
 }
 
 MonitorWindow::~MonitorWindow()
@@ -39,7 +40,7 @@ void MonitorWindow::display()
     //Working resizing code
     border_add = monitor->borderSize();
 
-    texture.loadFromImage(*screen); //Slow function
+    texture.update(monitor->getPixels()); //Slow function
     sprite.setTexture(texture);
     sprite.setScale(  //Warning setScale and scale are different !!
       (float)(getSize().x-border_add*2)/(float)(monitor->width()),

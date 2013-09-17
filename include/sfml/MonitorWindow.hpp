@@ -41,7 +41,6 @@ private:
 
     sf::Texture texture;        /// Texture of the screen
     sf::Sprite sprite;          /// Sprite of the screen
-    const sf::Image* screen;    /// Image of the screen
 
 };
 

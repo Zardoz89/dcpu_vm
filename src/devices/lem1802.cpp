@@ -16,11 +16,16 @@ const uint16_t Lem1802::def_palette_map[16] = {     /// Default palette
 
 Lem1802::Lem1802() : screen_map (0), font_map (0), palette_map (0),
 border_col (0), ticks(0), blink(0) { 
-    screen.create(Lem1802::WIDTH, Lem1802::HEIGHT, sf::Color::Black);
+    //screen.create(Lem1802::WIDTH, Lem1802::HEIGHT, sf::Color::Black);
+    _width = Lem1802::WIDTH;
+    _height = Lem1802::HEIGHT;
+    pixels = new uint8_t[4 * _width * _height]();
 }
 
 Lem1802::~Lem1802() 
-{ }
+{
+    delete[] pixels;
+}
 
 void Lem1802::attachTo (DCPU* cpu, size_t index) 
 {
@@ -77,9 +82,9 @@ unsigned Lem1802::handleInterrupt()
 void Lem1802::tick()
 {
     if (this->cpu == NULL) return;
-    if (++ticks > cpu->getClock() /50) {
+    if (++ticks > cpu->getClock() /REFRESHRATE) {
         // Update screen at 50Hz aprox
-        ticks -= cpu->getClock() / 50;
+        ticks -= cpu->getClock() / REFRESHRATE;
         this->updateScreen();
     }
     if (++blink > blink_max*2)
@@ -94,9 +99,20 @@ void Lem1802::updateScreen()
         return;
 
     need_render = false;
-    screen.create(Lem1802::WIDTH, Lem1802::HEIGHT, sf::Color::Black);
+    //screen.create(Lem1802::WIDTH, Lem1802::HEIGHT, sf::Color::Black);
 
     if (screen_map != 0) { // Update the texture
+        /*
+        for (unsigned j = 0; j < width(); j+=2) {
+            for (unsigned i = 0; i< height(); i+=2) {
+                setPixel(j, i, sf::Color::Blue);
+                setPixel(j+1, i, sf::Color::White);
+
+                setPixel(j, i+1, sf::Color::Green);
+                setPixel(j+1, i+1, sf::Color::Red);
+            }
+        }*/
+
         for (unsigned row=0; row < Lem1802::ROWS; row++) {
             for (unsigned col=0; col < Lem1802::COLS; col++) {
                 uint16_t pos = screen_map + row * Lem1802::COLS + col;
@@ -142,37 +158,39 @@ void Lem1802::updateScreen()
                     glyph[1] = cpu->getMem()[font_map+ (ascii*2)+1]; 
                 }
                 
+                auto c4 = col*4;
+                auto r8 = row*8;
                 for (int i=0; i< 8; i++) { 
                     // *** MSB ***
                     // First word 
                     bool pixel = ((1<<(i+8)) & glyph[0]) > 0;
                     if (pixel) {
-                        screen.setPixel (col*4, row*8 +i, fg);
+                        setPixel (c4, r8 +1, fg); // FIXME WTF
                     } else {
-                        screen.setPixel (col*4, row*8 +i, bg);
+                        setPixel (c4, r8 +i, bg);
                     }
                     // Second word
                     pixel = ((1<<(i+8)) & glyph[1]) > 0;
                     if (pixel) {
-                        screen.setPixel (col*4 +2, row*8 +i, fg);
+                        setPixel (c4 +2, r8 +i, fg);
                     } else {
-                        screen.setPixel (col*4 +2, row*8 +i, bg);
+                        setPixel (c4 +2, r8 +i, bg);
                     }
 
                     // *** LSB ***
                     // First word 
                     pixel = ((1<<i) & glyph[0]) >0;
                     if (pixel) {
-                        screen.setPixel (col*4 +1, row*8 +i, fg);
+                        setPixel (c4 +1, r8 +i, fg);
                     } else {
-                        screen.setPixel (col*4 +1, row*8 +i, bg);
+                        setPixel (c4 +1, r8 +i, bg);
                     }
                     // Second word
                     pixel = ((1<<i) & glyph[1]) > 0;
                     if (pixel) {
-                        screen.setPixel (col*4 +3, row*8 +i, fg);
+                        setPixel (c4 +3, r8 +i, fg);
                     } else {
-                        screen.setPixel (col*4 +3, row*8 +i, bg);
+                        setPixel (c4 +3, r8 +i, bg);
                     }
                 }
             }
