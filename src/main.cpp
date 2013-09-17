@@ -24,8 +24,9 @@
 
 #include <devices/speaker.hpp>
 
-// Audio
+// Modules that sues SFML
 #include <sfml/square_gen.hpp>
+#include <sfml/KeyboardWindow.hpp>
 
 // Util
 #include <disassembler.hpp>
@@ -226,131 +227,18 @@ int main (int argc, char **argv)
     else
         window.setFramerateLimit(FRAMERATE);
     
-    // We try to use a window to show a fake keyboard and capture keyboard
+    // We use a window to show a fake keyboard and capture keyboard
     // events if it have focus
-    sf::RenderWindow keyb_win;
-    keyb_win.create(sf::VideoMode(484, 196), "Keyboard", 
-            sf::Style::Titlebar | sf::Style::Close);
-    keyb_win.setKeyRepeatEnabled(false);
-    keyb_win.setActive(false);
-    sf::Texture keyb_tx;
-    bool keyb_image_loaded = keyb_tx.loadFromFile("assets/keyb_img.png");
-    sf::Sprite keyb_sprite;
-    if (keyb_image_loaded)
-        keyb_sprite.setTexture(keyb_tx);
-    else
-        LOG_WARN <<  "assets/keyb_img.png not found !";
-    
-    bool keyb_focus;
+    windows::KeyboardWindow keyb_win(gkeyboard->getDevIndex(), gkeyboard);
 
     LOG << "Entering main loop";
     unsigned long ticks_counter = 0;
-    while (window.isOpen() && keyb_win.isOpen()) 
-    {   //Because non mainthread event are forbidden in OSX
+    while (window.isOpen() && keyb_win.isOpen()) {
     
         // Process events
+        keyb_win.handleEvents();
+
         sf::Event event;
-        while (keyb_win.pollEvent(event)) {
-            // This window capture key events to the VM window if have focus
-            if (event.type == sf::Event::Closed) {
-                keyb_win.close();
-
-            } else if (event.type == sf::Event::GainedFocus) {
-                keyb_focus = true;
-
-            } else if (event.type == sf::Event::LostFocus) {
-                keyb_focus = false;
-
-            } else if (keyb_focus && ( event.type == sf::Event::KeyPressed || 
-                        event.type == sf::Event::KeyReleased || 
-                        event.type == sf::Event::TextEntered )) {
-                // Process VM keyboard input
-                bool pressed = (event.type == sf::Event::KeyPressed);
-                unsigned char keycode=0;
-
-                // Note this works becuase Unicode maps ASCII 7 bit in his
-                // first 128 codes
-                if (event.type == sf::Event::TextEntered &&
-                       ((event.text.unicode >= '!' && 
-                         event.text.unicode <= '/') ||
-                        (event.text.unicode >= ':' && 
-                             event.text.unicode <= '@') ||
-                        (event.text.unicode >= '[' && 
-                             event.text.unicode <= 0x60) ||
-                        (event.text.unicode >= '{' && 
-                             event.text.unicode <= 0x7F) )) {
-                        
-                        gkeyboard->pushKeyEvent(true, 
-                                (unsigned char) event.text.unicode);
-                        gkeyboard->pushKeyEvent(false, 
-                                (unsigned char) event.text.unicode);
-                }
-                // Ignore silenty any other TextEntered events
-                // because SFML generate at same time KeyEvent and TextEntered
-                if (event.type == sf::Event::TextEntered) 
-                    continue; 
-                
-                if (event.key.code>=sf::Keyboard::A && 
-                    event.key.code<=sf::Keyboard::Z) {
-                    if (event.key.shift)
-                        keycode=event.key.code+'A';
-                    else
-                        keycode=event.key.code+'a';
-                } else if (event.key.code>=sf::Keyboard::Num0 && 
-                        event.key.code<=sf::Keyboard::Num9) {
-
-                    keycode=event.key.code-sf::Keyboard::Num0+'0';
-                } else {
-                    switch (event.key.code) {
-                        case sf::Keyboard::Space:
-                            keycode=' ';
-                            break;
-                        case sf::Keyboard::BackSpace:
-                            keycode=keyboard::BACKSPACE;
-                            break;
-                        case sf::Keyboard::Return:
-                            keycode=keyboard::RETURN;
-                            break;
-                        case sf::Keyboard::Insert:
-                            keycode=keyboard::INSERT;
-                            break;
-                        case sf::Keyboard::Delete:
-                            keycode=keyboard::DELETE;
-                            break;
-                        case sf::Keyboard::Up:
-                            keycode=keyboard::ARROW_UP;
-                            break;
-                        case sf::Keyboard::Down:
-                            keycode=keyboard::ARROW_DOWN;
-                            break;
-                        case sf::Keyboard::Left:
-                            keycode=keyboard::ARROW_LEFT;
-                            break;
-                        case sf::Keyboard::Right:
-                            keycode=keyboard::ARROW_RIGHT;
-                            break;
-                        case sf::Keyboard::RShift:
-                        case sf::Keyboard::LShift:
-                            keycode=keyboard::SHIFT;
-                            break;
-                        case sf::Keyboard::RControl:
-                        case sf::Keyboard::LControl:
-                            keycode=keyboard::CONTROL;
-                            break;
-                        case sf::Keyboard::Escape:
-                            keycode=keyboard::ESC;
-                            break;
-
-
-                        default:
-                            break;
-                    }
-                }
-                if (keycode)
-                    gkeyboard->pushKeyEvent(pressed,keycode);
-            }
-        }
-
         while (window.pollEvent(event)) 
         {
             // Close window : exit
@@ -476,14 +364,8 @@ int main (int argc, char **argv)
         window.display();
         window.setActive(false);
 
-        // Updates Keyboard window
-        if (keyb_image_loaded) {
-            keyb_win.setActive(true);
-            keyb_win.clear();
-            keyb_win.draw(keyb_sprite);
-            keyb_win.display();
-            keyb_win.setActive(false);
-        }
+        keyb_win.display();
+
     }
 
     gen.stop();
