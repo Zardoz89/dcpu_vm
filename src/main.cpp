@@ -46,10 +46,10 @@ void print_help(std::string program_name)
     std::cout << "    -assemble (-a) : assemble before load (experimental)\n";
     std::cout << "    -debug (-d) : start in debug mode\n";
     std::cout << "            F1  : next step" << std::endl;
-    std::cout << "            F2  : print registers" << std::endl;
+    std::cout << "            F2  : print CPU status" << std::endl;
     std::cout << "            F3  : reset (no need debug mode)" << std::endl;
-    std::cout << "            F9  : Ejects/ Inserts a floppy" << std::endl;
-    std::cout << "            F12 : switch debug/run" << std::endl;
+    std::cout << "            F9  : ejects/inserts floppy" << std::endl;
+    std::cout << "            System + F12 : switch debug/run" << std::endl;
     std::cout << "    --monitor=<monitor_name> : use the following monitor\n";
     std::cout << "            1802 -> Lem1802 (default) [c] (-1802)\n";
     std::cout << "            1803 -> Lem1803 [c] (-1803)" << std::endl;

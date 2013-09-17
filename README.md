@@ -39,9 +39,10 @@ Just type **dcpu-vm --help** to get these infos.
         -assemble (-a) : assemble before load (experimental)
         -debug (-d) : start in debug mode
                 F1  : next step
-                F2  : print registers
+                F2  : print CPU status
                 F3  : reset (no need debug mode)
-                F12 : switch debug/run
+                F9  : ejects/insert floppy (no need debug mode)
+                System + F12 : switch debug/run
         --monitor=<monitor_name> : use the following monitor
                 1802 -> Lem1802 (default) [c] (-1802)
                 1803 -> Lem1803 [c] (-1803)
