@@ -33,8 +33,15 @@ public:
     void handleEvents();
 
 private:
+    sptr_AbstractMonitor monitor;
     double aspect_ratio;
     sf::Vector2u old_size;
+
+    float border_add;
+
+    sf::Texture texture;        /// Texture of the screen
+    sf::Sprite sprite;          /// Sprite of the screen
+    const sf::Image* screen;    /// Image of the screen
 
 };
 

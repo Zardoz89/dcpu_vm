@@ -7,10 +7,10 @@ namespace windows {
 
 MonitorWindow::MonitorWindow(sptr_AbstractMonitor monitor,
                                  const std::string title,
-                                 unsigned framerate)
+                                 unsigned framerate) : monitor(monitor)
 {
 
-    float border_add = monitor->borderSize()*2;
+    border_add = monitor->borderSize()*2;
     char tmp[48];
     std::snprintf(tmp, 48, "%s DevId=%zu", title.c_str(),
                    monitor->getDevIndex());
@@ -24,6 +24,7 @@ MonitorWindow::MonitorWindow(sptr_AbstractMonitor monitor,
                    (monitor->phyHeight() + border_add);
     old_size = this->getSize();
 
+    screen = monitor->getScreen();
 }
 
 MonitorWindow::~MonitorWindow()
@@ -33,12 +34,23 @@ MonitorWindow::~MonitorWindow()
 
 void MonitorWindow::display()
 {
-    //this->setActive(true);
-    //this->clear();
+    this->setActive(true);
 
+    //Working resizing code
+    border_add = monitor->borderSize();
+
+    texture.loadFromImage(*screen); //Slow function
+    sprite.setTexture(texture);
+    sprite.setScale(  //Warning setScale and scale are different !!
+      (float)(getSize().x-border_add*2)/(float)(monitor->width()),
+      (float)(getSize().y-border_add*2)/(float)(monitor->height()));
+    sprite.setPosition(sf::Vector2f(border_add,border_add));
+
+    clear(monitor->getBorder()); // Draws border and screen state
+    draw(sprite);
 
     this->AbstractWindow::display();
-    //this->setActive(false);
+    this->setActive(false);
 }
 
 void MonitorWindow::handleEvents()

@@ -74,16 +74,16 @@ int main (int argc, char **argv)
     std::string outname="a.out"; //output assembled filename
     int monitor_type=0; 
     bool debug=false;
-    //use vsync for refresh the screen (more accuracte than setFrameLimit)
+    //use vsync for refresh the screen (more accurate than setFrameLimit)
     bool use_vsync=false; 
     //use time emulation based on sf::Clock; 
     bool use_time=false; 
-    //need asssemble the file 
+    //need assemble the file
     bool assemble=false; 
     //disable speaker
     bool no_sound=false;
     
-    //TODO make a fonction that parse argument into a program struct
+    //TODO make a function that parse argument into a program struct
     for (int k=1; k < argc; k++) //parse arguments
     {
         if (argv[k][0] == '-')
@@ -181,7 +181,7 @@ int main (int argc, char **argv)
     auto floppy = std::make_shared<m35fd::M35_Floppy>(disk_filename);
     fd->insertFloppy(floppy);
 
-    // Sets apropiated monitor
+    // Sets appropriated monitor
     std::shared_ptr<AbstractMonitor> monitor;
     switch (monitor_type)
     {
@@ -210,16 +210,10 @@ int main (int argc, char **argv)
         dcpu->attachHardware (speaker);
     dcpu->reset();
     dcpu->loadProgramFromFile(filename);
-   
-    sf::Texture texture; // texture of the screen
-    sf::Sprite sprite;   //sprite of the screen
-    const sf::Image* screen = monitor->getScreen();
+
     sf::Clock clock; 
     windows::MonitorWindow window(monitor, window_title, FRAMERATE);
-    float border_add = monitor->borderSize()*2;
-
-    if (use_vsync)
-    {
+    if (use_vsync) {
         LOG_WARN << "vsync activated may bug";
         window.setVerticalSyncEnabled(true);
     }
@@ -332,24 +326,9 @@ int main (int argc, char **argv)
 
             dcpu->tick(tick_needed);
         }
-        
-        
-        window.setActive(true);
-        
-        //Working resizing code
-        border_add = monitor->borderSize();
-        texture.loadFromImage(*screen); //Slow function
-        sprite.setTexture(texture);
-        sprite.setScale(  //Warning setScale and scale are different !!
-          (float)(window.getSize().x-border_add*2)/(float)(monitor->width()),
-          (float)(window.getSize().y-border_add*2)/(float)(monitor->height()));
-        sprite.setPosition(sf::Vector2f(border_add,border_add));
 
-        window.clear(monitor->getBorder()); //good idea
-        window.draw(sprite);
+        
         window.display();
-        window.setActive(false);
-
         keyb_win.display();
 
     }
