@@ -27,6 +27,7 @@
 // Modules that sues SFML
 #include <sfml/square_gen.hpp>
 #include <sfml/KeyboardWindow.hpp>
+#include <sfml/MonitorWindow.hpp>
 
 // Util
 #include <disassembler.hpp>
@@ -214,18 +215,15 @@ int main (int argc, char **argv)
     sf::Sprite sprite;   //sprite of the screen
     const sf::Image* screen = monitor->getScreen();
     sf::Clock clock; 
-    sf::RenderWindow window;
+    windows::MonitorWindow window(monitor, window_title, FRAMERATE);
     float border_add = monitor->borderSize()*2;
-    window.create(sf::VideoMode(monitor->phyWidth()+border_add,
-                                monitor->phyHeight()+border_add),
-                                window_title);
+
     if (use_vsync)
     {
         LOG_WARN << "vsync activated may bug";
         window.setVerticalSyncEnabled(true);
     }
-    else
-        window.setFramerateLimit(FRAMERATE);
+
     
     // We use a window to show a fake keyboard and capture keyboard
     // events if it have focus
@@ -233,89 +231,77 @@ int main (int argc, char **argv)
 
     LOG << "Entering main loop";
     unsigned long ticks_counter = 0;
+    bool pressed_key = false; // Used to emulate keyDown event
     while (window.isOpen() && keyb_win.isOpen()) {
     
         // Process events
         keyb_win.handleEvents();
+        window.handleEvents();
 
-        sf::Event event;
-        while (window.pollEvent(event)) 
-        {
-            // Close window : exit
-            if (event.type == sf::Event::Closed) {
-                window.close();
-            }
-            else if (event.type == sf::Event::Resized)
-            {
-                //Rewrap opengl camera
-                float r_width = window.getSize().x;
-                float r_height = window.getSize().y;
-                sf::FloatRect r(0,0,r_width,r_height);
-                window.setView(sf::View(r));
-            }
-            // NOTE This keyboard events should be handled by sf:Keyboard
-            // direclty and only works if any VM window have focus.
-            // Actually only wokrs if the monitor window have focus
-            else if (event.type == sf::Event::KeyPressed 
-                    || event.type == sf::Event::KeyReleased)
-            {
-                bool pressed = (event.type == sf::Event::KeyPressed);
-                switch (event.key.code)
-                {
-                    case sf::Keyboard::F1:
-                        if (debug && pressed)
-                        {
-                          std::cout << disassembly(dcpu->getMem()
-                                                +dcpu->getPC(),3);
-                          std::cout << std::endl;
-                          dcpu->step();
-                        }
-                        break;
-                    case sf::Keyboard::F2:
-                        if (debug && !pressed)
-                        {
-                          printf("A : 0x%04X | B : 0x%04X | C : 0x%04X\n",
-                                            dcpu->getA(),dcpu->getB(),dcpu->getC());
-                          printf("X : 0x%04X | Y : 0x%04X | Z : 0x%04X\n",
-                                            dcpu->getX(),dcpu->getY(),dcpu->getZ());
-                          printf("I : 0x%04X | J : 0x%04X | IA: 0x%04X\n",
-                                            dcpu->getI(),dcpu->getJ(),dcpu->getIA());
-                          printf("PC: 0x%04X | SP: 0x%04X | EX: 0x%04X\n",
-                                            dcpu->getPC(),dcpu->getSP(),dcpu->getEX());
-                        }
-                        break;
-                    case sf::Keyboard::F3: 
-                        //No need to be in debug mode for this one
-                        if (!pressed)
-                        {
-                            LOG << "reset dcpu";
-                            dcpu->reset();
-                            dcpu->loadProgramFromFile(filename);
-                        }
-                        break;
-                    case sf::Keyboard::F9:
-                        if (!pressed) {
-                            if (fd->getState() == m35fd::STATE_CODES::NO_MEDIA) {
-                                fd->insertFloppy(floppy);
-                            } else {
-                                fd->eject();
-                            }
-                        }
-                        break;
-
-                    case sf::Keyboard::F12:
-                        if (!pressed)
-                        {
-
-                            LOG << "Entering/exiting of Debug mode";
-                            debug = !debug;
-                        }
-                        break;
-                        
-                    default: break;
+        // Checks general keyboard events
+        if (keyb_win.haveFocus() || window.haveFocus()) {
+            if (debug && sf::Keyboard::isKeyPressed (sf::Keyboard::F1)) {
+                if (!pressed_key ) {
+                    std::cout << disassembly(dcpu->getMem()
+                                          +dcpu->getPC(),3);
+                    std::cout << std::endl;
+                    dcpu->step();
                 }
+
+                pressed_key = true;
+            } else if (debug && sf::Keyboard::isKeyPressed
+                                        (sf::Keyboard::F2)) {
+                if (!pressed_key ) {
+                    printf("A : 0x%04X | B : 0x%04X | C : 0x%04X\n",
+                                      dcpu->getA(),dcpu->getB(),dcpu->getC());
+                    printf("X : 0x%04X | Y : 0x%04X | Z : 0x%04X\n",
+                                      dcpu->getX(),dcpu->getY(),dcpu->getZ());
+                    printf("I : 0x%04X | J : 0x%04X | IA: 0x%04X\n",
+                                      dcpu->getI(),dcpu->getJ(),dcpu->getIA());
+                    printf("PC: 0x%04X | SP: 0x%04X | EX: 0x%04X\n",
+                                      dcpu->getPC(),dcpu->getSP(),dcpu->getEX());
+                    if (dcpu->isQueueing())
+                        printf("Interrupts being push to the queue\n");
+                    if (dcpu->getOnFire())
+                        printf("Catch Fire!\n");
+                }
+
+                pressed_key = true;
+            } else if (sf::Keyboard::isKeyPressed (sf::Keyboard::F3)) {
+                if (!pressed_key ) {
+                    LOG << "Reset dcpu";
+                    dcpu->reset();
+                    dcpu->loadProgramFromFile(filename);
+                }
+
+                pressed_key = true;
+            } else if (sf::Keyboard::isKeyPressed (sf::Keyboard::F9)) {
+                if (!pressed_key ) {
+                    if (fd->getState() == m35fd::STATE_CODES::NO_MEDIA) {
+                        fd->insertFloppy(floppy);
+                    } else {
+                        fd->eject();
+                    }
+                }
+
+                pressed_key = true;
+            } else if (sf::Keyboard::isKeyPressed (sf::Keyboard::F12) &&
+                    (sf::Keyboard::isKeyPressed (sf::Keyboard::LSystem) ||
+                     sf::Keyboard::isKeyPressed (sf::Keyboard::RSystem) )) {
+                if (!pressed_key ) {
+                    debug = !debug;
+                    if (debug)
+                        LOG << "Debug mode activated";
+                    else
+                        LOG << "Debug mode deactivated";
+                }
+
+                pressed_key = true;
+            } else {
+                pressed_key = false;
             }
         }
+
         
         ///DCPU emulation stuff
         monitor->prepareRender();

@@ -22,7 +22,7 @@ set(dcpu-vm_DEVICES_SRCS
 set(dcpu-vm_SFML_SRCS
     ./sfml/square_gen.cpp
     ./sfml/KeyboardWindow.cpp
-    ./sfml/MonitorWindows.cpp
+    ./sfml/MonitorWindow.cpp
     )
 
 add_executable(dcpu-vm 
