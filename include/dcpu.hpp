@@ -98,17 +98,24 @@ public:
      * @brief Return total number of CPU clock cycles
      * @return Total number of cycles
      */
-    inline uint64_t getTotCycles() {
+    inline uint64_t getTotCycles() const{
         return tot_cycles;
     };
     
     /**
      * @brief Return is in fire the CPU
      */
-    inline bool getOnFire() {
+    inline bool getOnFire() const{
         return on_fire;
     }
     
+    /**
+     * @brief Return if is Queuing interrupts
+     */
+    inline bool isQueueing() const {
+        return int_queueing;
+    }
+
     // Get/Set for registers
     
     inline void setA (const uint16_t& ra) {
