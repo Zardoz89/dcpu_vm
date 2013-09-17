@@ -17,7 +17,7 @@ typedef std::shared_ptr<cpu::keyboard::GKeyboard> sptr_GKeyboard;
  */
 class KeyboardWindow: public sf::RenderWindow {
 public:
-    KeyboardWindow(unsigned devId, sptr_GKeyboard keyboard);
+    KeyboardWindow(sptr_GKeyboard keyboard);
     virtual ~KeyboardWindow();
 
     /**

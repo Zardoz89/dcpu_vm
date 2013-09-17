@@ -229,7 +229,7 @@ int main (int argc, char **argv)
     
     // We use a window to show a fake keyboard and capture keyboard
     // events if it have focus
-    windows::KeyboardWindow keyb_win(gkeyboard->getDevIndex(), gkeyboard);
+    windows::KeyboardWindow keyb_win(gkeyboard);
 
     LOG << "Entering main loop";
     unsigned long ticks_counter = 0;

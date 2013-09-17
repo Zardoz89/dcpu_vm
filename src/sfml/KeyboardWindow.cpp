@@ -12,13 +12,14 @@
 
 namespace windows {
 
-KeyboardWindow::KeyboardWindow(unsigned devId, sptr_GKeyboard keyboard) :
+KeyboardWindow::KeyboardWindow(sptr_GKeyboard keyboard) :
         sf::RenderWindow(sf::VideoMode(484, 196), "Keyboard",
                          sf::Style::Titlebar | sf::Style::Close),
-        keyboard(keyboard), focus(false) {
+        keyboard(keyboard), focus(false)
+{
 
     char tmp[32];
-    std::snprintf(tmp, 32, "Keyboard DevId=%u", devId);
+    std::snprintf(tmp, 32, "Keyboard DevId=%zu", keyboard->getDevIndex());
     this->setTitle(tmp);
 
     this->setFramerateLimit(25);
@@ -40,7 +41,8 @@ KeyboardWindow::~KeyboardWindow()
     // TODO Auto-generated destructor stub
 }
 
-void KeyboardWindow::display() {
+void KeyboardWindow::display()
+{
     this->setActive(true);
     this->clear();
 
@@ -52,7 +54,8 @@ void KeyboardWindow::display() {
     this->setActive(false);
 }
 
-void KeyboardWindow::handleEvents() {
+void KeyboardWindow::handleEvents()
+{
     if (! this->isOpen())
         return;
 
