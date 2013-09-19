@@ -39,6 +39,7 @@ unsigned Lem1803::handleInterrupt()
             _height = Lem1803::HEIGHT;
         }
 
+        delete[] pixels;
         pixels = new uint8_t[4 * _width * _height]();
         return 0;
     } 
