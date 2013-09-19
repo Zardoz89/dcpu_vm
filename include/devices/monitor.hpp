@@ -99,13 +99,14 @@ protected:
             uint8_t r, uint8_t g, uint8_t b, uint8_t a =255)
     {
         assert(pixels != NULL);
-        //assert(x < width());
-        //assert(y < height());
+        assert(x < width());
+        assert(y < height());
 
-        pixels[4*(x*height() + y)  ] = r; // R
-        pixels[4*(x*height() + y)+1] = g; // G
-        pixels[4*(x*height() + y)+2] = b; // B
-        pixels[4*(x*height() + y)+3] = a; // A
+        auto pos = 4*(x + y*width());
+        pixels[pos   ] = r; // R
+        pixels[pos +1] = g; // G
+        pixels[pos +2] = b; // B
+        pixels[pos +3] = a; // A
     }
 
     /**
@@ -120,10 +121,11 @@ protected:
         assert(x < width());
         assert(y < height());
 
-        pixels[4*(x + y*width())  ] = color.r; // R
-        pixels[4*(x + y*width())+1] = color.g; // G
-        pixels[4*(x + y*width())+2] = color.b; // B
-        pixels[4*(x + y*width())+3] = color.a; // A
+        auto pos = 4*(x + y*width());
+        pixels[pos   ] = color.r; // R
+        pixels[pos +1] = color.g; // G
+        pixels[pos +2] = color.b; // B
+        pixels[pos +3] = color.a; // A
     }
 
 };

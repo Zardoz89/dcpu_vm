@@ -64,7 +64,7 @@ public:
 
     
 
-    virtual sf::Color getBorder() const;
+    virtual Color getBorder() const;
 
 
     const static uint16_t def_palette_map[16];   /// Default palette

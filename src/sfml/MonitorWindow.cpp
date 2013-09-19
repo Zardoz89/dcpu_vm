@@ -25,7 +25,6 @@ MonitorWindow::MonitorWindow(sptr_AbstractMonitor monitor,
     old_size = this->getSize();
 
     texture.create(monitor->width(), monitor->height());
-    //monitor->getScreen();
 }
 
 MonitorWindow::~MonitorWindow()
@@ -79,7 +78,7 @@ void MonitorWindow::handleEvents()
 
             if (diffWidth > diffHeight) { // Enforces aspect ratio
                 newsize.x = event.size.width;
-                newsize.y = (unsigned)(event.size.width * aspect_ratio);
+                newsize.y = (unsigned)(event.size.width / aspect_ratio);
             } else {
                 newsize.x = (unsigned)(event.size.height * aspect_ratio);
                 newsize.y = event.size.height;
