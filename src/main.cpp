@@ -183,6 +183,7 @@ int main (int argc, char **argv)
 
     // Sets appropriated monitor
     std::shared_ptr<AbstractMonitor> monitor;
+    auto splash_file = "assets/lem_splash.png";
     switch (monitor_type)
     {
         case 1:
@@ -194,6 +195,7 @@ int main (int argc, char **argv)
             monitor=std::make_shared<cgm::CGM>();
             LOG << "use CGM Monitor";
             window_title = "CGM";
+            splash_file = "assets/cgm_splash.png";
             break;
         default :
             monitor=std::make_shared<lem::Lem1802>();
@@ -213,7 +215,7 @@ int main (int argc, char **argv)
 
     sf::Clock clock; 
     windows::MonitorWindow window(monitor, window_title, FRAMERATE);
-    window.setSplashImage("assets/lem_spash.png");
+    window.setSplashImage(splash_file);
 
     if (use_vsync) {
         LOG_WARN << "vsync activated may bug";

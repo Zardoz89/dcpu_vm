@@ -26,7 +26,7 @@ enum COMMANDS { /// A register commands
 };
 
 static const unsigned REFRESHRATE           = 50;
-static const unsigned SPLASHTIME            = 1; // In seconds
+static const unsigned SPLASHTIME            = 2; // In seconds
 
 /**
  * @brief CGM 1084 monitor that uses SFML
