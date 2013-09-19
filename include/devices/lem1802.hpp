@@ -7,7 +7,6 @@
 #include <cstdint>
 
 #include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Image.hpp>
 
 namespace cpu {
 
@@ -18,6 +17,9 @@ static const uint16_t MEM_MAP_PALETTE       = 2;
 static const uint16_t SET_BORDER_COLOR      = 3;
 static const uint16_t MEM_DUMP_FONT         = 4;
 static const uint16_t MEM_DUMP_PALETTE      = 5;
+
+static const unsigned REFRESHRATE           = 50;
+static const unsigned SPLASHTIME            = 1; // In seconds
 
 /**
  * @brief LEM1802 that uses SFML
@@ -46,8 +48,6 @@ public:
         return 0x1c6c8b36;
     }
     
-    virtual unsigned int width() const {return WIDTH;}
-    virtual unsigned int height() const {return HEIGHT;}
     virtual unsigned int phyWidth() const {return WIDTH;}
     virtual unsigned int phyHeight() const {return HEIGHT;}
     unsigned int borderSize() {return BORDER_SIZE;}
@@ -64,7 +64,7 @@ public:
 
     
 
-    virtual sf::Color getBorder() const;
+    virtual Color getBorder() const;
 
 
     const static uint16_t def_palette_map[16];   /// Default palette

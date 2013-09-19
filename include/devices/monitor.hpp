@@ -4,21 +4,26 @@
 #include <dcpu.hpp>
 
 #include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Image.hpp>
 
 #include <cstdint>
+#include <cassert>
 
 namespace cpu {
 
+typedef sf::Color Color; // To hide sf::Color
+
 class AbstractMonitor : public cpu::IHardware{
 public:
-        AbstractMonitor() : need_render(false) {} 
+    AbstractMonitor() : need_render(false), pixels(NULL), _width(0), _height(0),
+                        powered(false), splash(false), splashtime(1000)
+    { }
+
     /**
      * Return Actual screen resolution Width without border
      */
     inline unsigned int width() const
     {
-        return screen.getSize().x;
+        return _width;
     }
     
     /**
@@ -26,7 +31,7 @@ public:
      */
     inline unsigned int height() const
     {
-        return screen.getSize().y;
+        return _height;
     }
 
     /**
@@ -48,7 +53,7 @@ public:
     /**
      * Returns the Border color
      */
-    virtual sf::Color getBorder() const = 0;
+    virtual Color getBorder() const = 0;
 
     /**
       * @Call before render 1 frame to each frames
@@ -58,23 +63,83 @@ public:
         need_render = true;
     }
     
+
+    
     /**
-      * @brief ptr value will NEVER change
-      */
-    inline const sf::Image* getScreen() const
+     * @brief ptr with the pixels in RGBA format
+     */
+    inline const uint8_t* getPixels() const
     {
-        return &screen;
+        return pixels;
     }
     
-    
+    inline bool isPowered() const
+    {
+        return powered;
+    }
+
+    inline bool isSplash() const
+    {
+        return splash;
+    }
+
 protected:
     /**
-     * Generates a sf::Image with the actual screen state
+     * Update the pixels array
      */
     virtual void updateScreen() = 0;
 
-    bool need_render; ///Do we need a render (Improve the speed)
-    sf::Image screen; 
+    bool need_render;       /// Do we need a render (Improve the speed)
+
+    uint8_t* pixels;        /// Pixels matrix in RGBA format
+    unsigned _width;        /// Screen width in pixels
+    unsigned _height;       /// Screen height in pixels
+
+    bool powered;           /// Is ON ?
+    bool splash;            /// In splash mode ?
+    uint32_t splashtime;    /// Time that shows the splash image in CPU cycles
+
+    /**
+     * Sets a pixel value
+     * @param x X coord must be < width
+     * @param y Y coord must be < height
+     * @param r Red channel
+     * @param g Green channel
+     * @param b Blue channel
+     * @param a Alpha channel
+     */
+    inline void setPixel(unsigned x, unsigned y,
+            uint8_t r, uint8_t g, uint8_t b, uint8_t a =255)
+    {
+        assert(pixels != NULL);
+        assert(x < width());
+        assert(y < height());
+
+        auto pos = 4*(x + y*width());
+        pixels[pos   ] = r; // R
+        pixels[pos +1] = g; // G
+        pixels[pos +2] = b; // B
+        pixels[pos +3] = a; // A
+    }
+
+    /**
+     * Sets a pixel value
+     * @param x X coord must be < width
+     * @param y Y coord must be < height
+     * @param color RGBA color
+     */
+    inline void setPixel(unsigned x, unsigned y, Color color)
+    {
+        assert(pixels != NULL);
+        assert(x < width());
+        assert(y < height());
+
+        auto pos = 4*(x + y*width());
+        pixels[pos   ] = color.r; // R
+        pixels[pos +1] = color.g; // G
+        pixels[pos +2] = color.b; // B
+        pixels[pos +3] = color.a; // A
+    }
 
 };
 } // END OF NAMESPACE cpu

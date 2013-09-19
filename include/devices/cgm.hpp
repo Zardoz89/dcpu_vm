@@ -25,6 +25,9 @@ enum COMMANDS { /// A register commands
     MEM_MAP_FONT,
 };
 
+static const unsigned REFRESHRATE           = 50;
+static const unsigned SPLASHTIME            = 2; // In seconds
+
 /**
  * @brief CGM 1084 monitor that uses SFML
  */
@@ -41,7 +44,7 @@ public:
     static const unsigned int COLS[3]; 
     
     
-    static const uint16_t BLINKPERSECOND    = 10;
+    static const uint16_t BLINKPERSECOND    = 2;
 
     uint32_t getId() const {
         return 0x7349043C;
@@ -67,7 +70,7 @@ public:
     
     virtual void attachTo (DCPU* cpu, size_t index);
 
-    virtual sf::Color getBorder() const;
+    virtual Color getBorder() const;
 
     const static uint16_t def_palette_map[64];          /// Default palette
     const static uint16_t def_fonts[256*2 + 256*4];     /// Font maps
