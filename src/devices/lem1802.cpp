@@ -15,18 +15,24 @@ const uint16_t Lem1802::def_palette_map[16] = {     /// Default palette
 };
 
 Lem1802::Lem1802() : screen_map (0), font_map (0), palette_map (0),
-border_col (0), ticks(0), blink(0) { 
-    screen.create(Lem1802::WIDTH, Lem1802::HEIGHT, sf::Color::Black);
+                     border_col (0), ticks(0), blink(0) {
+    _width = Lem1802::WIDTH;
+    _height = Lem1802::HEIGHT;
+    pixels = new uint8_t[4 * _width * _height]();
 }
 
 Lem1802::~Lem1802() 
-{ }
+{
+    delete[] pixels;
+}
 
 void Lem1802::attachTo (DCPU* cpu, size_t index) 
 {
     this->IHardware::attachTo(cpu, index);
+
     blink_max = cpu->getClock() / Lem1802::BLINKPERSECOND;
     blink = 0;
+
     screen_map = font_map, palette_map = 0;
     border_col = 0;
 }
@@ -39,7 +45,13 @@ unsigned Lem1802::handleInterrupt()
     size_t s;
     switch (cpu->getA() ) {
         case MEM_MAP_SCREEN:
+            if (screen_map == 0 && cpu->getB() != 0) {
+                splash = true;
+                splashtime = cpu->getClock() * SPLASHTIME;
+            }
+
             screen_map = cpu->getB();
+            powered = screen_map != 0x0000;
             break;
 
         case MEM_MAP_FONT:
@@ -77,29 +89,34 @@ unsigned Lem1802::handleInterrupt()
 void Lem1802::tick()
 {
     if (this->cpu == NULL) return;
-    if (++ticks > cpu->getClock() /50) {
+
+    if (++ticks > cpu->getClock() /REFRESHRATE) {
         // Update screen at 50Hz aprox
-        ticks -= cpu->getClock() / 50;
+        ticks -= cpu->getClock() / REFRESHRATE;
         this->updateScreen();
     }
-    if (++blink > blink_max*2)
-        blink = 0;
+
+    if (splash && splashtime-- == 0)
+        splash = false;
+
+    if (++blink > (blink_max << 1))
+        blink -= blink_max << 1;
 }
 
 void Lem1802::updateScreen()
 {
-    //TODO use uint32_t to fast copy the color into the buffer
-    //TODO remove all multiplications inside loop
     if (this->cpu == NULL || !need_render)
         return;
 
     need_render = false;
-    screen.create(Lem1802::WIDTH, Lem1802::HEIGHT, sf::Color::Black);
 
     if (screen_map != 0) { // Update the texture
+
         for (unsigned row=0; row < Lem1802::ROWS; row++) {
+            uint16_t row_offset = row * Lem1802::COLS;
+            auto r8 = row*8;
             for (unsigned col=0; col < Lem1802::COLS; col++) {
-                uint16_t pos = screen_map + row * Lem1802::COLS + col;
+                uint16_t pos = screen_map + row_offset + col;
                 unsigned char ascii = (unsigned char) (cpu->getMem()[pos] 
                                                         & 0x007F);
                 // Get palette indexes
@@ -122,12 +139,12 @@ void Lem1802::updateScreen()
                 }
 
                 // Composes RGBA values from palette colors
-                sf::Color fg (
+                Color fg (
                         ((fg_col & 0xF00)>> 8) *0x11,
                         ((fg_col & 0x0F0)>> 4) *0x11,
-                         (fg_col & 0x00F)      *0x11,
+                         (fg_col & 0x00F)      *0x11, // 0xF * 0x11 = 0xFF
                         0xFF );
-                sf::Color bg (
+                Color bg (
                         ((bg_col & 0xF00)>> 8) *0x11,
                         ((bg_col & 0x0F0)>> 4) *0x11,
                          (bg_col & 0x00F)      *0x11,
@@ -135,44 +152,49 @@ void Lem1802::updateScreen()
 
                 uint16_t glyph[2];
                 if (font_map == 0) { // Default font
-                    glyph[0] = Lem1802::def_font_map[ascii*2]; 
-                    glyph[1] = Lem1802::def_font_map[ascii*2+1];
+                    glyph[0] = Lem1802::def_font_map[ascii<<1];
+                    glyph[1] = Lem1802::def_font_map[(ascii<<1) +1];
                 } else {
-                    glyph[0] = cpu->getMem()[font_map+ (ascii*2)]; 
-                    glyph[1] = cpu->getMem()[font_map+ (ascii*2)+1]; 
+                    glyph[0] = cpu->getMem()[font_map + (ascii<<1)];
+                    glyph[1] = cpu->getMem()[font_map + (ascii<<1) +1];
                 }
                 
+                auto c4 = col*4;
                 for (int i=0; i< 8; i++) { 
                     // *** MSB ***
                     // First word 
+
                     bool pixel = ((1<<(i+8)) & glyph[0]) > 0;
+
                     if (pixel) {
-                        screen.setPixel (col*4, row*8 +i, fg);
+                        setPixel (c4, r8 +i, fg);
                     } else {
-                        screen.setPixel (col*4, row*8 +i, bg);
+                        setPixel (c4, r8 +i, bg);
                     }
+
+
                     // Second word
                     pixel = ((1<<(i+8)) & glyph[1]) > 0;
                     if (pixel) {
-                        screen.setPixel (col*4 +2, row*8 +i, fg);
+                        setPixel (c4 +2, r8 +i, fg);
                     } else {
-                        screen.setPixel (col*4 +2, row*8 +i, bg);
+                        setPixel (c4 +2, r8 +i, bg);
                     }
 
                     // *** LSB ***
                     // First word 
                     pixel = ((1<<i) & glyph[0]) >0;
                     if (pixel) {
-                        screen.setPixel (col*4 +1, row*8 +i, fg);
+                        setPixel (c4 +1, r8 +i, fg);
                     } else {
-                        screen.setPixel (col*4 +1, row*8 +i, bg);
+                        setPixel (c4 +1, r8 +i, bg);
                     }
                     // Second word
                     pixel = ((1<<i) & glyph[1]) > 0;
                     if (pixel) {
-                        screen.setPixel (col*4 +3, row*8 +i, fg);
+                        setPixel (c4 +3, r8 +i, fg);
                     } else {
-                        screen.setPixel (col*4 +3, row*8 +i, bg);
+                        setPixel (c4 +3, r8 +i, bg);
                     }
                 }
             }
@@ -180,7 +202,7 @@ void Lem1802::updateScreen()
     }
 }
 
-sf::Color Lem1802::getBorder() const
+Color Lem1802::getBorder() const
 {
     uint16_t border;
     if (palette_map == 0) { // Use default palette
@@ -188,7 +210,7 @@ sf::Color Lem1802::getBorder() const
     } else {
         border = cpu->getMem()[palette_map+ border_col];
     }
-    return sf::Color(
+    return Color(
                 ((border &0x0F00) >> 8) *0x11 ,
                 ((border &0x00F0) >> 4) *0x11 ,
                 ((border &0x000F) ) *0x11 ,

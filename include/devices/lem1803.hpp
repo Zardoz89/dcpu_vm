@@ -32,7 +32,7 @@ public:
     
     virtual void updateScreen();
     
-    virtual sf::Color getBorder() const;
+    virtual Color getBorder() const;
     
     /**
      * @brief is the LEM1803 emulating the LEM1802 ?

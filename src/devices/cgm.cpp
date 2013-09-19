@@ -23,10 +23,16 @@ const unsigned int CGM::COLS[3] = {64, 32, 32};
 CGM::CGM() : 
     bitfield_map (0), attribute_map (0), palette_map (0), font_map (0),
     videomode(0), border_col (0), ticks(0), blink(0) 
-{ }
+{
+    _width = CGM::WIDTH;
+    _height = CGM::HEIGHT;
+    pixels = new uint8_t[4 * _width * _height]();
+}
 
 CGM::~CGM() 
-{ }
+{
+    delete[] pixels;
+}
 
 void CGM::attachTo (DCPU* cpu, size_t index) 
 {
@@ -49,16 +55,26 @@ unsigned CGM::handleInterrupt()
     switch (cpu->getA() ) {
     case MEM_BITPLANE_SCREEN:
         if (bitfield_map == 0 && attribute_map != 0 && cpu->getB() != 0) {
-            videomode = 0; 
+            videomode = 0;
+            splash = true;
+            splashtime = cpu->getClock() * SPLASHTIME;
         }
+
         bitfield_map = cpu->getB();
+
+        powered = (bitfield_map != 0x0000) && (attribute_map != 0x0000);
         break;
 
     case MEM_ATTRIBUTE_SCREEN:
         if (bitfield_map != 0 && attribute_map == 0 && cpu->getB() != 0) {
             videomode = 0;
+            splash = true;
+            splashtime = cpu->getClock() * SPLASHTIME;
         }
+
         attribute_map = cpu->getB();
+
+        powered = (bitfield_map != 0x0000) && (attribute_map != 0x0000);
         break;
 
     case MEM_MAP_PALETTE:
@@ -70,7 +86,8 @@ unsigned CGM::handleInterrupt()
         break;
 
     case SET_VIDEO_MODE:
-        videomode = cpu->getB() & 3;
+        videomode = cpu->getB() & 0x7;
+        LOG << "[CGM] Videomode : " << videomode;
         break;
 
     case GET_VIDEO_MODE:
@@ -88,13 +105,12 @@ unsigned CGM::handleInterrupt()
         if (videomode == 4) {       // 4x8 fonts
             s = RAM_SIZE - 1 - cpu->getB() < 512 ? 
                 RAM_SIZE - 1 - cpu->getB() : 512 ;
-            std::copy_n (CGM::def_fonts, s, 
-                    cpu->getMem() + cpu->getB() );
+            std::copy_n (CGM::def_fonts, s, cpu->getMem() + cpu->getB() );
+
         } else if (videomode == 5) { // 8x8 fonts
             s = RAM_SIZE - 1 - cpu->getB() < 512*2 ? 
                 RAM_SIZE - 1 - cpu->getB() : 512*2 ;
-            std::copy_n (&CGM::def_fonts[512], s, 
-                    cpu->getMem() + cpu->getB() );
+            std::copy_n (&CGM::def_fonts[512], s, cpu->getMem() + cpu->getB() );
         }
         break;
 
@@ -113,13 +129,17 @@ unsigned CGM::handleInterrupt()
 void CGM::tick()
 {
     if (this->cpu == NULL) return;
-    if (++ticks > cpu->getClock() /50) {
-        // Update screen at 60Hz aprox
-        ticks -= cpu->getClock() /50;
+    if (++ticks > cpu->getClock() /REFRESHRATE) {
+        // Update screen at Refresh rate aprox.
+        ticks -= cpu->getClock() /REFRESHRATE;
         this->updateScreen();
     }
-    if (++blink > blink_max*2)
-        blink = 0;
+
+    if (splash && splashtime-- == 0)
+        splash = false;
+
+    if (++blink > (blink_max << 1))
+        blink -= blink_max << 1;
 }
 
 void CGM::updateScreen()
@@ -127,7 +147,6 @@ void CGM::updateScreen()
     if (this->cpu == NULL || !need_render)
         return;
     
-    screen.create(CGM::WIDTH, CGM::HEIGHT, sf::Color::Black);
     need_render = false;
     if (bitfield_map != 0 && attribute_map != 0) { 
         // Update the texture
@@ -153,12 +172,12 @@ void CGM::updateScreen()
                 }
 
                 // Composes RGBA values from palette colors
-                sf::Color fg (
+                Color fg (
                         ((fg_col & 0x7C00)>> 10) *8,
                         ((fg_col & 0x03E0)>> 5)  *8,
                          (fg_col & 0x001F)       *8,
                         0xFF );
-                sf::Color bg (
+                Color bg (
                         ((bg_col & 0x7C00)>> 10) *8,
                         ((bg_col & 0x03E0)>> 5)  *8,
                          (bg_col & 0x001F)       *8,
@@ -170,10 +189,10 @@ void CGM::updateScreen()
                 unsigned y = i / CGM::WIDTH;
                 if (cpu->getMem()[word] & 1<<bit) {
                     // Foreground
-                    screen.setPixel (x, y, fg);
+                    setPixel (x, y, fg);
                 } else {
-                    // Backgorund
-                    screen.setPixel (x, y, bg);
+                    // Background
+                    setPixel (x, y, bg);
                 }
             }
             break;
@@ -199,12 +218,12 @@ void CGM::updateScreen()
                 }
 
                 // Composes RGBA values from palette colors
-                sf::Color fg (
+                Color fg (
                         ((fg_col & 0x7C00)>> 10) *8,
                         ((fg_col & 0x03E0)>> 5)  *8,
                          (fg_col & 0x001F)       *8,
                         0xFF );
-                sf::Color bg (
+                Color bg (
                         ((bg_col & 0x7C00)>> 10) *8,
                         ((bg_col & 0x03E0)>> 5)  *8,
                          (bg_col & 0x001F)       *8,
@@ -216,15 +235,15 @@ void CGM::updateScreen()
                 unsigned y = i / CGM::WIDTH;
                 if (cpu->getMem()[word] & 1<<bit) {
                     // Foreground
-                    screen.setPixel (x, y, fg);
+                    setPixel (x, y, fg);
                 } else {
-                    // Backgorund
-                    screen.setPixel (x, y, bg);
+                    // Background
+                    setPixel (x, y, bg);
                 }
             }
             break;
 
-        case 2: // 256x192-16x192 cells of 8x2 pixels. 16 colors
+        case 2: // 256x192-16x192 cells of 8x2 pixels. 64 colors
             for (unsigned i=0; i < CGM::WIDTH * CGM::HEIGHT; i++) {
                 unsigned col = (i /8) % (CGM::COLS[videomode]);
                 unsigned row = i / (2*8*CGM::COLS[videomode]); 
@@ -245,12 +264,12 @@ void CGM::updateScreen()
                 }
 
                 // Composes RGBA values from palette colors
-                sf::Color fg (
+                Color fg (
                         ((fg_col & 0x7C00)>> 10) *8,
                         ((fg_col & 0x03E0)>> 5)  *8,
                          (fg_col & 0x001F)       *8,
                         0xFF );
-                sf::Color bg (
+                Color bg (
                         ((bg_col & 0x7C00)>> 10) *8,
                         ((bg_col & 0x03E0)>> 5)  *8,
                          (bg_col & 0x001F)       *8,
@@ -262,10 +281,10 @@ void CGM::updateScreen()
                 unsigned y = i / CGM::WIDTH;
                 if (cpu->getMem()[word] & 1<<bit) {
                     // Foreground
-                    screen.setPixel (x, y, fg);
+                    setPixel (x, y, fg);
                 } else {
-                    // Backgorund
-                    screen.setPixel (x, y, bg);
+                    // Background
+                    setPixel (x, y, bg);
                 }
             }
             break;
@@ -285,12 +304,12 @@ void CGM::updateScreen()
                     bg_col = cpu->getMem()[palette_map+ bg_ind];
                 }
                 // Composes RGBA values from palette colors
-                sf::Color fg (
+                Color fg (
                         ((fg_col & 0x7C00)>> 10) *8,
                         ((fg_col & 0x03E0)>> 5)  *8,
                          (fg_col & 0x001F)       *8,
                         0xFF );
-                sf::Color bg (
+                Color bg (
                         ((bg_col & 0x7C00)>> 10) *8,
                         ((bg_col & 0x03E0)>> 5)  *8,
                          (bg_col & 0x001F)       *8,
@@ -299,44 +318,53 @@ void CGM::updateScreen()
                 unsigned x = 0;
                 unsigned y = 0;
             
-            for (unsigned i=0; i < loop_condition; i++) {
-                uint16_t bit = cpu->getMem()[bitfield_map+i];
-                for (unsigned j = 0; j < 16; j++)
-                {
-                    if (bit & 1<<j) {
-                        // Foreground
-                        screen.setPixel (x, y, fg);
-                    } else {
-                        // Backgorund
-                        screen.setPixel (x, y, bg);
+                for (unsigned i=0; i < loop_condition; i++) {
+                    uint16_t bit = cpu->getMem()[bitfield_map+i];
+                    for (unsigned j = 0; j < 16; j++) {
+                        if (bit & 1<<j) {
+                            // Foreground
+                            setPixel (x, y, fg);
+                        } else {
+                            // Background
+                            setPixel (x, y, bg);
+                        }
+                        x++;
                     }
-                    x++;
+
+                    if (x>=CGM::WIDTH) {
+                        y++;
+                        x=0;
+                    }
                 }
-                if (x>=CGM::WIDTH)
-                {
-                    y++;
-                    x=0;
-                }
-            }
             }
             break;
 
         case 4: // 256x192 4x8 font Text mode
             for (unsigned row=0; row < CGM::ROWS[0]; row++) {
+                uint16_t row_offset_attr = row * CGM::COLS[0];
+                uint16_t row_offset = row_offset_attr/2;
+
                 for (unsigned col=0; col < CGM::COLS[0]; col++) {
-                    uint16_t pos = row * (CGM::COLS[0]/2) + (col/2);
-                    pos += bitfield_map;
-                    uint16_t attr_pos = row * CGM::COLS[0] + row;
+                    uint16_t pos = bitfield_map + row_offset + (col/2);
+                    uint16_t attr_pos = row * CGM::COLS[0] + col;
                     attr_pos += attribute_map;
 
-                    // Get palette indexes and other attributes
-                    uint16_t fg_ind = (cpu->getMem()[attr_pos] & 0x0FC0) 
-                        >> 6;
-                    uint16_t bg_ind = (cpu->getMem()[attr_pos] & 0x003F);
-                    bool blinkf = (cpu->getMem()[attr_pos] & 0x1000) > 0;
-                    bool underf = (cpu->getMem()[attr_pos] & 0x2000) > 0;
+                    auto row8 = row << 3;
 
+                    // Every word contains two characters
+                    unsigned char ascii;
+                    if (col%2 == 0) {
+                        ascii = (unsigned char) (cpu->getMem()[pos] & 0x00FF);
+                    } else {
+                        ascii = (unsigned char) ((cpu->getMem()[pos] & 0xFF00) >> 8);
+                    }
+
+                    // Get palette indexes
+                    uint16_t fg_ind = (cpu->getMem()[attr_pos] & 0x0FC0) >> 6;
+                    uint16_t bg_ind = (cpu->getMem()[attr_pos] & 0x003F);
+                    // Get palette indexes and other attributes
                     uint16_t fg_col, bg_col;
+
                     if (palette_map == 0) { // Use default palette
                         fg_col = CGM::def_palette_map[fg_ind];
                         bg_col = CGM::def_palette_map[bg_ind];
@@ -345,31 +373,24 @@ void CGM::updateScreen()
                         bg_col = cpu->getMem()[palette_map+ bg_ind];
                     }
 
-                    if (blink > blink_max && blinkf)
+                    // Does the blink
+                    if (blink > blink_max &&
+                           ((cpu->getMem()[attr_pos] & 0x1000) > 0) ) {
                         fg_col = bg_col;
+                    }
 
                     // Composes RGBA values from palette colors
-                    sf::Color fg (
-                            ((fg_col & 0x7C00)>> 10) *8,
-                            ((fg_col & 0x03E0)>> 5)  *8,
-                             (fg_col & 0x001F)       *8,
+                    Color fg (
+                            ((fg_col & 0x7C00)>> 10) << 3,
+                            ((fg_col & 0x03E0)>> 5)  << 3,
+                             (fg_col & 0x001F)       << 3,
                             0xFF );
-                    sf::Color bg (
-                            ((bg_col & 0x7C00)>> 10) *8,
-                            ((bg_col & 0x03E0)>> 5)  *8,
-                             (bg_col & 0x001F)       *8,
+                    Color bg (
+                            ((bg_col & 0x7C00)>> 10) << 3,
+                            ((bg_col & 0x03E0)>> 5)  << 3,
+                             (bg_col & 0x001F)       << 3,
                             0xFF );
 
-                    // Every word contains two characters
-                    unsigned char ascii;
-                    if (col%2 == 0) {  
-                        ascii = (unsigned char) 
-                            (cpu->getMem()[pos] & 0x00FF);
-                    } else {
-                        ascii = (unsigned char) 
-                            ((cpu->getMem()[pos] & 0xFF00) >> 8);
-                    }
-                    
                     uint16_t glyph[2];
                     if (font_map == 0) { // Default font
                         glyph[0] = CGM::def_fonts[ascii*2]; 
@@ -379,45 +400,45 @@ void CGM::updateScreen()
                         glyph[1] = cpu->getMem()[font_map+ (ascii*2)+1]; 
                     }
 
-                    // Display it
+                    auto col4 = col << 2;
                     for (int i=0; i< 8; i++) { 
                         // *** MSB ***
                         // First word 
                         bool pixel = ((1<<(i+8)) & glyph[0]) > 0;
                         if (pixel) {
-                            screen.setPixel (col*4, row*8 +i, fg);
+                            setPixel (col4, row8 +i, fg);
                         } else {
-                            screen.setPixel (col*4, row*8 +i, bg);
+                            setPixel (col4, row8 +i, bg);
+                        }
+                        // Second word
+                        pixel = ((1<<(i+8)) & glyph[1]) > 0;
+                        if (pixel) {
+                            setPixel (col4 +2, row8 +i, fg);
+                        } else {
+                            setPixel (col4 +2, row8 +i, bg);
+                        }
+
+                        // *** LSB ***
+                        // First word 
+                        pixel = ((1<<i) & glyph[0]) >0;
+                        if (pixel) {
+                            setPixel (col4 +1, row8 +i, fg);
+                        } else {
+                            setPixel (col4 +1, row8 +i, bg);
                         }
                         // Second word
                         pixel = ((1<<i) & glyph[1]) > 0;
                         if (pixel) {
-                            screen.setPixel (col*4 +2, row*8 +i, fg);
+                            setPixel (col4 +3, row8 +i, fg);
                         } else {
-                            screen.setPixel (col*4 +2, row*8 +i, bg);
-                        }
-                        
-                        // *** LSB ***
-                        // First word 
-                        pixel = ((1<<(i+8)) & glyph[0]) >0;
-                        if (pixel) {
-                            screen.setPixel (col*4 +1, row*8 +i, fg);
-                        } else {
-                            screen.setPixel (col*4 +1, row*8 +i, bg);
-                        }
-                        // Secodn word
-                        pixel = ((1<<i) & glyph[1]) > 0;
-                        if (pixel) {
-                            screen.setPixel (col*4 +3, row*8 +i, fg);
-                        } else {
-                            screen.setPixel (col*4 +3, row*8 +i, bg);
+                            setPixel (col4 +3, row8 +i, bg);
                         }
                     }
 
-                    if (underf) { // Underline, puts last row to ON
-                        for (int i=0; i<4; i++)
-                            screen.setPixel (col*4 +i, row*8 +8, fg);
-                    }
+                    // Underline
+                    if ((cpu->getMem()[attr_pos] & 0x2000) > 0)
+                        for (int i=0; i< 4; i++)
+                            setPixel(col4 +i, row8+ 7, fg);
 
                 }
             }
@@ -432,7 +453,7 @@ void CGM::updateScreen()
     } 
 }
 
-sf::Color CGM::getBorder() const
+Color CGM::getBorder() const
 {
     uint16_t border;
     if (palette_map == 0) { // Use default palette
@@ -440,10 +461,10 @@ sf::Color CGM::getBorder() const
     } else {
         border = cpu->getMem()[palette_map+ border_col];
     }
-    return sf::Color(
-                (sf::Uint8)(((border & 0x7C00)>> 10) *8),
-                (sf::Uint8)(((border & 0x03E0)>> 5)  *8),
-                (sf::Uint8)( (border & 0x001F)       *8),
+    return Color(
+                (uint8_t)(((border & 0x7C00)>> 10) *8),
+                (uint8_t)(((border & 0x03E0)>> 5)  *8),
+                (uint8_t)( (border & 0x001F)       *8),
                 0xFF );
 }
 
