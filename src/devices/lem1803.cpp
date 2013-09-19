@@ -32,10 +32,14 @@ unsigned Lem1803::handleInterrupt()
         font_map = palette_map = screen_map = 0;
         blink = 0;
         if (emulation_mode) {
-            screen.create(Lem1802::WIDTH,Lem1802::HEIGHT,sf::Color::Black);
+            _width = Lem1802::WIDTH;
+            _height = Lem1802::HEIGHT;
         } else {
-            screen.create(Lem1803::WIDTH,Lem1803::HEIGHT,sf::Color::Black);
+            _width = Lem1803::WIDTH;
+            _height = Lem1803::HEIGHT;
         }
+
+        pixels = new uint8_t[4 * _width * _height]();
         return 0;
     } 
 
@@ -69,10 +73,16 @@ void Lem1803::updateScreen()
     }
     need_render = false;
     if (screen_map != 0) { // Update the texture
+
         for (unsigned row=0; row < Lem1803::ROWS; row++) {
+            uint16_t row_offset_attr = row * Lem1803::COLS;
+            uint16_t row_offset = row_offset_attr/2;
+
             for (unsigned col=0; col < Lem1803::COLS; col++) {
-                uint16_t pos = screen_map + row * (Lem1803::COLS/2) + (col/2);
-                uint16_t pos_attr = screen_map + 1728 + row*Lem1803::COLS + col;
+                uint16_t pos = screen_map + row_offset + (col/2);
+                uint16_t pos_attr = screen_map + 1728 + row_offset_attr + col;
+                auto row8 = row << 3;
+
                 // Every word contains two characters
                 unsigned char ascii;
                 if (col%2 == 0) {  
@@ -101,15 +111,15 @@ void Lem1803::updateScreen()
                 }
                 
                 // Composes RGBA values from palette colors
-                sf::Color fg (
-                        ((fg_col & 0x7C00)>> 10) *8,
-                        ((fg_col & 0x03E0)>> 5)  *8,
-                         (fg_col & 0x001F)       *8,
+                Color fg (
+                        ((fg_col & 0x7C00)>> 10) << 3,
+                        ((fg_col & 0x03E0)>> 5)  << 3,
+                         (fg_col & 0x001F)       << 3,
                         0xFF );
-                sf::Color bg (
-                        ((bg_col & 0x7C00)>> 10) *8,
-                        ((bg_col & 0x03E0)>> 5)  *8,
-                         (bg_col & 0x001F)       *8,
+                Color bg (
+                        ((bg_col & 0x7C00)>> 10) << 3,
+                        ((bg_col & 0x03E0)>> 5)  << 3,
+                         (bg_col & 0x001F)       << 3,
                         0xFF );
 
                 uint16_t glyph[2];
@@ -120,38 +130,39 @@ void Lem1803::updateScreen()
                     glyph[0] = cpu->getMem()[font_map+ (ascii*2)]; 
                     glyph[1] = cpu->getMem()[font_map+ (ascii*2)+1]; 
                 }
-                
+
+                auto col4 = col << 2;
                 for (int i=0; i< 8; i++) { 
                     // *** MSB ***
                     // First word 
                     bool pixel = ((1<<(i+8)) & glyph[0]) > 0;
                     if (pixel) {
-                        screen.setPixel (col*4, row*8 +i, fg);
+                        setPixel (col4, row8 +i, fg);
                     } else {
-                        screen.setPixel (col*4, row*8 +i, bg);
+                        setPixel (col4, row8 +i, bg);
                     }
                     // Second word
                     pixel = ((1<<(i+8)) & glyph[1]) > 0;
                     if (pixel) {
-                        screen.setPixel (col*4 +2, row*8 +i, fg);
+                        setPixel (col4 +2, row8 +i, fg);
                     } else {
-                        screen.setPixel (col*4 +2, row*8 +i, bg);
+                        setPixel (col4 +2, row8 +i, bg);
                     }
                 
                     // *** LSB ***
                     // First word 
                     pixel = ((1<<i) & glyph[0]) >0;
                     if (pixel) {
-                        screen.setPixel (col*4 +1, row*8 +i, fg);
+                        setPixel (col4 +1, row8 +i, fg);
                     } else {
-                        screen.setPixel (col*4 +1, row*8 +i, bg);
+                        setPixel (col4 +1, row8 +i, bg);
                     }
                     // Second word
                     pixel = ((1<<i) & glyph[1]) > 0;
                     if (pixel) {
-                        screen.setPixel (col*4 +3, row*8 +i, fg);
+                        setPixel (col4 +3, row8 +i, fg);
                     } else {
-                        screen.setPixel (col*4 +3, row*8 +i, bg);
+                        setPixel (col4 +3, row8 +i, bg);
                     }
                 }
             }
@@ -159,7 +170,7 @@ void Lem1803::updateScreen()
     } 
 }
 
-sf::Color Lem1803::getBorder() const
+Color Lem1803::getBorder() const
 {
     if (emulation_mode)
         return Lem1802::getBorder();
@@ -170,10 +181,10 @@ sf::Color Lem1803::getBorder() const
     } else {
         border = cpu->getMem()[palette_map+ border_col];
     }
-    return sf::Color(
-                (sf::Uint8)(((border & 0x7C00)>> 10) *8),
-                (sf::Uint8)(((border & 0x03E0)>> 5)  *8),
-                (sf::Uint8)( (border & 0x001F)       *8),
+    return Color(
+                (sf::Uint8)(((border & 0x7C00)>> 10) << 3),
+                (sf::Uint8)(((border & 0x03E0)>> 5)  << 3),
+                (sf::Uint8)( (border & 0x001F)       << 3),
                 0xFF );
 }
 

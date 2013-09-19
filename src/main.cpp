@@ -17,7 +17,7 @@
 #include <devices/gkeyboard.hpp>
 
 #include <devices/lem1802.hpp>
-//#include <devices/lem1803.hpp>
+#include <devices/lem1803.hpp>
 //#include <devices/cgm.hpp>
 
 #include <devices/m35fd.hpp>
@@ -185,11 +185,11 @@ int main (int argc, char **argv)
     std::shared_ptr<AbstractMonitor> monitor;
     switch (monitor_type)
     {
-//        case 1:
-//            monitor=std::make_shared<lem::Lem1803>();
-//            LOG << "use Lem1803 Monitor";
-//            window_title = "Lem 1803";
-//            break;
+        case 1:
+            monitor=std::make_shared<lem::Lem1803>();
+            LOG << "use Lem1803 Monitor";
+            window_title = "Lem 1803";
+            break;
 //        case 2:
 //            monitor=std::make_shared<cgm::CGM>();
 //            LOG << "use CGM Monitor";

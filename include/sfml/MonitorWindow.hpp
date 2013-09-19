@@ -45,6 +45,8 @@ private:
     sptr_AbstractMonitor monitor;
     double aspect_ratio;
     sf::Vector2u old_size;
+    unsigned int old_width;
+    unsigned int old_height;
 
     float border_add;
 

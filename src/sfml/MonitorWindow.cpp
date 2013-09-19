@@ -25,6 +25,8 @@ MonitorWindow::MonitorWindow(sptr_AbstractMonitor monitor,
     old_size = this->getSize();
 
     texture.create(monitor->width(), monitor->height());
+    old_width = monitor->width();
+    old_height = monitor->height();
 
     splash.create(monitor->width(), monitor->height());
 
@@ -61,6 +63,12 @@ void MonitorWindow::display()
 
         // Working resizing code
         border_add = monitor->borderSize();
+
+        if (old_width != monitor->width() || old_height != monitor->height()) {
+            texture.create(monitor->width(), monitor->height());
+            old_width = monitor->width();
+            old_height = monitor->height();
+        }
 
         texture.update(monitor->getPixels()); //Slow function
         sprite.setTexture(texture);
