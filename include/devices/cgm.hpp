@@ -44,7 +44,7 @@ public:
     static const unsigned int COLS[3]; 
     
     
-    static const uint16_t BLINKPERSECOND    = 10;
+    static const uint16_t BLINKPERSECOND    = 2;
 
     uint32_t getId() const {
         return 0x7349043C;

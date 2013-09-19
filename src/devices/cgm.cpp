@@ -86,7 +86,8 @@ unsigned CGM::handleInterrupt()
         break;
 
     case SET_VIDEO_MODE:
-        videomode = cpu->getB() & 3;
+        videomode = cpu->getB() & 0x7;
+        LOG << "[CGM] Videomode : " << videomode;
         break;
 
     case GET_VIDEO_MODE:
@@ -135,10 +136,10 @@ void CGM::tick()
     }
 
     if (splash && splashtime-- == 0)
-            splash = false;
+        splash = false;
 
-    if (++blink > blink_max*2)
-        blink -= blink_max*2;
+    if (++blink > (blink_max << 1))
+        blink -= blink_max << 1;
 }
 
 void CGM::updateScreen()
@@ -340,20 +341,30 @@ void CGM::updateScreen()
 
         case 4: // 256x192 4x8 font Text mode
             for (unsigned row=0; row < CGM::ROWS[0]; row++) {
+                uint16_t row_offset_attr = row * CGM::COLS[0];
+                uint16_t row_offset = row_offset_attr/2;
+
                 for (unsigned col=0; col < CGM::COLS[0]; col++) {
-                    uint16_t pos = row * (CGM::COLS[0]/2) + (col/2);
-                    pos += bitfield_map;
-                    uint16_t attr_pos = row * CGM::COLS[0] + row;
+                    uint16_t pos = bitfield_map + row_offset + (col/2);
+                    uint16_t attr_pos = row * CGM::COLS[0] + col;
                     attr_pos += attribute_map;
 
-                    // Get palette indexes and other attributes
-                    uint16_t fg_ind = (cpu->getMem()[attr_pos] & 0x0FC0) 
-                        >> 6;
-                    uint16_t bg_ind = (cpu->getMem()[attr_pos] & 0x003F);
-                    bool blinkf = (cpu->getMem()[attr_pos] & 0x1000) > 0;
-                    bool underf = (cpu->getMem()[attr_pos] & 0x2000) > 0;
+                    auto row8 = row << 3;
 
+                    // Every word contains two characters
+                    unsigned char ascii;
+                    if (col%2 == 0) {
+                        ascii = (unsigned char) (cpu->getMem()[pos] & 0x00FF);
+                    } else {
+                        ascii = (unsigned char) ((cpu->getMem()[pos] & 0xFF00) >> 8);
+                    }
+
+                    // Get palette indexes
+                    uint16_t fg_ind = (cpu->getMem()[attr_pos] & 0x0FC0) >> 6;
+                    uint16_t bg_ind = (cpu->getMem()[attr_pos] & 0x003F);
+                    // Get palette indexes and other attributes
                     uint16_t fg_col, bg_col;
+
                     if (palette_map == 0) { // Use default palette
                         fg_col = CGM::def_palette_map[fg_ind];
                         bg_col = CGM::def_palette_map[bg_ind];
@@ -362,31 +373,24 @@ void CGM::updateScreen()
                         bg_col = cpu->getMem()[palette_map+ bg_ind];
                     }
 
-                    if (blink > blink_max && blinkf)
+                    // Does the blink
+                    if (blink > blink_max &&
+                           ((cpu->getMem()[attr_pos] & 0x1000) > 0) ) {
                         fg_col = bg_col;
+                    }
 
                     // Composes RGBA values from palette colors
                     Color fg (
-                            ((fg_col & 0x7C00)>> 10) *8,
-                            ((fg_col & 0x03E0)>> 5)  *8,
-                             (fg_col & 0x001F)       *8,
+                            ((fg_col & 0x7C00)>> 10) << 3,
+                            ((fg_col & 0x03E0)>> 5)  << 3,
+                             (fg_col & 0x001F)       << 3,
                             0xFF );
                     Color bg (
-                            ((bg_col & 0x7C00)>> 10) *8,
-                            ((bg_col & 0x03E0)>> 5)  *8,
-                             (bg_col & 0x001F)       *8,
+                            ((bg_col & 0x7C00)>> 10) << 3,
+                            ((bg_col & 0x03E0)>> 5)  << 3,
+                             (bg_col & 0x001F)       << 3,
                             0xFF );
 
-                    // Every word contains two characters
-                    unsigned char ascii;
-                    if (col%2 == 0) {  
-                        ascii = (unsigned char) 
-                            (cpu->getMem()[pos] & 0x00FF);
-                    } else {
-                        ascii = (unsigned char) 
-                            ((cpu->getMem()[pos] & 0xFF00) >> 8);
-                    }
-                    
                     uint16_t glyph[2];
                     if (font_map == 0) { // Default font
                         glyph[0] = CGM::def_fonts[ascii*2]; 
@@ -396,45 +400,45 @@ void CGM::updateScreen()
                         glyph[1] = cpu->getMem()[font_map+ (ascii*2)+1]; 
                     }
 
-                    // Display it
+                    auto col4 = col << 2;
                     for (int i=0; i< 8; i++) { 
                         // *** MSB ***
                         // First word 
                         bool pixel = ((1<<(i+8)) & glyph[0]) > 0;
                         if (pixel) {
-                            setPixel (col*4, row*8 +i, fg);
+                            setPixel (col4, row8 +i, fg);
                         } else {
-                            setPixel (col*4, row*8 +i, bg);
+                            setPixel (col4, row8 +i, bg);
                         }
                         // Second word
-                        pixel = ((1<<i) & glyph[1]) > 0;
+                        pixel = ((1<<(i+8)) & glyph[1]) > 0;
                         if (pixel) {
-                            setPixel (col*4 +2, row*8 +i, fg);
+                            setPixel (col4 +2, row8 +i, fg);
                         } else {
-                            setPixel (col*4 +2, row*8 +i, bg);
+                            setPixel (col4 +2, row8 +i, bg);
                         }
-                        
+
                         // *** LSB ***
                         // First word 
-                        pixel = ((1<<(i+8)) & glyph[0]) >0;
+                        pixel = ((1<<i) & glyph[0]) >0;
                         if (pixel) {
-                            setPixel (col*4 +1, row*8 +i, fg);
+                            setPixel (col4 +1, row8 +i, fg);
                         } else {
-                            setPixel (col*4 +1, row*8 +i, bg);
+                            setPixel (col4 +1, row8 +i, bg);
                         }
                         // Second word
                         pixel = ((1<<i) & glyph[1]) > 0;
                         if (pixel) {
-                            setPixel (col*4 +3, row*8 +i, fg);
+                            setPixel (col4 +3, row8 +i, fg);
                         } else {
-                            setPixel (col*4 +3, row*8 +i, bg);
+                            setPixel (col4 +3, row8 +i, bg);
                         }
                     }
 
-                    if (underf) { // Underline, puts last row to ON
-                        for (int i=0; i<4; i++)
-                            setPixel (col*4 +i, row*8 +8, fg);
-                    }
+                    // Underline
+                    if ((cpu->getMem()[attr_pos] & 0x2000) > 0)
+                        for (int i=0; i< 4; i++)
+                            setPixel(col4 +i, row8+ 7, fg);
 
                 }
             }
