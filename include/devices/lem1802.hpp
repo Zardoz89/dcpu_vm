@@ -7,7 +7,6 @@
 #include <cstdint>
 
 #include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Image.hpp>
 
 namespace cpu {
 

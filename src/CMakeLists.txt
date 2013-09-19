@@ -14,7 +14,7 @@ set(dcpu-vm_DEVICES_SRCS
     ./devices/gkeyboard.cpp
     ./devices/lem1802.cpp
     ./devices/lem1803.cpp
-#    ./devices/cgm.cpp
+    ./devices/cgm.cpp
     ./devices/speaker.cpp
     ./devices/m35fd.cpp
     )
