@@ -32,12 +32,25 @@ public:
      */
     void handleEvents();
 
+    /**
+     * @brief Sets the asset files with the splash image
+     * If the filename is "" or isn't called, then uses a black screen for
+     * splash
+     * @param filename Asset file
+     */
+    void setSplashImage (const std::string filename);
+
+
 private:
     sptr_AbstractMonitor monitor;
     double aspect_ratio;
     sf::Vector2u old_size;
 
     float border_add;
+
+    sf::Texture splash;         /// Splash image
+    sf::Sprite splash_sprite;   /// Splash sprite
+    sf::Color powering_fx;      /// Sprite color to imitate gradual power on
 
     sf::Texture texture;        /// Texture of the screen
     sf::Sprite sprite;          /// Sprite of the screen

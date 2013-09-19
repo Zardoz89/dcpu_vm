@@ -4,7 +4,6 @@
 #include <dcpu.hpp>
 
 #include <SFML/Graphics.hpp>
-#include <SFML/Graphics/Image.hpp>
 
 #include <cstdint>
 #include <cassert>
@@ -15,7 +14,8 @@ typedef sf::Color Color; // To hide sf::Color
 
 class AbstractMonitor : public cpu::IHardware{
 public:
-    AbstractMonitor() : need_render(false), pixels(NULL), _width(0), _height(0)
+    AbstractMonitor() : need_render(false), pixels(NULL), _width(0), _height(0),
+                        powered(false), splash(false), splashtime(1000)
     { }
 
     /**
@@ -73,18 +73,31 @@ public:
         return pixels;
     }
     
+    inline bool isPowered() const
+    {
+        return powered;
+    }
+
+    inline bool isSplash() const
+    {
+        return splash;
+    }
 
 protected:
     /**
-     * Generates a sf::Image with the actual screen state
+     * Update the pixels array
      */
     virtual void updateScreen() = 0;
 
-    bool need_render; ///Do we need a render (Improve the speed)
+    bool need_render;       /// Do we need a render (Improve the speed)
 
-    uint8_t* pixels;    /// Pixels matrix in RGBA format
-    unsigned _width;     /// Screen width in pixels
-    unsigned _height;    /// Screen height in pixels
+    uint8_t* pixels;        /// Pixels matrix in RGBA format
+    unsigned _width;        /// Screen width in pixels
+    unsigned _height;       /// Screen height in pixels
+
+    bool powered;           /// Is ON ?
+    bool splash;            /// In splash mode ?
+    uint32_t splashtime;    /// Time that shows the splash image in CPU cycles
 
     /**
      * Sets a pixel value

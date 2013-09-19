@@ -20,6 +20,7 @@ static const uint16_t MEM_DUMP_FONT         = 4;
 static const uint16_t MEM_DUMP_PALETTE      = 5;
 
 static const unsigned REFRESHRATE           = 50;
+static const unsigned SPLASHTIME            = 1; // In seconds
 
 /**
  * @brief LEM1802 that uses SFML

@@ -213,6 +213,8 @@ int main (int argc, char **argv)
 
     sf::Clock clock; 
     windows::MonitorWindow window(monitor, window_title, FRAMERATE);
+    window.setSplashImage("assets/lem_spash.png");
+
     if (use_vsync) {
         LOG_WARN << "vsync activated may bug";
         window.setVerticalSyncEnabled(true);

@@ -6,8 +6,8 @@
 namespace windows {
 
 MonitorWindow::MonitorWindow(sptr_AbstractMonitor monitor,
-                                 const std::string title,
-                                 unsigned framerate) : monitor(monitor)
+                             const std::string title, unsigned framerate) :
+                               monitor(monitor)
 {
 
     border_add = monitor->borderSize()*2;
@@ -25,6 +25,10 @@ MonitorWindow::MonitorWindow(sptr_AbstractMonitor monitor,
     old_size = this->getSize();
 
     texture.create(monitor->width(), monitor->height());
+
+    splash.create(monitor->width(), monitor->height());
+
+    powering_fx = sf::Color(0x01, 0x01, 0x01, 0xFF);
 }
 
 MonitorWindow::~MonitorWindow()
@@ -36,18 +40,49 @@ void MonitorWindow::display()
 {
     this->setActive(true);
 
-    //Working resizing code
-    border_add = monitor->borderSize();
+    if (monitor->isPowered() && monitor->isSplash()) {
+        // Show splash if there is any splash image
 
-    texture.update(monitor->getPixels()); //Slow function
-    sprite.setTexture(texture);
-    sprite.setScale(  //Warning setScale and scale are different !!
-      (float)(getSize().x-border_add*2)/(float)(monitor->width()),
-      (float)(getSize().y-border_add*2)/(float)(monitor->height()));
-    sprite.setPosition(sf::Vector2f(border_add,border_add));
+        splash_sprite.setScale(  //Warning setScale and scale are different !!
+          (float)(getSize().x) / (float)(splash.getSize().x),
+          (float)(getSize().y) / (float)(splash.getSize().y) );
 
-    clear(monitor->getBorder()); // Draws border and screen state
-    draw(sprite);
+        if (powering_fx.r < 0xFF) {
+            powering_fx.r += 0x02;
+            powering_fx.b += 0x02;
+            powering_fx.g += 0x02;
+            splash_sprite.setColor(powering_fx);
+        }
+
+        clear(sf::Color::Black);
+        draw(splash_sprite);
+
+    } else if (monitor->isPowered()) {
+
+        // Working resizing code
+        border_add = monitor->borderSize();
+
+        texture.update(monitor->getPixels()); //Slow function
+        sprite.setTexture(texture);
+
+        sprite.setScale(  //Warning setScale and scale are different !!
+          (float)(getSize().x - border_add*2) / (float)(monitor->width()),
+          (float)(getSize().y - border_add*2) / (float)(monitor->height()) );
+        sprite.setPosition(sf::Vector2f(border_add,border_add));
+
+        if (powering_fx.r < 0xFF) {
+            powering_fx.r += 0x02;
+            powering_fx.b += 0x02;
+            powering_fx.g += 0x02;
+            sprite.setColor(powering_fx);
+        }
+
+        clear(monitor->getBorder()); // Draws border and screen state
+        draw(sprite);
+
+    } else { // No power, no image
+        clear(sf::Color::Black);
+    }
 
     this->AbstractWindow::display();
     this->setActive(false);
@@ -98,6 +133,19 @@ void MonitorWindow::handleEvents()
         setView(sf::View(r));
         old_size = newsize;
     }
+}
+
+
+void MonitorWindow::setSplashImage (const std::string filename)
+{
+    if (filename.size() == 0) {
+        splash.create(monitor->width(), monitor->height());
+        return;
+    }
+
+    splash.loadFromFile(filename);
+    splash_sprite.setTexture(splash);
+    splash_sprite.setPosition(0,0);
 
 }
 

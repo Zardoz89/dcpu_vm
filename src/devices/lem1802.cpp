@@ -29,8 +29,10 @@ Lem1802::~Lem1802()
 void Lem1802::attachTo (DCPU* cpu, size_t index) 
 {
     this->IHardware::attachTo(cpu, index);
+
     blink_max = cpu->getClock() / Lem1802::BLINKPERSECOND;
     blink = 0;
+
     screen_map = font_map, palette_map = 0;
     border_col = 0;
 }
@@ -43,7 +45,13 @@ unsigned Lem1802::handleInterrupt()
     size_t s;
     switch (cpu->getA() ) {
         case MEM_MAP_SCREEN:
+            if (screen_map == 0 && cpu->getB() != 0) {
+                splash = true;
+                splashtime = cpu->getClock() * SPLASHTIME;
+            }
+
             screen_map = cpu->getB();
+            powered = screen_map != 0x0000;
             break;
 
         case MEM_MAP_FONT:
@@ -87,6 +95,10 @@ void Lem1802::tick()
         ticks -= cpu->getClock() / REFRESHRATE;
         this->updateScreen();
     }
+
+    if (splash && splashtime-- == 0)
+        splash = false;
+
     if (++blink > (blink_max << 1))
         blink -= blink_max << 1;
 }
