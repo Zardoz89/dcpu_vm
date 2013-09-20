@@ -2,7 +2,7 @@
 #ifndef _LEM1802_HPP
 #define _LEM1802_HPP
 #include <dcpu.hpp> 
-#include <devices/monitor.hpp> //base class AbstractMonitor
+#include <devices/amonitor.hpp> //base class AbstractMonitor
 
 #include <cstdint>
 

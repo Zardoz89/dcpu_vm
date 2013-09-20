@@ -3,14 +3,12 @@
 #define _MONITOR_HPP_ 1
 #include <dcpu.hpp>
 
-#include <SFML/Graphics.hpp>
+#include <graphics/color.hpp>
 
 #include <cstdint>
 #include <cassert>
 
 namespace cpu {
-
-typedef sf::Color Color; // To hide sf::Color
 
 class AbstractMonitor : public cpu::IHardware{
 public:

@@ -2,7 +2,7 @@
 #define MONITORWINDOWS_HPP_
 
 #include <sfml/AbstractWindow.hpp>
-#include <devices/monitor.hpp>
+#include <devices/amonitor.hpp>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>

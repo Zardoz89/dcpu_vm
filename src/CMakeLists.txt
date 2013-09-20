@@ -2,7 +2,7 @@
 include(SFML)
 
 set(dcpu-vm_SRCS
-    main.cpp
+    dcpu-vm.cpp
     dcpu.cpp
     disassembler.cpp  
     binasm.cpp
@@ -25,9 +25,13 @@ set(dcpu-vm_SFML_SRCS
     ./sfml/MonitorWindow.cpp
     )
 
+set(dcpu-vm_GRAPHICS_SRCS
+    )
+
 add_executable(dcpu-vm 
     ${dcpu-vm_SRCS}
     ${dcpu-vm_DEVICES_SRCS}
+    ${dcpu-vm_GRAPHICS_SRCS}
     ${dcpu-vm_SFML_SRCS}
     )
 

@@ -3,7 +3,7 @@
 #define _CGM_HPP
 
 #include <dcpu.hpp> // Base class: cpu::IHardware
-#include <devices/monitor.hpp>
+#include <devices/amonitor.hpp>
 
 #include <cstdint>
 
