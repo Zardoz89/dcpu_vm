@@ -1,7 +1,7 @@
 #ifndef ____BIN__ASM
 #define ____BIN__ASM
 
-#include <dcpu_opcodes.hpp>
+#include <dcpu/dcpu_opcodes.hpp>
 #include <file.h>
 #include <log.hpp>
 

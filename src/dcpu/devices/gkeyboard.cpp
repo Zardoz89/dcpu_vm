@@ -1,4 +1,4 @@
-#include <devices/gkeyboard.hpp>
+#include <dcpu/devices/gkeyboard.hpp>
 #include <config.hpp>
 
 #include <algorithm>

@@ -1,8 +1,8 @@
 #pragma once
 #ifndef _LEM1802_HPP
 #define _LEM1802_HPP
-#include <dcpu.hpp> 
-#include <devices/amonitor.hpp> //base class AbstractMonitor
+#include <dcpu/dcpu.hpp> 
+#include <dcpu/devices/amonitor.hpp> //base class AbstractMonitor
 
 #include <cstdint>
 

@@ -2,8 +2,8 @@
 #ifndef _CGM_HPP
 #define _CGM_HPP
 
-#include <dcpu.hpp> // Base class: cpu::IHardware
-#include <devices/amonitor.hpp>
+#include <dcpu/dcpu.hpp> // Base class: cpu::IHardware
+#include <dcpu/devices/amonitor.hpp>
 
 #include <cstdint>
 

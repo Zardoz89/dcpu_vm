@@ -1,5 +1,5 @@
-#include <disassembler.hpp>
-#include <dcpu_opcodes.hpp>
+#include <dcpu/disassembler.hpp>
+#include <dcpu/dcpu_opcodes.hpp>
 
 #include <cassert>
 #include <sstream>

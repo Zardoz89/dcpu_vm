@@ -1,7 +1,7 @@
 #ifndef _SPEAKER_HPP_
 #define _SPEAKER_HPP_ 1
 
-#include <dcpu.hpp>
+#include <dcpu/dcpu.hpp>
 
 namespace cpu {
 

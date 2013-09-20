@@ -1,4 +1,4 @@
-#include <devices/cgm.hpp>
+#include <dcpu/devices/cgm.hpp>
 
 #include <algorithm>
 #include <cctype>

@@ -2,7 +2,7 @@
 #define KEYBOARDWINDOW_HPP_ 1
 
 #include <sfml/AbstractWindow.hpp>
-#include <devices/gkeyboard.hpp>
+#include <dcpu/devices/gkeyboard.hpp>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>

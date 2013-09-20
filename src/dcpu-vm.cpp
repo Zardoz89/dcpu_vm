@@ -9,20 +9,11 @@
 #include "config.hpp"
 
 // Machine core
-#include <dcpu_opcodes.hpp>
-#include <dcpu.hpp>
+#include <dcpu/dcpu_opcodes.hpp>
+#include <dcpu/dcpu.hpp>
 
 // Devices
-#include <devices/gclock.hpp>
-#include <devices/gkeyboard.hpp>
-
-#include <devices/lem1802.hpp>
-#include <devices/lem1803.hpp>
-#include <devices/cgm.hpp>
-
-#include <devices/m35fd.hpp>
-
-#include <devices/speaker.hpp>
+#include <dcpu/devices.hpp>
 
 // Modules that sues SFML
 #include <sfml/square_gen.hpp>
@@ -30,7 +21,7 @@
 #include <sfml/MonitorWindow.hpp>
 
 // Util
-#include <disassembler.hpp>
+#include <dcpu/disassembler.hpp>
 #include <binasm.hpp>
 
 #define FRAMERATE   50

@@ -1,4 +1,4 @@
-#include <devices/gclock.hpp>
+#include <dcpu/devices/gclock.hpp>
 
 #include <iostream>
 

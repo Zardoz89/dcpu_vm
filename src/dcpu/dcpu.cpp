@@ -1,5 +1,5 @@
-#include <dcpu.hpp>
-#include <dcpu_opcodes.hpp>
+#include <dcpu/dcpu.hpp>
+#include <dcpu/dcpu_opcodes.hpp>
 
 #include <iostream>
 #include <algorithm>

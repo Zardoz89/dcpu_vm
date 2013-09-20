@@ -1,7 +1,7 @@
 #ifndef __M35FD__HPP__
 #define __M35FD__HPP__ 1
 
-#include <dcpu.hpp>
+#include <dcpu/dcpu.hpp>
 #include <config.hpp>
 
 #include <cstdint>

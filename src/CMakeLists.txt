@@ -3,20 +3,20 @@ include(SFML)
 
 set(dcpu-vm_SRCS
     dcpu-vm.cpp
-    dcpu.cpp
-    disassembler.cpp  
+    ./dcpu/dcpu.cpp
+    ./dcpu/disassembler.cpp  
     binasm.cpp
     file.c
     )
 
 set(dcpu-vm_DEVICES_SRCS
-    ./devices/gclock.cpp
-    ./devices/gkeyboard.cpp
-    ./devices/lem1802.cpp
-    ./devices/lem1803.cpp
-    ./devices/cgm.cpp
-    ./devices/speaker.cpp
-    ./devices/m35fd.cpp
+    ./dcpu/devices/gclock.cpp
+    ./dcpu/devices/gkeyboard.cpp
+    ./dcpu//devices/lem1802.cpp
+    ./dcpu//devices/lem1803.cpp
+    ./dcpu//devices/cgm.cpp
+    ./dcpu//devices/speaker.cpp
+    ./dcpu//devices/m35fd.cpp
     )
 
 set(dcpu-vm_SFML_SRCS

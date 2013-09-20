@@ -1,7 +1,7 @@
 #pragma once
 #ifndef _MONITOR_HPP_
 #define _MONITOR_HPP_ 1
-#include <dcpu.hpp>
+#include <dcpu/dcpu.hpp>
 
 #include <graphics/color.hpp>
 
