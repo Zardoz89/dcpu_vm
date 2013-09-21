@@ -20,7 +20,7 @@
 
 enum OUTPUT_FORMAT {
     DAT,
-    HEX_LIST,
+    HEX_DUMP,
 };
 
 enum CHARSET_TYPE {
@@ -41,7 +41,7 @@ void print_help(std::string program_name)
     cout << "            8x8 -> Generates 8x8 font charset\n";
     cout << "    -format=<output_format> : use the following format\n";
     cout << "            dat -> Uses universal .dat output format\n";
-    cout << "            hex_list -> Generates a hexadecimal list\n";
+    cout << "            hex_dump -> Generates a hexadecimal dump\n";
     cout << "            By defaults, the ouput format is \"dat\" and the"
          << " charset is 4x8\n";
 }
@@ -81,14 +81,14 @@ int main (int argc, char **argv)
                         " requiered another argument it will be ignored here";
             } else if (opt == "-format=dat" ) {
                 format = OUTPUT_FORMAT::DAT;
-            } else if (opt == "-format=hex_list") {
-                format = OUTPUT_FORMAT::HEX_LIST;
+            } else if (opt == "-format=hex_dump") {
+                format = OUTPUT_FORMAT::HEX_DUMP;
             } else if (opt == "-charset=4x8") {
                 type = CHARSET_TYPE::C4x8;
             } else if (opt == "-charset=8x8") {
                 type = CHARSET_TYPE::C8x8;
             } else {
-                LOG_WARN << "Unknow option " + opt + " it will be ignored !";
+                LOG_WARN << "Unknown option " + opt + " it will be ignored !";
             }
         } else {
             filename = argv[k];
@@ -117,7 +117,7 @@ int main (int argc, char **argv)
 
     // Check header
     if (str.size() <= 0 || str.substr(0, 2) != "P1") {
-        LOG_ERROR << "Invalid input file. Must be a PBM file. Aborting.";
+        LOG_ERROR << "Invalid input file. Must be a ASCII PBM file. Aborting.";
         return -1;
     }
 
@@ -161,7 +161,7 @@ int main (int argc, char **argv)
         return -1;
     }
 
-    // reads the framebuffer itself
+    // reads the frame buffer itself
     unsigned words_per_glyph = (type== CHARSET_TYPE::C4x8)? 2 : 4;
     unsigned glyphs_row = (type== CHARSET_TYPE::C4x8)? (width /4) : (width /8);
     unsigned num_words = words_per_glyph * glyphs_row;
