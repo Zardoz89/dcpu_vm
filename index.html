@@ -116,6 +116,44 @@ usage : dcpu-vm [-options] &lt;dcpu16-exe&gt;
 <li>DCPU manager and separated graphic rendering threads</li>
 <li>Correct bad English :P</li>
 </ul>
+
+<a name="tools" class="anchor" href="#tools"><span class="octicon octicon-link"></span></a>TOOLS</h1>
+
+<h2>
+<a name="pbm2font" class="anchor" href="#pbm2font"><span class="octicon octicon-link"></span></a>PBM2FONT</h2>
+
+<p>PBM2FONT is a small tool to create LEM180x and CGM 1084 fonts. It uses a ASCII <strong>PBM</strong> image file to create the HEX data values that represents the font.</p>
+
+<h3>
+<a name="run-1" class="anchor" href="#run-1"><span class="octicon octicon-link"></span></a>RUN</h3>
+
+<p>Just type <strong>pbm2font --help</strong> to get these infos.</p>
+
+<pre><code>usage : pbm2font [-options] &lt;input-file&gt;
+--------------------------------------------------------
+  options:
+    -output &lt;filename&gt; (-o) : output filename
+    -charset=&lt;charset_type&gt; : use the following charset type
+            4x8 -&gt; Generates 4x8 font charset
+            8x8 -&gt; Generates 8x8 font charset
+    -format=&lt;output_format&gt; : use the following format
+            dat -&gt; Uses universal .dat output format
+            hex_dump -&gt; Generates a hexadecimal dump
+            By defaults, the ouput format is "dat" and the charset is 4x8
+</code></pre>
+
+<p>If isn't choosed a output file, then output to the standard out.</p>
+
+<h3>
+<a name="how-works" class="anchor" href="#how-works"><span class="octicon octicon-link"></span></a>HOW WORKS</h3>
+
+<p>PBM2FONT reads the PBM file, and makes a grid of 4x8, or 8x8 cells. Each cell it's converted to the appropriate format for 4x8 or 8x8 fonts. So to generate a font, you only need to use a graphics editor program that outputs ASCII PBM files (for example The Gimp), and set a grid of 4x8 or 8x8. Then you only need to draw in B&amp;W each character and save the file. </p>
+
+<p><a
+    href="https://raw.github.com/Zardoz89/dcpu_vm/gh-pages/images/gimp_font.png"
+    target="_blank"><img
+    src="https://raw.github.com/Zardoz89/dcpu_vm/gh-pages/images/gimp_font.png"
+    alt="Crating a font with The Gimp" style="max-width:100%;"></a></p>
       </section>
     </div>
 
