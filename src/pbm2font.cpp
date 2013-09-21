@@ -200,7 +200,13 @@ int main (int argc, char **argv)
         
         } else { // 8x8
             auto glyph = x / 8;
-            // TODO 
+            auto word = glyph*4 + ((y%8)>>1);
+            if (y & 1) { // Odd
+                glyphs[word] |= (c == '1') << (7-(x%8));
+            } else {     // Even
+                glyphs[word] |= (c == '1') << (15-(x%8));
+            }
+
         }
         
         if (++x >= width) {
