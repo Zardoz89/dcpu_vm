@@ -47,5 +47,17 @@ target_link_libraries(dcpu-vm
     ${SFML_LIBRARIES}
 )
 
-INSTALL(TARGETS dcpu-vm DESTINATION ${dcpu-vm_SOURCE_DIR})
+# pbm2font tool
+
+add_executable(pbm2font
+    pbm2font.cpp
+    )
+
+include_directories(pbm2font
+    ${DCPU-VM_INCLUDE_DIRS}
+)
+
+target_link_libraries(pbm2font
+    ${CMAKE_THREAD_LIBS_INIT}
+)
 
