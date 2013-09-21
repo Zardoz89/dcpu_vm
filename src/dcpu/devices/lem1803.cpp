@@ -74,13 +74,12 @@ void Lem1803::updateScreen()
     }
     need_render = false;
     if (screen_map != 0) { 
-        uint8_t* pixel_pos = NULL;
+        uint8_t* pixel_pos = pixels;
         //4 pixel per col 4 value per pixels
         const unsigned row_pixel_size = Lem1803::WIDTH*4; 
-        const unsigned row_pixel_size_8 = row_pixel_size*8; 
-        for (unsigned row=0; row < Lem1803::ROWS; row++) {
-            pixel_pos=pixels + row*row_pixel_size_8;
-            for (unsigned col=0; col < Lem1803::COLS; col++) {
+        const unsigned row_pixel_size_7 = row_pixel_size*7; 
+        for (unsigned row=0; row < Lem1803::ROWS; ++row) {
+            for (unsigned col=0; col < Lem1803::COLS; ++col) {
                 uint16_t pos = screen_map + row * (Lem1803::COLS/2) + (col/2);
                 uint16_t pos_attr = screen_map + 1728 + row*Lem1803::COLS + col;
                 // Every word contains two characters
@@ -132,7 +131,7 @@ void Lem1803::updateScreen()
                 }
                 
                 uint8_t* current_pixel_pos = pixel_pos;
-                for (int i=8; i< 16; i++) { // Puts MSB of Words
+                for (int i=8; i< 16; ++i) { // Puts MSB of Words
                     // First word 
                     bool pixel = ((1<<i) & glyph[0]) > 0;
                     if (pixel) {
@@ -163,7 +162,7 @@ void Lem1803::updateScreen()
                 }
                 current_pixel_pos = pixel_pos;
 
-                for (int i=0; i< 8; i++) { // Puts LSB of Words
+                for (int i=0; i< 8; ++i) { // Puts LSB of Words
                     // First word 
                     bool pixel = ((1<<i) & glyph[0]) >0;
                     if (pixel) {
@@ -194,10 +193,13 @@ void Lem1803::updateScreen()
                 }
                 pixel_pos+=16;
             }
+            pixel_pos+=row_pixel_size_7;
         }
     }
     
-    ///Non optimised 
+    ///Non Optimised Code
+    /// Leave this yet : if you implement something implement on
+    /// this code then optimise !!!!
     /*if (screen_map != 0) { // Update the texture
 
         for (unsigned row=0; row < Lem1803::ROWS; row++) {
