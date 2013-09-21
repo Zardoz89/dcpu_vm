@@ -9,8 +9,9 @@ namespace cgm {
 
 const uint16_t CGM::def_fonts[256*2 + 256*4] = {  /// Font maps
 #   include "lem1802_font.inc"
-    // TODO Upper half of 8-bit Extended ASCII to 4x8 font
-    // TODO Add font for 8x8
+#   include "lem1802_font.inc" // TODO Upper half of 8-bit Extended ASCII
+    // 8x8 Font
+#   include "cgm8x8font.inc"
 }; 
 
 const  uint16_t CGM::def_palette_map[64] = {    /// Default palette
