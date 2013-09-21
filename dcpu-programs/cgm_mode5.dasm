@@ -1,0 +1,43 @@
+HWN Z
+:loop_search_cgm
+SUB Z, 1
+HWQ Z
+IFE B, 0x7349
+    IFE A, 0x043C
+        SET [CGM_ID], Z
+
+IFG Z, 0
+    SET PC, loop_search_cgm
+
+; Change videomode and points text and attrbiutes
+SET A, 0
+SET B, TEXT
+HWI [CGM_ID] ; Text section
+
+SET A, 1
+SET B, ATTR
+HWI [CGM_ID] ; Attrbiute section
+
+SET A, 4
+SET B, 5
+HWI [CGM_ID] ; Set Mode 5 text, font of 8x8
+
+:end
+SET PC, end
+
+
+:CGM_ID
+.dat 0
+
+:TEXT 
+.dat 0x6f48, 0x616c ; "HOLA"
+.RESW 0, 766
+
+:ATTR 
+.dat 0x13C0, 0x23C0, 0x33C0, 0x03C0, 0x000F
+.RESW 0, 59
+.dat 0, 1, 2, 3, 4 ,5 ,6 ,7 ,8 ,9 ,10 ,11, 12, 13, 14 ,15 ,16, 17 ,18, 19, 20
+.dat 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38 
+.dat 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56
+.dat 57, 58, 59, 60, 61, 62, 63
+.RESW 0, 1920

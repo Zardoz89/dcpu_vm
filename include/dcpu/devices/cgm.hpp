@@ -40,8 +40,8 @@ public:
     static const unsigned int HEIGHT        = 192;
     static const unsigned int BORDER_SIZE   = 10;
 
-    static const unsigned int ROWS[3]; 
-    static const unsigned int COLS[3]; 
+    static const unsigned int ROWS[];
+    static const unsigned int COLS[];
     
     
     static const uint16_t BLINKPERSECOND    = 2;

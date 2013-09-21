@@ -70,7 +70,7 @@ Avaliable shortcuts alltime:
 TODO
 ----
 
- - Finnish CGM code <s>and create a 8x8 font</s>
+ - <s>Finnish CGM code and create a 8x8 font</s>
  - Set a way of how configure what devices will be used in the machine
  - Several optimizations on rendering monitor loops
  - Rename variables/namespaces with a convention -> Apply code convention of Trillek proyect more strictly.
