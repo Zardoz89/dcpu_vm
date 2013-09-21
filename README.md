@@ -3,33 +3,34 @@ DCPU VM
 Multi-platform DCPU-16 Virtual Machine
 -----------------------------------
 
-Note that this VM is aimed to implement and test some of the proposed hardware devices of the <a href="http://trillek.org/" target="_blank">Trillek proyect</a>.
+Note that this VM is aimed to implement and test some of the proposed hardware devices of the [Trillek project](http://trillek.org/).
 In addition, includes some extra tools.
 
 
-Based on <a href="https://bitbucket.org/benedek/dcpu-16/overview" target="_blank">Benedek Vartok VM</a>
-  
+Based on [Benedek Vartok VM](https://bitbucket.org/benedek/dcpu-16/overview)
 
-COMPILING
----------
+
+COMPILATION
+-----------
+
     mkdir build
     cd build
     cmake ..
     make
     
-To doing a Release build (compiling with optimizations):
+To make a Release build (compiling with optimizations):
 
     cmake -DCMAKE_BUILD_TYPE=Release ..
     
-To doing a Debug build:
+To make a Debug build:
 
     cmake -DCMAKE_BUILD_TYPE=Debug ..
 
-Run make install to copy the executable to the root of the project
-This project fork is created to run perfectly on windows without boost
+Run **make install** to copy the executable to the root of the project
+This project fork is made to run perfectly on windows without boost
 
-RUN
----
+RUNNING
+-------
 
 Just type **dcpu-vm --help** to get these infos.
 
@@ -56,7 +57,7 @@ Just type **dcpu-vm --help** to get these infos.
                         (more accurate but may bug)
 
 
-There is a debug/step mode activate/deactivate with **System+F12**:
+There is a debug/step mode that can be activated and deactivated with **System+F12**:
  
  - **F1** : Single step (print the current instruction on the console)
  - **F2** : Print registers states into console
@@ -100,13 +101,13 @@ Just type **pbm2font --help** to get these infos.
         -format=<output_format> : use the following format
                 dat -> Uses universal .dat output format
                 hex_dump -> Generates a hexadecimal dump
-                By defaults, the ouput format is "dat" and the charset is 4x8
+                By default, the ouput format is "dat" and the charset is 4x8
                 
-If isn't choosed a output file, then output to the standard out.
+If no output file has been chosen, then it will write to standard out.
 
-### HOW WORKS
+### HOW IT WORKS
 
-PBM2FONT reads the PBM file, and makes a grid of 4x8, or 8x8 cells. Each cell it's converted to the appropriate format for 4x8 or 8x8 fonts. So to generate a font, you only need to use a graphics editor program that outputs ASCII PBM files (for example The Gimp), and set a grid of 4x8 or 8x8. Then you only need to draw in B&W each character and save the file. 
+PBM2FONT reads the PBM file, and makes a grid of 4x8, or 8x8 cells. Each cell is converted to the appropriate format for 4x8 or 8x8 fonts. So to generate a font, you only need to use a graphics editor program that outputs ASCII PBM files (for example The Gimp), and set a grid of 4x8 or 8x8. Then you only need to draw each character in black and white and save the file.
 
 ![Creating a font with The Gimp](https://raw.github.com/Zardoz89/dcpu_vm/gh-pages/images/gimp_font.png)
 
