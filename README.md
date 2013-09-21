@@ -4,6 +4,7 @@ Multi-platform DCPU-16 Virtual Machine
 -----------------------------------
 
 Note that this VM is aimed to implement and test some of the proposed hardware devices of the <a href="http://trillek.org/" target="_blank">Trillek proyect</a>.
+In addition, includes some extra tools.
 
 
 Based on <a href="https://bitbucket.org/benedek/dcpu-16/overview" target="_blank">Benedek Vartok VM</a>
@@ -69,14 +70,45 @@ Avaliable shortcuts alltime:
 TODO
 ----
 
- - Finnish CGM code and create a 8x8 font
+ - Finnish CGM code <s>and create a 8x8 font</s>
  - Set a way of how configure what devices will be used in the machine
  - Several optimizations on rendering monitor loops
  - Rename variables/namespaces with a convention -> Apply code convention of Trillek proyect more strictly.
  - More options to Debug mode
  - DCPU manager and separated graphic rendering threads
  - Correct bad English :P
+ 
+ 
+TOOLS
+=====
 
+PBM2FONT
+--------
+PBM2FONT is a small tool to create LEM180x and CGM 1084 fonts. It uses a ASCII **PBM** image file to create the HEX data values that represents the font.
+
+### RUN
+
+Just type **pbm2font --help** to get these infos.
+
+    usage : pbm2font [-options] <input-file>
+    --------------------------------------------------------
+      options:
+        -output <filename> (-o) : output filename
+        -charset=<charset_type> : use the following charset type
+                4x8 -> Generates 4x8 font charset
+                8x8 -> Generates 8x8 font charset
+        -format=<output_format> : use the following format
+                dat -> Uses universal .dat output format
+                hex_dump -> Generates a hexadecimal dump
+                By defaults, the ouput format is "dat" and the charset is 4x8
+                
+If isn't choosed a output file, then output to the standard out.
+
+### HOW WORKS
+
+PBM2FONT reads the PBM file, and makes a grid of 4x8, or 8x8 cells. Each cell it's converted to the appropriate format for 4x8 or 8x8 fonts. So to generate a font, you only need to use a graphics editor program that outputs ASCII PBM files (for example The Gimp), and set a grid of 4x8 or 8x8. Then you only need to draw in B&W each character and save the file. 
+
+![ScreenShot](https://raw.github.com/{username}/{repository}/{branch}/{path})
 
 
 
