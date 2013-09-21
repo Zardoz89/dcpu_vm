@@ -34,7 +34,7 @@ RUNNING
 
 Just type **dcpu-vm --help** to get these infos.
 
-    dcpu-vm x.x.x
+    dcpu-vm 0.1
     usage : dcpu-vm [-options] <dcpu16-exe>
     --------------------------------------------------------
       options:
@@ -73,6 +73,9 @@ TODO
 
  - <s>Finnish CGM code and create a 8x8 font</s>
  - Set a way of how configure what devices will be used in the machine
+ - Implemente BadSector bitmap for floppies
+ - A tool to create floppies and fill/copy data to it.
+ - GUI of the floppy drive to eject and insert diferent floppies.
  - Several optimizations on rendering monitor loops
  - Rename variables/namespaces with a convention -> Apply code convention of Trillek proyect more strictly.
  - More options to Debug mode
