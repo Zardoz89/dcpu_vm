@@ -109,8 +109,128 @@ void Lem1802::updateScreen()
         return;
 
     need_render = false;
-
+    
+    
+    //4 pixel per col 4 value per pixels
     if (screen_map != 0) { // Update the texture
+        uint8_t* pixel_pos = NULL;
+        const unsigned row_pixel_size = Lem1802::WIDTH*4; 
+        const unsigned row_pixel_size_8 = row_pixel_size*8; 
+        for (unsigned row=0; row < Lem1802::ROWS; row++) {
+            //TODO Remove this mult
+            pixel_pos=pixels + row*row_pixel_size_8;
+            for (unsigned col=0; col < Lem1802::COLS; col++) {
+                uint16_t pos = screen_map + row * Lem1802::COLS + col;
+                unsigned char ascii = (unsigned char) (cpu->getMem()[pos] 
+                                                        & 0x007F);
+                // Get palette indexes
+                uint16_t fg_ind = (cpu->getMem()[pos] & 0xF000) >> 12;
+                uint16_t bg_ind = (cpu->getMem()[pos] & 0x0F00) >> 8;
+                uint16_t fg_col, bg_col;
+
+                if (palette_map == 0) { // Use default palette
+                    fg_col = Lem1802::def_palette_map[fg_ind &0xF];
+                    bg_col = Lem1802::def_palette_map[bg_ind &0xF];
+                } else {
+                    fg_col = cpu->getMem()[palette_map+ (fg_ind &0xF)];
+                    bg_col = cpu->getMem()[palette_map+ (bg_ind &0xF)];
+                }
+                
+                // Does the blink
+                if (blink > blink_max &&  
+                       ((cpu->getMem()[pos] & 0x80) > 0) ) {
+                    fg_col = bg_col;
+                }
+
+                // Composes RGBA values from palette colors
+                sf::Uint8 fg[] = {
+                    (sf::Uint8)(((fg_col & 0xF00)>> 8) *0x11),
+                    (sf::Uint8)(((fg_col & 0x0F0)>> 4) *0x11),
+                    (sf::Uint8)( (fg_col & 0x00F)      *0x11),
+                    0xFF };
+                sf::Uint8 bg[] = {
+                    (sf::Uint8)(((bg_col & 0xF00)>> 8) *0x11),
+                    (sf::Uint8)(((bg_col & 0x0F0)>> 4) *0x11),
+                    (sf::Uint8)( (bg_col & 0x00F)      *0x11),
+                    0xFF };
+
+                uint16_t glyph[2];
+                if (font_map == 0) { // Default font
+                    glyph[0] = Lem1802::def_font_map[ascii*2]; 
+                    glyph[1] = Lem1802::def_font_map[ascii*2+1];
+                } else {
+                    glyph[0] = cpu->getMem()[font_map+ (ascii*2)]; 
+                    glyph[1] = cpu->getMem()[font_map+ (ascii*2)+1]; 
+                }
+                uint8_t* current_pixel_pos = pixel_pos;
+                for (int i=8; i< 16; i++) { // Puts MSB of Words
+                    // First word 
+                    bool pixel = ((1<<i) & glyph[0]) > 0;
+                    if (pixel) {
+                        *(current_pixel_pos+0) = fg[0];
+                        *(current_pixel_pos+1) = fg[1];
+                        *(current_pixel_pos+2) = fg[2];
+                        *(current_pixel_pos+3) = fg[3];
+                    } else {
+                        *(current_pixel_pos+0) = bg[0];
+                        *(current_pixel_pos+1) = bg[1];
+                        *(current_pixel_pos+2) = bg[2];
+                        *(current_pixel_pos+3) = bg[3];
+                    }
+                    // Second word
+                    pixel = ((1<<i) & glyph[1]) > 0;
+                    if (pixel) {
+                        *(current_pixel_pos+0+2*4) = fg[0];
+                        *(current_pixel_pos+1+2*4) = fg[1];
+                        *(current_pixel_pos+2+2*4) = fg[2];
+                        *(current_pixel_pos+3+2*4) = fg[3];
+                    } else {
+                        *(current_pixel_pos+0+2*4) = bg[0];
+                        *(current_pixel_pos+1+2*4) = bg[1];
+                        *(current_pixel_pos+2+2*4) = bg[2];
+                        *(current_pixel_pos+3+2*4) = bg[3];
+                    }
+                    current_pixel_pos += row_pixel_size;
+                }
+                current_pixel_pos = pixel_pos;
+
+                for (int i=0; i< 8; i++) { // Puts LSB of Words
+                    // First word 
+                    bool pixel = ((1<<i) & glyph[0]) >0;
+                    if (pixel) {
+                        *(current_pixel_pos+0+1*4) = fg[0];
+                        *(current_pixel_pos+1+1*4) = fg[1];
+                        *(current_pixel_pos+2+1*4) = fg[2];
+                        *(current_pixel_pos+3+1*4) = fg[3];
+                    } else {
+                        *(current_pixel_pos+0+1*4) = bg[0];
+                        *(current_pixel_pos+1+1*4) = bg[1];
+                        *(current_pixel_pos+2+1*4) = bg[2];
+                        *(current_pixel_pos+3+1*4) = bg[3];
+                    }
+                    // Secodn word
+                    pixel = ((1<<i) & glyph[1]) > 0;
+                    if (pixel) {
+                        *(current_pixel_pos+0+3*4) = fg[0];
+                        *(current_pixel_pos+1+3*4) = fg[1];
+                        *(current_pixel_pos+2+3*4) = fg[2];
+                        *(current_pixel_pos+3+3*4) = fg[3];
+                    } else {
+                        *(current_pixel_pos+0+3*4) = bg[0];
+                        *(current_pixel_pos+1+3*4) = bg[1];
+                        *(current_pixel_pos+2+3*4) = bg[2];
+                        *(current_pixel_pos+3+3*4) = bg[3];
+                    }
+                    current_pixel_pos += row_pixel_size;
+                }
+                pixel_pos+=16;
+            }
+        }
+    }
+    
+    ///Non Optimised
+    
+    /*if (screen_map != 0) { // Update the texture
 
         for (unsigned row=0; row < Lem1802::ROWS; row++) {
             uint16_t row_offset = row * Lem1802::COLS;
@@ -199,7 +319,7 @@ void Lem1802::updateScreen()
                 }
             }
         }
-    }
+    }*/
 }
 
 Color Lem1802::getBorder() const
