@@ -108,7 +108,7 @@ If isn't choosed a output file, then output to the standard out.
 
 PBM2FONT reads the PBM file, and makes a grid of 4x8, or 8x8 cells. Each cell it's converted to the appropriate format for 4x8 or 8x8 fonts. So to generate a font, you only need to use a graphics editor program that outputs ASCII PBM files (for example The Gimp), and set a grid of 4x8 or 8x8. Then you only need to draw in B&W each character and save the file. 
 
-![ScreenShot](https://raw.github.com/{username}/{repository}/{branch}/{path})
+![Creating a font with The Gimp](https://raw.github.com/Zardoz89/dcpu_vm/gh-pages/images/gimp_font.png)
 
 
 
