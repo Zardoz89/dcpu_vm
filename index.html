@@ -28,128 +28,131 @@
 
     <div class="container">
       <section id="main_content">
-        <h1><a name="dcpu-vm" class="anchor" href="#dcpu-vm"><span class="octicon octicon-link"></span></a>DCPU VM</h1>
+        <h1>
+<a name="dcpu-vm" class="anchor" href="#dcpu-vm"><span class="octicon octicon-link"></span></a>DCPU VM</h1>
 
-        <h2>
-          <a name="multi-platform-dcpu-16-virtual-machine" class="anchor" href="#multi-platform-dcpu-16-virtual-machine"><span class="octicon octicon-link"></span></a>Multi-platform DCPU-16 Virtual Machine
-        </h2>
+<h2>
+<a name="multi-platform-dcpu-16-virtual-machine" class="anchor" href="#multi-platform-dcpu-16-virtual-machine"><span class="octicon octicon-link"></span></a>Multi-platform DCPU-16 Virtual Machine</h2>
 
-        <p>Note that this VM is aims to implement and test some of the proposed hardware devices of the <a href="http://trillek.org/" target="_blank">Trillek project</a>.
-        In addition, it includes some extra tools.</p>
+<p>Note that this VM is aimed to implement and test some of the proposed hardware devices of the <a href="http://trillek.org/">Trillek project</a>.
+In addition, includes some extra tools.</p>
 
-        <p>Based on <a href="https://bitbucket.org/benedek/dcpu-16/overview" target="_blank">Benedek Vartok VM</a></p>
+<p>Based on <a href="https://bitbucket.org/benedek/dcpu-16/overview">Benedek Vartok VM</a></p>
 
-        <h2>
-        <a name="compiling" class="anchor" href="#compiling"><span class="octicon octicon-link"></span></a>COMPILATION</h2>
+<h2>
+<a name="compilation" class="anchor" href="#compilation"><span class="octicon octicon-link"></span></a>COMPILATION</h2>
 
-        <pre><code>mkdir build
-        cd build
-        cmake ..
-        make
-        </code></pre>
+<pre><code>mkdir build
+cd build
+cmake ..
+make
+</code></pre>
 
-        <p>To make a Release build (compiling with optimization):</p>
+<p>To make a Release build (compiling with optimizations):</p>
 
-        <pre><code>cmake -DCMAKE_BUILD_TYPE=Release ..
-        </code></pre>
+<pre><code>cmake -DCMAKE_BUILD_TYPE=Release ..
+</code></pre>
 
-        <p>To make a Debug build:</p>
+<p>To make a Debug build:</p>
 
-        <pre><code>cmake -DCMAKE_BUILD_TYPE=Debug ..
-        </code></pre>
+<pre><code>cmake -DCMAKE_BUILD_TYPE=Debug ..
+</code></pre>
 
-        <p>Run <strong>make install</strong> to copy the executable to the root of the project
-        This project fork is made to run perfectly on windows without boost</p>
+<p>Run <strong>make install</strong> to copy the executable to the root of the project
+This project fork is made to run perfectly on windows without boost</p>
 
-        <h2>
-        <a name="run" class="anchor" href="#run"><span class="octicon octicon-link"></span></a>RUNNING</h2>
+<h2>
+<a name="running" class="anchor" href="#running"><span class="octicon octicon-link"></span></a>RUNNING</h2>
 
-        <p>Just type <strong>dcpu-vm --help</strong> to get these infos.</p>
+<p>Just type <strong>dcpu-vm --help</strong> to get these infos.</p>
 
-        <pre><code>dcpu-vm x.x.x
-        usage : dcpu-vm [-options] &lt;dcpu16-exe&gt;
-        --------------------------------------------------------
-          options:
-            -assemble (-a) : assemble before load (experimental)
-            -debug (-d) : start in debug mode
-                    F1  : next step
-                    F2  : print CPU status
-                    F3  : reset (no need debug mode)
-                    F9  : ejects/insert floppy (no need debug mode)
-                    System + F12 : switch debug/run
-            --monitor=&lt;monitor_name&gt; : use the following monitor
-                    1802 -&gt; Lem1802 (default) [c] (-1802)
-                    1803 -&gt; Lem1803 [c] (-1803)
-                    cgm -&gt; Colour Graphics Monitor (-cgm)
-                    [c] : compatible with Lem1802 0x10c programs
-            -output &lt;filename&gt; (-o) : output assembled filename
-            -floppy &lt;filename&gt; (-fd) : floppy image file
-            -time (-t) : use timed emulation (else refresh based)
-            -vsync (-v) : use vertical synchronization
-                            (more accurate but may bug)
-        </code></pre>
+<pre><code>dcpu-vm 0.1
+usage : dcpu-vm [-options] &lt;dcpu16-exe&gt;
+--------------------------------------------------------
+  options:
+    -assemble (-a) : assemble before load (experimental)
+    -debug (-d) : start in debug mode
+            F1  : next step
+            F2  : print CPU status
+            F3  : reset (no need debug mode)
+            F9  : ejects/insert floppy (no need debug mode)
+            System + F12 : switch debug/run
+    --monitor=&lt;monitor_name&gt; : use the following monitor
+            1802 -&gt; Lem1802 (default) [c] (-1802)
+            1803 -&gt; Lem1803 [c] (-1803)
+            cgm -&gt; Colour Graphics Monitor (-cgm)
+            [c] : compatible with Lem1802 0x10c programs
+    -output &lt;filename&gt; (-o) : output assembled filename
+    -floppy &lt;filename&gt; (-fd) : floppy image file
+    -time (-t) : use timed emulation (else refresh based)
+    -vsync (-v) : use vertical synchronization
+                    (more accurate but may bug)
+</code></pre>
 
-        <p>There is a debug/step mode that can be activated and deactivated with <strong>System+F12</strong>:</p>
+<p>There is a debug/step mode that can be activated and deactivated with <strong>System+F12</strong>:</p>
 
-        <ul>
-        <li>
-        <strong>F1</strong> : Single step (print the current instruction on the console)</li>
-        <li>
-        <strong>F2</strong> : Print registers states into console</li>
-        </ul><p>Avaliable shortcuts alltime: </p>
+<ul>
+<li>
+<strong>F1</strong> : Single step (print the current instruction on the console)</li>
+<li>
+<strong>F2</strong> : Print registers states into console</li>
+</ul><p>Avaliable shortcuts alltime: </p>
 
-        <ul>
-        <li>
-        <strong>F3</strong> : Reset the DCPU</li>
-        <li>
-        <strong>F9</strong> : Ejects/Inserts a floppy</li>
-        <li>
-        <strong>System+F12</strong> : Activate/Deactivate debug mode. Note that System is Windows/Apple/Super key</li>
-        </ul><h2>
-        <a name="todo" class="anchor" href="#todo"><span class="octicon octicon-link"></span></a>TODO</h2>
+<ul>
+<li>
+<strong>F3</strong> : Reset the DCPU</li>
+<li>
+<strong>F9</strong> : Ejects/Inserts a floppy</li>
+<li>
+<strong>System+F12</strong> : Activate/Deactivate debug mode. Note that System is Windows/Apple/Super key</li>
+</ul><h2>
+<a name="todo" class="anchor" href="#todo"><span class="octicon octicon-link"></span></a>TODO</h2>
 
-        <ul>
-        <li>Finnish CGM code and create a 8x8 font</li>
-        <li>Set a way of how configure what devices will be used in the machine</li>
-        <li>Several optimizations on rendering monitor loops</li>
-        <li>Rename variables/namespaces with a convention -&gt; Apply code convention of Trillek proyect more strictly.</li>
-        <li>More options to Debug mode</li>
-        <li>DCPU manager and separated graphic rendering threads</li>
-        <li>Correct bad English :P</li>
-        </ul><h1>
-        <a name="tools" class="anchor" href="#tools"><span class="octicon octicon-link"></span></a>TOOLS</h1>
+<ul>
+<li>Finnish CGM code and create a 8x8 font</li>
+<li>Set a way of how configure what devices will be used in the machine</li>
+<li>Implemente BadSector bitmap for floppies</li>
+<li>A tool to create floppies and fill/copy data to it.</li>
+<li>GUI of the floppy drive to eject and insert diferent floppies.</li>
+<li>Several optimizations on rendering monitor loops</li>
+<li>Rename variables/namespaces with a convention -&gt; Apply code convention of Trillek proyect more strictly.</li>
+<li>More options to Debug mode</li>
+<li>DCPU manager and separated graphic rendering threads</li>
+<li>Correct bad English :P</li>
+</ul><h1>
+<a name="tools" class="anchor" href="#tools"><span class="octicon octicon-link"></span></a>TOOLS</h1>
 
-        <h2>
-        <a name="pbm2font" class="anchor" href="#pbm2font"><span class="octicon octicon-link"></span></a>PBM2FONT</h2>
+<h2>
+<a name="pbm2font" class="anchor" href="#pbm2font"><span class="octicon octicon-link"></span></a>PBM2FONT</h2>
 
-        <p>PBM2FONT is a small tool to create LEM180x and CGM 1084 fonts. It uses a ASCII <strong>PBM</strong> image file to create the HEX data values that represent the font.</p>
+<p>PBM2FONT is a small tool to create LEM180x and CGM 1084 fonts. It uses a ASCII <strong>PBM</strong> image file to create the HEX data values that represents the font.</p>
 
-        <h3>
-        <a name="run-1" class="anchor" href="#run-1"><span class="octicon octicon-link"></span></a>RUNNING</h3>
+<h3>
+<a name="run" class="anchor" href="#run"><span class="octicon octicon-link"></span></a>RUN</h3>
 
-        <p>Just type <strong>pbm2font --help</strong> to get these infos.</p>
+<p>Just type <strong>pbm2font --help</strong> to get these infos.</p>
 
-        <pre><code>usage : pbm2font [-options] &lt;input-file&gt;
-        --------------------------------------------------------
-          options:
-            -output &lt;filename&gt; (-o) : output filename
-            -charset=&lt;charset_type&gt; : use the following charset type
-                    4x8 -&gt; Generates 4x8 font charset
-                    8x8 -&gt; Generates 8x8 font charset
-            -format=&lt;output_format&gt; : use the following format
-                    dat -&gt; Uses universal .dat output format
-                    hex_dump -&gt; Generates a hexadecimal dump
-                    By default, the ouput format is "dat" and the charset is 4x8
-        </code></pre>
+<pre><code>usage : pbm2font [-options] &lt;input-file&gt;
+--------------------------------------------------------
+  options:
+    -output &lt;filename&gt; (-o) : output filename
+    -charset=&lt;charset_type&gt; : use the following charset type
+            4x8 -&gt; Generates 4x8 font charset
+            8x8 -&gt; Generates 8x8 font charset
+    -format=&lt;output_format&gt; : use the following format
+            dat -&gt; Uses universal .dat output format
+            hex_dump -&gt; Generates a hexadecimal dump
+            By default, the ouput format is "dat" and the charset is 4x8
+</code></pre>
 
-        <p>If isn't choosed a output file, then output to the standard out.</p>
+<p>If no output file has been chosen, then it will write to standard out.</p>
 
-        <h3>
-        <a name="how-works" class="anchor" href="#how-works"><span class="octicon octicon-link"></span></a>HOW IT WORKS</h3>
+<h3>
+<a name="how-it-works" class="anchor" href="#how-it-works"><span class="octicon octicon-link"></span></a>HOW IT WORKS</h3>
 
-        <p>PBM2FONT reads the PBM file, and makes a grid of 4x8, or 8x8 cells. Each cell is converted to the appropriate format for 4x8 or 8x8 fonts. So to generate a font, you only need to use a graphics editor program that outputs ASCII PBM files (for example The Gimp), and set a grid of 4x8 or 8x8. Then you only need to draw each character in black and white and save the file.</p>
+<p>PBM2FONT reads the PBM file, and makes a grid of 4x8, or 8x8 cells. Each cell is converted to the appropriate format for 4x8 or 8x8 fonts. So to generate a font, you only need to use a graphics editor program that outputs ASCII PBM files (for example The Gimp), and set a grid of 4x8 or 8x8. Then you only need to draw each character in black and white and save the file.</p>
 
-        <p><img src="https://raw.github.com/Zardoz89/dcpu_vm/gh-pages/images/gimp_font.png" alt="Creating a font with The Gimp"></p>
+<p><img src="https://raw.github.com/Zardoz89/dcpu_vm/gh-pages/images/gimp_font.png" alt="Creating a font with The Gimp"></p>
       </section>
     </div>
 
