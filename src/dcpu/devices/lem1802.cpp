@@ -141,15 +141,15 @@ void Lem1802::updateScreen()
                 }
 
                 // Composes RGBA values from palette colors
-                sf::Uint8 fg[] = {
-                    (sf::Uint8)(((fg_col & 0xF00)>> 8) *0x11),
-                    (sf::Uint8)(((fg_col & 0x0F0)>> 4) *0x11),
-                    (sf::Uint8)( (fg_col & 0x00F)      *0x11),
+                uint8_t fg[] = {
+                    (uint8_t)(((fg_col & 0xF00)>> 8) *0x11),
+                    (uint8_t)(((fg_col & 0x0F0)>> 4) *0x11),
+                    (uint8_t)( (fg_col & 0x00F)      *0x11),
                     0xFF };
-                sf::Uint8 bg[] = {
-                    (sf::Uint8)(((bg_col & 0xF00)>> 8) *0x11),
-                    (sf::Uint8)(((bg_col & 0x0F0)>> 4) *0x11),
-                    (sf::Uint8)( (bg_col & 0x00F)      *0x11),
+                uint8_t bg[] = {
+                    (uint8_t)(((bg_col & 0xF00)>> 8) *0x11),
+                    (uint8_t)(((bg_col & 0x0F0)>> 4) *0x11),
+                    (uint8_t)( (bg_col & 0x00F)      *0x11),
                     0xFF };
 
                 uint16_t glyph[2];
