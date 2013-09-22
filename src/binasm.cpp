@@ -178,13 +178,17 @@ bool BinAsm::get_value(const std::string& word, uint16_t& v, std::string& err,
 			switch (word[2])
 			{
 				case 'n':
-					return '\n';
+					v = '\n';
+                    return true;
 				case 't':
-					return '\t';
+                    v = '\t';
+					return true;
 				case '\\':
-					return '\\';
+                    v = '\\';
+					return true;
 				case 'r':
-					return '\r';
+					v = '\r';
+                    return true;
 				default:
 					err = "invalid special symbol value " +  word;
 					return false;
@@ -272,7 +276,7 @@ bool BinAsm::get_data(const std::string& word,std::string& err,bool& unresolved)
 		{
 				if (word[j-1] == '\\')
 				{
-					switch (word[j+1])
+					switch (word[j])
 					{
                         case 'n':
                             _bin[_offset] = '\n';
@@ -283,7 +287,7 @@ bool BinAsm::get_data(const std::string& word,std::string& err,bool& unresolved)
                         case 'r':
                             _bin[_offset] = '\r';
                         default:
-                            err = "invalid special symbol value " + word;
+                            err = "invalid special symbol value " + word[j];
                             return false;
 					}
 							
