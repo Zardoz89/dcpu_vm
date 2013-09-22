@@ -887,7 +887,7 @@ bool BinAsm::assemble()
             if (w.size() >= c+3)
             {
                 std::string we = remove_spaces(w[c+2]);
-               if (get_value(we,count,err,unresolved))
+               if (get_value(we,init,err,unresolved))
                 {
                     if (unresolved)
                     {
