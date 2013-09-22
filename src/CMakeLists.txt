@@ -33,7 +33,12 @@ set(dcpu-vm_SFML_SRCS
 
 set(dcpu-vm_GRAPHICS_SRCS
     )
-    
+
+set(TinyXML-2_SRCS
+    ./tinyxml2/tinyxml2.cpp
+    )
+
+# DCPU-VM core lib
 add_library( dcpu
     SHARED
     ${dcpu_SRCS}
@@ -42,7 +47,8 @@ add_library( dcpu
 include_directories(dcpu
     ${DCPU-VM_INCLUDE_DIRS}
 )
-    
+
+# DCPU-DEVICES lib
 add_library( dcpu-devices
     SHARED
     ${dcpu-devices_SRCS}
@@ -52,10 +58,12 @@ include_directories(dcpu-devices
     ${DCPU-VM_INCLUDE_DIRS}
 )
 
+# Main executable
 add_executable(dcpu-vm 
     ${dcpu-vm_SRCS}
     ${dcpu-vm_GRAPHICS_SRCS}
     ${dcpu-vm_SFML_SRCS}
+    ${TinyXML-2_SRCS}
     )
 
 include_directories(dcpu-vm
@@ -73,7 +81,6 @@ target_link_libraries(dcpu-vm
 )
 
 # pbm2font tool
-
 add_executable(pbm2font
     pbm2font.cpp
     )
