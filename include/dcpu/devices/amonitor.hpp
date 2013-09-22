@@ -3,7 +3,6 @@
 #define _MONITOR_HPP_ 1
 #include <dcpu/dcpu.hpp>
 
-#include <graphics/color.hpp>
 
 #include <cstdint>
 #include <cassert>
@@ -49,9 +48,10 @@ public:
 
 
     /**
-     * Returns the Border color
+     * Returns the Border color as DWORD
+     * @Return the color format is 0xRRGGBBAA
      */
-    virtual Color getBorder() const = 0;
+    virtual uint32_t getBorder() const = 0;
 
     /**
       * @Call before render 1 frame to each frames
@@ -124,19 +124,19 @@ protected:
      * Sets a pixel value
      * @param x X coord must be < width
      * @param y Y coord must be < height
-     * @param color RGBA color
+     * @param The color in a DWORD format : 0xRRGGBBAA 
      */
-    inline void setPixel(unsigned x, unsigned y, Color color)
+    inline void setPixel(unsigned x, unsigned y, uint32_t color)
     {
         assert(pixels != NULL);
         assert(x < width());
         assert(y < height());
 
         auto pos = 4*(x + y*width());
-        pixels[pos   ] = color.r; // R
-        pixels[pos +1] = color.g; // G
-        pixels[pos +2] = color.b; // B
-        pixels[pos +3] = color.a; // A
+        pixels[pos   ] = color >> 24;           // R
+        pixels[pos +1] = (color >> 16) & 0xFF; // G
+        pixels[pos +2] = (color >> 8) & 0xFF; // B
+        pixels[pos +3] = color & 0xFF;     // A
     }
 
 };

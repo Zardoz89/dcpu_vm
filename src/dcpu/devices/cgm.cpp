@@ -173,16 +173,16 @@ void CGM::updateScreen()
                 }
 
                 // Composes RGBA values from palette colors
-                Color fg (
-                        ((fg_col & 0x7C00)>> 10) *8,
-                        ((fg_col & 0x03E0)>> 5)  *8,
-                         (fg_col & 0x001F)       *8,
-                        0xFF );
-                Color bg (
-                        ((bg_col & 0x7C00)>> 10) *8,
-                        ((bg_col & 0x03E0)>> 5)  *8,
-                         (bg_col & 0x001F)       *8,
-                        0xFF );
+                uint32_t fg = 
+                        (((((fg_col & 0x7C00)>> 10) *8) & 0xFF) << 24) |
+                        (((((fg_col & 0x03E0)>> 5)  *8) & 0xFF) << 16) |
+                         ((((fg_col & 0x001F)       *8) & 0xFF) << 8) |
+                          0xFF ;
+                uint32_t bg =
+                        (((((bg_col & 0x7C00)>> 10) *8) & 0xFF) << 24) |
+                        (((((bg_col & 0x03E0)>> 5)  *8) & 0xFF) << 16) |
+                        ((((bg_col & 0x001F)       *8) & 0xFF) << 8) |
+                          0xFF ;
 
                 auto bit = 15 - (i % 16); // From MSB to LSB
                 uint16_t word = bitfield_map + (i >> 4);
@@ -219,16 +219,15 @@ void CGM::updateScreen()
                 }
 
                 // Composes RGBA values from palette colors
-                Color fg (
-                        ((fg_col & 0x7C00)>> 10) *8,
-                        ((fg_col & 0x03E0)>> 5)  *8,
-                         (fg_col & 0x001F)       *8,
-                        0xFF );
-                Color bg (
-                        ((bg_col & 0x7C00)>> 10) *8,
-                        ((bg_col & 0x03E0)>> 5)  *8,
-                         (bg_col & 0x001F)       *8,
-                        0xFF );
+                uint32_t fg = ((((fg_col & 0x7C00)>> 10) *8) << 24) |
+                              (((((fg_col & 0x03E0)>> 5)  *8) & 0xFF) << 16) |
+                              ((((fg_col & 0x001F)       *8) & 0xFF) << 8) |
+                              0xFF ;
+                uint32_t bg = 
+                        ((((bg_col & 0x7C00)>> 10) *8) << 24) |
+                        (((((bg_col & 0x03E0)>> 5)  *8) & 0xFF) << 16) |
+                        ((( (bg_col & 0x001F)       *8) & 0xFF) << 8)  | 
+                        0xFF;
 
                 auto bit = 15 - (i % 16); // From MSB to LSB
                 uint16_t word = bitfield_map + (i >> 4);
@@ -265,16 +264,16 @@ void CGM::updateScreen()
                 }
 
                 // Composes RGBA values from palette colors
-                Color fg (
-                        ((fg_col & 0x7C00)>> 10) *8,
-                        ((fg_col & 0x03E0)>> 5)  *8,
-                         (fg_col & 0x001F)       *8,
-                        0xFF );
-                Color bg (
-                        ((bg_col & 0x7C00)>> 10) *8,
-                        ((bg_col & 0x03E0)>> 5)  *8,
-                         (bg_col & 0x001F)       *8,
-                        0xFF );
+                uint32_t fg = 
+                        (((((fg_col & 0x7C00)>> 10) *8) & 0xFF) << 24) |
+                        (((((fg_col & 0x03E0)>> 5)  *8) & 0xFF) << 16) |
+                         ((((fg_col & 0x001F)       *8) & 0xFF) << 8)  |
+                        0xFF ;
+                uint32_t bg = 
+                        (((((bg_col & 0x7C00)>> 10) *8) & 0xFF) << 24) |
+                        (((((bg_col & 0x03E0)>> 5)  *8) & 0xFF) << 16) |
+                        ((((bg_col & 0x001F)       *8)  & 0xFF) << 8 ) |
+                        0xFF ;
 
                 auto bit = 15 - (i % 16); // From MSB to LSB
                 uint16_t word = bitfield_map + (i >> 4);
@@ -305,16 +304,16 @@ void CGM::updateScreen()
                     bg_col = cpu->getMem()[palette_map+ bg_ind];
                 }
                 // Composes RGBA values from palette colors
-                Color fg (
-                        ((fg_col & 0x7C00)>> 10) *8,
-                        ((fg_col & 0x03E0)>> 5)  *8,
-                         (fg_col & 0x001F)       *8,
-                        0xFF );
-                Color bg (
-                        ((bg_col & 0x7C00)>> 10) *8,
-                        ((bg_col & 0x03E0)>> 5)  *8,
-                         (bg_col & 0x001F)       *8,
-                        0xFF );
+                uint32_t fg =
+                        (((((fg_col & 0x7C00)>> 10) *8) & 0xFF) << 24) |
+                        (((((fg_col & 0x03E0)>> 5)  *8) & 0xFF) << 16) |
+                        ((((fg_col & 0x001F)       *8) & 0xFF) << 8) |
+                        0xFF ;
+                uint32_t bg =
+                        (((((bg_col & 0x7C00)>> 10) *8) & 0xFF) << 24) |
+                        (((((bg_col & 0x03E0)>> 5)  *8) & 0xFF) << 16) |
+                        ((((bg_col & 0x001F)       *8) & 0xFF) << 8) |
+                        0xFF ;
                 const unsigned loop_condition = CGM::WIDTH * CGM::HEIGHT/16;
                 unsigned x = 0;
                 unsigned y = 0;
@@ -381,16 +380,16 @@ void CGM::updateScreen()
                     }
 
                     // Composes RGBA values from palette colors
-                    Color fg (
-                            ((fg_col & 0x7C00)>> 10) << 3,
-                            ((fg_col & 0x03E0)>> 5)  << 3,
-                             (fg_col & 0x001F)       << 3,
-                            0xFF );
-                    Color bg (
-                            ((bg_col & 0x7C00)>> 10) << 3,
-                            ((bg_col & 0x03E0)>> 5)  << 3,
-                             (bg_col & 0x001F)       << 3,
-                            0xFF );
+                    uint32_t fg =
+                            (((((fg_col & 0x7C00)>> 10) << 3) & 0xFF) << 24) |
+                            (((((fg_col & 0x03E0)>> 5)  << 3) & 0xFF) << 16) |
+                            ((( (fg_col & 0x001F)       << 3) & 0xFF) << 8) |
+                            0xFF ;
+                    uint32_t bg =
+                            (((((bg_col & 0x7C00)>> 10) << 3) & 0xFF) << 24) |
+                            (((((bg_col & 0x03E0)>> 5)  << 3) & 0xFF) << 16) |
+                            ((( (bg_col & 0x001F)       << 3) & 0xFF) << 8) |
+                            0xFF ;
 
                     uint16_t glyph[2];
                     if (font_map == 0) { // Default font
@@ -487,16 +486,16 @@ void CGM::updateScreen()
                     }
 
                     // Composes RGBA values from palette colors
-                    Color fg (
-                            ((fg_col & 0x7C00)>> 10) << 3,
-                            ((fg_col & 0x03E0)>> 5)  << 3,
-                             (fg_col & 0x001F)       << 3,
-                            0xFF );
-                    Color bg (
-                            ((bg_col & 0x7C00)>> 10) << 3,
-                            ((bg_col & 0x03E0)>> 5)  << 3,
-                             (bg_col & 0x001F)       << 3,
-                            0xFF );
+                    uint32_t fg =
+                            (((((fg_col & 0x7C00)>> 10) << 3) & 0xFF) << 24) |
+                            (((((fg_col & 0x03E0)>> 5)  << 3) & 0xFF) << 16) |
+                             ((((fg_col & 0x001F)       << 3) & 0xFF) << 8) |
+                            0xFF ;
+                    uint32_t bg = 
+                            (((((bg_col & 0x7C00)>> 10) << 3) & 0xFF) << 24) |
+                            (((((bg_col & 0x03E0)>> 5)  << 3) & 0xFF) << 16) |
+                             ((((bg_col & 0x001F)       << 3) & 0xFF) << 8) |
+                            0xFF ;
 
                     // From here changes from mode 4
                     uint16_t glyph[4];
@@ -593,7 +592,7 @@ void CGM::updateScreen()
     } 
 }
 
-Color CGM::getBorder() const
+uint32_t CGM::getBorder() const
 {
     uint16_t border;
     if (palette_map == 0) { // Use default palette
@@ -601,11 +600,10 @@ Color CGM::getBorder() const
     } else {
         border = cpu->getMem()[palette_map+ border_col];
     }
-    return Color(
-                (uint8_t)(((border & 0x7C00)>> 10) *8),
-                (uint8_t)(((border & 0x03E0)>> 5)  *8),
-                (uint8_t)( (border & 0x001F)       *8),
-                0xFF );
+    return  (((((border & 0x7C00)>> 10) *8) & 0xFF) << 24) |
+            (((((border & 0x03E0)>> 5)  *8) & 0xFF) << 16) |
+            ((( (border & 0x001F)       *8) & 0xFF) << 8)  |
+            (0xFF) ;
 }
 
 } // END of NAMESPACE cgm

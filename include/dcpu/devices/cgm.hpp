@@ -70,7 +70,7 @@ public:
     
     virtual void attachTo (DCPU* cpu, size_t index);
 
-    virtual Color getBorder() const;
+    virtual uint32_t getBorder() const;
 
     const static uint16_t def_palette_map[64];          /// Default palette
     const static uint16_t def_fonts[256*2 + 256*4];     /// Font maps

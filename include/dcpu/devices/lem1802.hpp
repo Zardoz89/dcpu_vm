@@ -6,7 +6,6 @@
 
 #include <cstdint>
 
-#include <SFML/Graphics.hpp>
 
 namespace cpu {
 
@@ -64,7 +63,7 @@ public:
 
     
 
-    virtual Color getBorder() const;
+    virtual uint32_t getBorder() const;
 
 
     const static uint16_t def_palette_map[16];   /// Default palette

@@ -32,7 +32,7 @@ public:
     
     virtual void updateScreen();
     
-    virtual Color getBorder() const;
+    virtual uint32_t getBorder() const;
     
     /**
      * @brief is the LEM1803 emulating the LEM1802 ?

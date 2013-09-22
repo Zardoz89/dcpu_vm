@@ -298,7 +298,7 @@ void Lem1803::updateScreen()
     }*/
 }
 
-Color Lem1803::getBorder() const
+uint32_t Lem1803::getBorder() const
 {
     if (emulation_mode)
         return Lem1802::getBorder();
@@ -309,11 +309,10 @@ Color Lem1803::getBorder() const
     } else {
         border = cpu->getMem()[palette_map+ border_col];
     }
-    return Color(
-                (sf::Uint8)(((border & 0x7C00)>> 10) << 3),
-                (sf::Uint8)(((border & 0x03E0)>> 5)  << 3),
-                (sf::Uint8)( (border & 0x001F)       << 3),
-                0xFF );
+    return  (((((border & 0x7C00)>> 10) << 3) & 0xFF) << 24) |
+            (((((border & 0x03E0)>> 5)  << 3) & 0xFF) << 16) |
+            ((( (border & 0x001F)       << 3) & 0xFF) << 8)  |
+            (0xFF);
 }
 
 } // END OF NAMESPACE lem

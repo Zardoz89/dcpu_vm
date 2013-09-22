@@ -322,7 +322,7 @@ void Lem1802::updateScreen()
     }*/
 }
 
-Color Lem1802::getBorder() const
+uint32_t Lem1802::getBorder() const
 {
     uint16_t border;
     if (palette_map == 0) { // Use default palette
@@ -330,11 +330,10 @@ Color Lem1802::getBorder() const
     } else {
         border = cpu->getMem()[palette_map+ border_col];
     }
-    return Color(
-                ((border &0x0F00) >> 8) *0x11 ,
-                ((border &0x00F0) >> 4) *0x11 ,
-                ((border &0x000F) ) *0x11 ,
-                0xFF );
+    return  (((((border &0x0F00) >> 8) *0x11) & 0xFF) << 24) |
+            (((((border &0x00F0) >> 4) *0x11) & 0xFF) << 16) |
+            (((((border &0x000F) ) *0x11) & 0xFF) << 8) |
+            (0xFF );
 }
 
 } // END of NAMESPACE lem

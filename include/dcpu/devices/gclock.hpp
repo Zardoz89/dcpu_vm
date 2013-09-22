@@ -5,7 +5,7 @@
 #include <dcpu/dcpu.hpp>
 
 #include <cstdint>
-#include <SFML/System.hpp>
+#include <chrono>
 // TODO Is using SFML clock for timming. Remplace for something not SFML
 // dependent
 
@@ -40,7 +40,9 @@ private:
     uint16_t msg;               /// Message to send when a interrupt hapens
     int trigger;                /// Trigered
     
-    sf::Clock clock;            /// Measures the time
+    //why std can't make little name ?
+    std::chrono::time_point<std::chrono::system_clock> 
+    start, end;                 /// Measures the time
     int64_t acum;               /// Accumulates delta time
     int64_t max_acum;           /// If accu > max_accu -> does a Tick
     uint_fast16_t divider;      /// Frac of 60 seconds

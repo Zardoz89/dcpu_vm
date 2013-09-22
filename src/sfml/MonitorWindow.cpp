@@ -12,7 +12,7 @@ MonitorWindow::MonitorWindow(sptr_AbstractMonitor monitor,
 
     border_add = monitor->borderSize()*2;
     char tmp[48];
-    std::snprintf(tmp, 48, "%s DevId=%zu", title.c_str(),
+    std::snprintf(tmp, 48, "%s DevId=%u", title.c_str(),
                    monitor->getDevIndex());
 
     this->create(sf::VideoMode(monitor->phyWidth()+border_add,
@@ -84,8 +84,9 @@ void MonitorWindow::display()
             powering_fx.g += 0x02;
             sprite.setColor(powering_fx);
         }
-
-        clear(monitor->getBorder()); // Draws border and screen state
+        uint32_t c = monitor->getBorder();
+        // Draws border and screen state
+        clear(sf::Color(c >> 24,(c >> 16) & 0xFF,(c >> 8) & 0xFF ,0xFF)); 
         draw(sprite);
 
     } else { // No power, no image
