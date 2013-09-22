@@ -24,6 +24,8 @@
 #include <dcpu/disassembler.hpp>
 #include <binasm.hpp>
 
+#include <tinyxml2/tinyxml2.h>
+
 #define FRAMERATE   50
 
 using namespace cpu;
@@ -136,9 +138,27 @@ int main (int argc, char **argv)
         }
     
     }
-    
-    if (assemble)
-    {
+   
+    // Find extension
+    tinyxml2::XMLDocument solution; // Solution loadout
+    bool use_solution = false;
+    auto ext_pos= filename.rfind(".");
+    if (ext_pos != std::string::npos) {
+        auto extension = filename.substr(ext_pos);
+        if (extension == ".dasm" || extension == ".asm" || 
+                extension == ".dasm16" || extension == ".10c") {
+            // Assembly files
+            assemble = true;
+        } else if (extension == ".10csln") {
+            // DevKit Solution files
+            if (solution.LoadFile(filename.c_str()) 
+                    == tinyxml2::XML_NO_ERROR) {
+                // TODO Parse using tinyXML-2
+            }
+        }
+    }
+
+    if (assemble) {
         BinAsm assembler;
         if (!assembler.load(filename)) return 0xdead;
         if (!assembler.assemble()) return 0xdead;
