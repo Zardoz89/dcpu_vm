@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<solution version="1.7.6">
+  <name>NewSolution</name>
+  <loadout>
+    <loadout>
+      <hardware>
+        <device type="GenericClock" />
+        <device type="GenericKeyboard" />
+        <device type="M35FD" />
+        <device type="LEM1803" />
+        <device type="CGM1084" />
+        <device type="SimpleSpeaker" />
+      </hardware>
+      <interface>
+        <primaryDisplay>LEM1802-1:1</primaryDisplay>
+      </interface>
+    </loadout>
+  </loadout>
+</solution>
+

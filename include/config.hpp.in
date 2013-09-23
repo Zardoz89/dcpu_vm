@@ -22,6 +22,7 @@
 
 #if _MSC_VER && !__INTEL_COMPILER
 //manual type def
+// NOTE <cstdint> is supported from MSVC2012. 
 typedef signed char     int8_t;
 typedef signed short    int16_t;
 typedef signed int      int32_t;
