@@ -2,7 +2,8 @@
 #include <cstdint>
 #include <algorithm>
 #include <memory>
-#include <stdio.h>
+#include <vector>
+#include <cstdio>
 #include <chrono>
 #include <cmath>
 
@@ -29,31 +30,83 @@
 #define FRAMERATE   50
 
 using namespace cpu;
+    
+// Containers of devices and windows
+std::vector<std::shared_ptr<AbstractMonitor>> monitors;
+std::vector<std::shared_ptr<windows::AbstractWindow>> wins;
+std::vector<std::shared_ptr<m35fd::M35FD>> fdrives;
+
+std::vector<std::shared_ptr<sf::SoundStream>> sound_streams;
+
+auto dcpu = std::make_shared<DCPU>();
+
+bool custom_loadot = false; /// Use a custom loadout
+bool no_sound=false;        /// Disable audio/Speaker
+
+// Process loadout from a XML document
+void process_loadout_xml(tinyxml2::XMLDocument& doc, bool devkit = false);
 
 void print_help(std::string program_name)
 {
-    std::cout << _PRG_NAME << " " << _VERSION << std::endl;
-    std::cout << "usage : " << program_name << " [-options] <dcpu16-exe>\n";
-    std::cout << "--------------------------------------------------------\n";
-    std::cout << "  options:" << std::endl;
-    std::cout << "    -assemble (-a) : assemble before load (experimental)\n";
-    std::cout << "    -debug (-d) : start in debug mode\n";
-    std::cout << "            F1  : next step" << std::endl;
-    std::cout << "            F2  : print CPU status" << std::endl;
-    std::cout << "            F3  : reset (no need debug mode)" << std::endl;
-    std::cout << "            F9  : ejects/inserts floppy" << std::endl;
-    std::cout << "            System + F12 : switch debug/run" << std::endl;
-    std::cout << "    --monitor=<monitor_name> : use the following monitor\n";
-    std::cout << "            1802 -> Lem1802 (default) [c] (-1802)\n";
-    std::cout << "            1803 -> Lem1803 [c] (-1803)" << std::endl;
-    std::cout << "            cgm -> Colour Graphics Monitor (-cgm)\n";
-    std::cout << "            [c] : compatible with Lem1802 0x10c programs\n";
-    std::cout << "    --no-sound : disable the sound speaker device\n";
-    std::cout << "    -output <filename> (-o) : output assembled filename\n";
-    std::cout << "    -floppy <filename> (-fd) : floppy image file\n";
-    std::cout << "    -time (-t) : use timed emulation (else refresh based)\n";
-    std::cout << "    -vsync (-v) : use vertical synchronisation\n";
-    std::cout << "                    (more accurate but may bug)\n";
+    using namespace std;
+    cout << _PRG_NAME << " " << _VERSION << std::endl;
+    cout << "usage : " << program_name << " [-options] <dcpu16-exe>";
+    cout << endl;
+    cout << "--------------------------------------------------------";
+    cout << endl;
+    cout << "  options:";
+    cout << endl;
+    cout << "    -assemble (-a) : assemble before load (experimental)";
+    cout << endl;
+    cout << "    -output <filename> (-o) : output assembled filename";
+    cout << endl;
+    cout << "    -debug (-d) : start in debug mode";
+    cout << endl;
+    cout << "            F1  : next step";
+    cout << endl;
+    cout << "            F2  : print CPU status";
+    cout << endl;
+    cout << "            F3  : reset (no need debug mode)";
+    cout << endl;
+    cout << "            F9  : ejects/inserts floppy";
+    cout << endl;
+    cout << "            System + F12 : switch debug/run";
+    cout << endl;
+    cout << "    -time (-t) : use timed emulation (else refresh based)";
+    cout << endl;
+    cout << "    -vsync (-v) : use vertical synchronisation";
+    cout << endl;
+    cout << "                    (more accurate but may bug)";
+    cout << endl;
+    cout << "  Hardware loadout options:";
+    cout << endl;
+    cout << 
+"    -loadout (-l) : XML file that descrives hardware loadout. If isn't using";
+    cout << endl <<
+"            a loadout file, then a default loadout will be used. The default";
+    cout << endl <<
+"            loadout contains a generic clock, a generic keyboard, a monitor,";
+    cout << endl <<
+"            a floppy drive and a sound speaker.";
+    cout << endl << 
+"            The next options will be used to change the default loadout of";
+    cout << endl << 
+"            the virtual machine.";
+    cout << endl;
+    cout << "    --monitor=<monitor_name> : use the following monitor";
+    cout << endl;
+    cout << "            1802 -> Lem1802 (default) [c] (-1802)";
+    cout << endl;
+    cout << "            1803 -> Lem1803 [c] (-1803)";
+    cout << endl;
+    cout << "            cgm -> Colour Graphics Monitor (-cgm)";
+    cout << endl;
+    cout << "            [c] : compatible with Lem1802 0x10c programs";
+    cout << endl;
+    cout << "    --no-sound : disable the sound speaker device";
+    cout << endl;
+    cout << "    -floppy <filename> (-fd) : floppy image file";
+    cout << endl;
 }
 
 int main (int argc, char **argv)
@@ -63,6 +116,7 @@ int main (int argc, char **argv)
     logger::LOG_level = logger::LogLevel::INFO; 
 
     std::string filename;
+    std::string loadout_filename;
     std::string disk_filename="disk.dsk"; // Floppy disk image
     std::string outname="a.out"; //output assembled filename
     int monitor_type=0; 
@@ -73,75 +127,57 @@ int main (int argc, char **argv)
     bool use_time=false; 
     //need assemble the file
     bool assemble=false; 
-    //disable speaker
-    bool no_sound=false;
     
     //TODO make a function that parse argument into a program struct
-    for (int k=1; k < argc; k++) //parse arguments
-    {
-        if (argv[k][0] == '-')
-        {
+    for (int k=1; k < argc; k++) { //parse arguments
+        if (argv[k][0] == '-') {
             std::string opt = argv[k];
             
-            if (opt=="--help"||opt=="-help"||opt=="-h")
-            {
+            if (opt=="--help"||opt=="-help"||opt=="-h") {
                 std::string pn = argv[0];
                 pn.erase(0,pn.find_last_of('\\')+1); //windows
                 pn.erase(0,pn.find_last_of('/')+1); //linux
                 print_help(pn);
                 return 0;
-            }
-            else if (opt=="-debug") debug=true;
-            else if (opt=="-1802"||opt=="--monitor=1802") monitor_type=0;
-            else if (opt=="-1803"||opt=="--monitor=1803") monitor_type=1; 
-            else if (opt=="-cgm"||opt=="--monitor=cgm") monitor_type=2;
-            else if (opt.find("--monitor") != std::string::npos)
-            {
+            } else if (opt=="-debug") debug=true;
+              else if (opt=="-1802"||opt=="--monitor=1802") monitor_type=0;
+              else if (opt=="-1803"||opt=="--monitor=1803") monitor_type=1; 
+              else if (opt=="-cgm"||opt=="--monitor=cgm") monitor_type=2;
+              else if (opt.find("--monitor") != std::string::npos) {
                 LOG_WARN << "Unknow monitor type " + opt;
-            }
-            else if (opt=="--no-sound")
-            {
+            } else if (opt=="--no-sound") {
                 no_sound=true;
-            }
-            else if (opt == "-vsync" || opt == "-v") use_vsync=true;
-            else if (opt == "-time" || opt == "-t") use_time=true;
-            else if (opt == "-assemble" || opt == "-a") assemble=true;
-            else if ((opt == "-output" || opt == "-o") && argc > k+1)
-            {
+            } else if (opt == "-vsync" || opt == "-v") use_vsync=true;
+              else if (opt == "-time" || opt == "-t") use_time=true;
+              else if (opt == "-assemble" || opt == "-a") assemble=true;
+              else if ((opt == "-output" || opt == "-o") && argc > k+1) {
                 assemble=true;
-                outname = argv[k+1];
-                k++;
-            }
-            else if (opt == "-output" || opt == "-o")
-            {
+                outname = argv[++k];
+            } else if (opt == "-output" || opt == "-o") {
                 LOG_WARN << "Option " + opt +
-                        " requiert another argument it will be ignored here";
-            }
-            else if ((opt == "-floppy" || opt == "-fd") && argc > k+1)
-            {
-                disk_filename = argv[k+1];
-                k++;
-            }
-            else if (opt == "-floppy" || opt == "-fd")
-            {
+                        " requierd another argument it will be ignored here";
+            } else if ((opt == "-floppy" || opt == "-fd") && argc > k+1) {
+                disk_filename = argv[++k];
+            } else if (opt == "-floppy" || opt == "-fd") {
                 LOG_WARN << "Option " + opt + 
-                        " requiert another argument it will be ignored here";
-            }
-            else
-            {
+                        " requierd another argument it will be ignored here";
+            } else if ((opt == "-loadout" || opt == "-l") && argc > k+1) {
+                loadout_filename = argv[++k];
+            } else if (opt == "-loadout" || opt == "-l") {
+                LOG_WARN << "Option " + opt + 
+                        " requierd another argument it will be ignored here";
+            } else {
                 LOG_WARN << "Unknow option " + opt + " it will be ignored !";
             }
-        }
-        else
-        {
+
+        } else {
             filename = argv[k];
         }
-    
     }
-   
-    // Find extension
-    tinyxml2::XMLDocument solution; // Solution loadout
-    bool use_solution = false;
+  
+
+
+    // Find extension of input file
     auto ext_pos= filename.rfind(".");
     if (ext_pos != std::string::npos) {
         auto extension = filename.substr(ext_pos);
@@ -149,12 +185,24 @@ int main (int argc, char **argv)
                 extension == ".dasm16" || extension == ".10c") {
             // Assembly files
             assemble = true;
-        } else if (extension == ".10csln") {
-            // DevKit Solution files
-            if (solution.LoadFile(filename.c_str()) 
-                    == tinyxml2::XML_NO_ERROR) {
-                // TODO Parse using tinyXML-2
+        }
+    }
+
+    tinyxml2::XMLDocument xml; // Loadout from XML file
+    if (loadout_filename.size() > 0) {
+        auto ext_pos= loadout_filename.rfind(".");
+        bool devkit = false;
+        if (ext_pos != std::string::npos) {
+            auto extension = loadout_filename.substr(ext_pos);
+            if (extension == ".10csln") {
+                devkit = true;
             }
+        } 
+        
+        // XML loadout of devices
+        if (xml.LoadFile(loadout_filename.c_str()) 
+                == tinyxml2::XML_NO_ERROR) {
+            process_loadout_xml(xml, devkit);
         }
     }
 
@@ -173,82 +221,100 @@ int main (int argc, char **argv)
     }
    
     
-    LOG << "Loading devices";
-    sf::String window_title="dcpu_vm";
-    auto dcpu = std::make_shared<DCPU>();
-    auto gclock = std::make_shared<Generic_Clock>();
-    auto gkeyboard = std::make_shared<keyboard::GKeyboard>();
-
-    // Prepare the speaker device
-    auto speaker = std::make_shared<speaker::Speaker>();
-    audio::SquareGenerator gen;
-    gen.prepare();
-    gen.play();
-    speaker->setFreqCallback(audio::SquareGenerator::WrappeCallback,
-            (void *)(&gen));
-
-    // Floppy drive
-    auto fd = std::make_shared<m35fd::M35FD>();
+   
+    // TODO Handle in a future
+    // multiples disk and a way of select floppy image to use with a particular
+    // drive
     auto floppy = std::make_shared<m35fd::M35_Floppy>(disk_filename);
-    fd->insertFloppy(floppy);
-
-    // Sets appropriated monitor
-    std::shared_ptr<AbstractMonitor> monitor;
-    auto splash_file = "assets/lem_splash.png";
-    switch (monitor_type)
-    {
-        case 1:
-            monitor=std::make_shared<lem::Lem1803>();
-            LOG << "use Lem1803 Monitor";
-            window_title = "Lem 1803";
-            break;
-        case 2:
-            monitor=std::make_shared<cgm::CGM>();
-            LOG << "use CGM Monitor";
-            window_title = "CGM";
-            splash_file = "assets/cgm_splash.png";
-            break;
-        default :
-            monitor=std::make_shared<lem::Lem1802>();
-            LOG << "use Lem1802 Monitor";
-            window_title = "Lem 1802";
-            break;
-    }
     
-    dcpu->attachHardware (gclock);
-    dcpu->attachHardware (monitor);
-    dcpu->attachHardware (gkeyboard);
-    dcpu->attachHardware (fd);
-    if (!no_sound)
-        dcpu->attachHardware (speaker);
-    dcpu->reset();
-    dcpu->loadProgramFromFile(filename);
+    if (!custom_loadot) {
+        LOG << "Loading devices. Using default loadout";
+        std::string window_title="dcpu_vm";
+        auto gclock = std::make_shared<Generic_Clock>();
+        dcpu->attachHardware (gclock);
+       
+        // Generic Keyboard
+        auto gkeyboard = std::make_shared<keyboard::GKeyboard>();
+        dcpu->attachHardware (gkeyboard);
+        auto keyb_win = std::make_shared<windows::KeyboardWindow>(gkeyboard);
+        wins.push_back(keyb_win);
 
-    sf::Clock clock; 
-    windows::MonitorWindow window(monitor, window_title, FRAMERATE);
-    window.setSplashImage(splash_file);
+        // Prepare the speaker device
+        auto speaker = std::make_shared<speaker::Speaker>();
+        if (!no_sound) {
+            dcpu->attachHardware (speaker);
+            auto gen = std::make_shared<audio::SquareGenerator>();
+            sound_streams.push_back(gen);
+            gen->prepare();
+            gen->play();
+            speaker->setFreqCallback(audio::SquareGenerator::WrappeCallback,
+                (void*)gen.get());
+        }
+
+        // Floppy drive
+        auto fd = std::make_shared<m35fd::M35FD>();
+        fdrives.push_back(fd);
+        dcpu->attachHardware (fd);
+        fd->insertFloppy(floppy);
+
+        // Sets appropriated monitor
+        std::shared_ptr<AbstractMonitor> monitor;
+        auto splash_file = "assets/lem_splash.png";
+        switch (monitor_type) {
+            case 1:
+                monitor=std::make_shared<lem::Lem1803>();
+                LOG << "use Lem1803 Monitor";
+                window_title = "Lem 1803";
+                break;
+            case 2:
+                monitor=std::make_shared<cgm::CGM>();
+                LOG << "use CGM Monitor";
+                window_title = "CGM";
+                splash_file = "assets/cgm_splash.png";
+                break;
+            default :
+                monitor=std::make_shared<lem::Lem1802>();
+                LOG << "use Lem1802 Monitor";
+                window_title = "Lem 1802";
+                break;
+        }
+        
+        dcpu->attachHardware (monitor);
+        monitors.push_back(monitor);
+        auto window = std::make_shared<windows::MonitorWindow>(monitor, 
+                window_title, FRAMERATE);
+        wins.push_back(window);
+        window->setSplashImage(splash_file);
+    }
 
     if (use_vsync) {
         LOG_WARN << "vsync activated may bug";
-        window.setVerticalSyncEnabled(true);
+        for (auto it = wins.begin(); it != wins.end(); ++it) {
+            (*it)->setVerticalSyncEnabled(true);
+        }
     }
-
     
-    // We use a window to show a fake keyboard and capture keyboard
-    // events if it have focus
-    windows::KeyboardWindow keyb_win(gkeyboard);
+    dcpu->reset();
+    dcpu->loadProgramFromFile(filename);
 
     LOG << "Entering main loop";
+    sf::Clock clock; 
     unsigned long ticks_counter = 0;
     bool pressed_key = false; // Used to emulate keyDown event
-    while (window.isOpen() && keyb_win.isOpen()) {
-    
-        // Process events
-        keyb_win.handleEvents();
-        window.handleEvents();
-
+    bool is_open = true;
+    bool have_focus;
+    while (is_open) {
+        have_focus = false;
+        // Does all windows stuff
+        for (auto it = wins.begin(); it != wins.end(); ++it) {
+            is_open = is_open && (*it)->isOpen();
+            have_focus = have_focus || (*it)->haveFocus();
+            (*it)->handleEvents();
+            (*it)->display();
+        }
+        
         // Checks general keyboard events
-        if (keyb_win.haveFocus() || window.haveFocus()) {
+        if (have_focus) {
             if (debug && sf::Keyboard::isKeyPressed (sf::Keyboard::F1)) {
                 if (!pressed_key ) {
                     std::cout << disassembly(dcpu->getMem()
@@ -286,10 +352,12 @@ int main (int argc, char **argv)
                 pressed_key = true;
             } else if (sf::Keyboard::isKeyPressed (sf::Keyboard::F9)) {
                 if (!pressed_key ) {
-                    if (fd->getState() == m35fd::STATE_CODES::NO_MEDIA) {
-                        fd->insertFloppy(floppy);
-                    } else {
-                        fd->eject();
+                    for (auto it = fdrives.begin(); it != fdrives.end(); ++it){
+                        if ((*it)->getState() == m35fd::STATE_CODES::NO_MEDIA) {
+                            (*it)->insertFloppy(floppy); //TODO
+                        } else {
+                            (*it)->eject();
+                        }
                     }
                 }
 
@@ -312,8 +380,11 @@ int main (int argc, char **argv)
         }
 
         
-        ///DCPU emulation stuff
-        monitor->prepareRender();
+        // DCPU emulation stuff -----------------------------------------------
+        for (auto it = monitors.begin(); it != monitors.end(); ++it) {
+            (*it)->prepareRender();
+        }
+
         // T period of a 100KHz signal = 10 microseconds
         const auto delta=clock.getElapsedTime().asMicroseconds(); 
         clock.restart();
@@ -322,7 +393,8 @@ int main (int argc, char **argv)
             unsigned int tick_needed;
             if (use_time) {
                 double tmp = delta / 10.0f;
-                tick_needed= tmp+0.5; //trash fix Visual don't know the function round lol!
+                tick_needed= tmp+0.5; 
+                //trash fix Visual don't know the function round lol!
             } else {
                 double tmp = dcpu->getClock() / (double)(FRAMERATE);
                 tick_needed= tmp+0.5;
@@ -342,14 +414,142 @@ int main (int argc, char **argv)
             dcpu->tick(tick_needed);
         }
 
-        
-        window.display();
-        keyb_win.display();
-
     }
 
-    gen.stop();
+    // Stops audio generator/streams
+    for (auto it = sound_streams.begin(); it != sound_streams.end(); ++it){
+        (*it)->stop();
+    }
+    
     return 0;
 }
 
+
+void process_loadout_xml(tinyxml2::XMLDocument& doc, bool devkit) 
+{
+    using namespace tinyxml2;
+    const XMLNode* node = NULL;
+
+    LOG << "Parsing XML file. DevKit solution: " << devkit ;
+
+    if (devkit) {
+        // Finds the first loadout element
+        node = doc.FirstChildElement("solution");
+        if (node == NULL) {
+            LOG_WARN << "Invalid DevKit solution file." 
+                     << "Trying parse as XML loadout file";
+            devkit = false;
+
+            // Try to parse as normal XML
+            node = doc.FirstChildElement("loadout");
+            if (node == NULL) {
+                LOG_WARN << "Invalid loadout file."; 
+                return;
+            }
+            goto end_devkit; // Try to parse as normal XML
+        } 
+
+        node = node->FirstChildElement("loadout");
+        if (node == NULL) {
+            LOG_WARN << "Invalid DevKit solution file.";
+            return;
+        }
+
+        node = node->FirstChildElement("loadout");
+        if (node == NULL) {
+            LOG_WARN << "Invalid DevKit solution file."; 
+            return;
+        }
+
+        end_devkit:
+            ;
+    } else {
+        node = doc.FirstChildElement("loadout");
+        if (node == NULL) {
+            LOG_WARN << "Invalid loadout file.";
+            return;
+        }
+    }
+    // Node points to <loadout>
+
+    node = node->FirstChildElement("hardware");
+    if (node == NULL) {
+        LOG_WARN << "Invalid loadout file.";
+        return;
+    }
+
+    for ( auto dev = node->FirstChildElement(); dev != NULL; 
+            dev = dev->NextSiblingElement()) {
+        std::string name = dev->Name();
+        if (name != "device")
+            continue;
+
+        if (dev->Attribute("type", "GenericClock")) {
+            auto gclock = std::make_shared<Generic_Clock>();
+            dcpu->attachHardware (gclock);
+        } else if (dev->Attribute("type", "GenericKeyboard")) {
+            auto gkeyboard = std::make_shared<keyboard::GKeyboard>();
+            dcpu->attachHardware (gkeyboard);
+            auto keyb_win = 
+                std::make_shared<windows::KeyboardWindow>(gkeyboard);
+            wins.push_back(keyb_win);
+        // Monitors -----------------------------------------------------------
+        } else if (dev->Attribute("type", "LEM1802")) {
+            auto monitor = std::make_shared<lem::Lem1802>();
+            dcpu->attachHardware (monitor);
+            monitors.push_back(monitor);
+            
+            auto window = std::make_shared<windows::MonitorWindow>(monitor, 
+                "LEM 1802", FRAMERATE);
+            wins.push_back(window);
+            window->setSplashImage("assets/lem_splash.png");
+        } else if (dev->Attribute("type", "LEM1803")) {
+            auto monitor = std::make_shared<lem::Lem1803>();
+            dcpu->attachHardware (monitor);
+            monitors.push_back(monitor);
+            
+            auto window = std::make_shared<windows::MonitorWindow>(monitor, 
+                "LEM 1803", FRAMERATE);
+            wins.push_back(window);
+            window->setSplashImage("assets/lem_splash.png");
+        } else if (dev->Attribute("type", "CGM1084")) {
+            auto monitor = std::make_shared<cgm::CGM >();
+            dcpu->attachHardware (monitor);
+            monitors.push_back(monitor);
+            
+            auto window = std::make_shared<windows::MonitorWindow>(monitor, 
+                "CGM 1084", FRAMERATE);
+            wins.push_back(window);
+            window->setSplashImage("assets/cgm_splash.png");
+
+        // Audio --------------------------------------------------------------
+        } else if (dev->Attribute("type", "SimpleSpeaker")) {
+            auto speaker = std::make_shared<speaker::Speaker>();
+            dcpu->attachHardware (speaker);
+            if (!no_sound) {
+                auto gen = std::make_shared<audio::SquareGenerator>();
+                sound_streams.push_back(gen);
+                gen->prepare();
+                gen->play();
+                speaker->setFreqCallback(
+                        audio::SquareGenerator::WrappeCallback, 
+                            (void*)gen.get() );
+            }
+
+        // Storage ------------------------------------------------------------
+        } else if (dev->Attribute("type", "M35FD")) {
+            auto fd = std::make_shared<m35fd::M35FD>();
+            fdrives.push_back(fd);
+            dcpu->attachHardware (fd);
+            // TODO use attribute "file" to select a initial floppy disk image
+            // TODO create a manager of floppy disks images ?
+            //fd->insertFloppy(floppy);
+        }
+        
+
+    }
+
+    LOG << "Custom loadout";
+    custom_loadot = true;
+}
 

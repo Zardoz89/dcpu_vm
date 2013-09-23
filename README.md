@@ -39,22 +39,29 @@ Just type **dcpu-vm --help** to get these infos.
     --------------------------------------------------------
       options:
         -assemble (-a) : assemble before load (experimental)
+        -output <filename> (-o) : output assembled filename
         -debug (-d) : start in debug mode
                 F1  : next step
                 F2  : print CPU status
-                F3  : reset (no need debug mode)
-                F9  : ejects/insert floppy (no need debug mode)
                 System + F12 : switch debug/run
+        -time (-t) : use timed emulation (else refresh based)
+        -vsync (-v) : use vertical synchronisation
+                        (more accurate but may bug)
+      Hardware loadout options:
+        -loadout (-l) : XML file that describes hardware loadout. If isn't using
+                a loadout file, then a default loadout will be used. The default
+                loadout contains a generic clock, a generic keyboard, a monitor,
+                a floppy drive and a sound speaker.
+                The next options will be used to change the default loadout of
+                the virtual machine.
         --monitor=<monitor_name> : use the following monitor
                 1802 -> Lem1802 (default) [c] (-1802)
                 1803 -> Lem1803 [c] (-1803)
                 cgm -> Colour Graphics Monitor (-cgm)
                 [c] : compatible with Lem1802 0x10c programs
-        -output <filename> (-o) : output assembled filename
+        --no-sound : disable the sound speaker device
         -floppy <filename> (-fd) : floppy image file
-        -time (-t) : use timed emulation (else refresh based)
-        -vsync (-v) : use vertical synchronization
-                        (more accurate but may bug)
+
 
 
 There is a debug/step mode that can be activated and deactivated with **System+F12**:
@@ -62,20 +69,46 @@ There is a debug/step mode that can be activated and deactivated with **System+F
  - **F1** : Single step (print the current instruction on the console)
  - **F2** : Print registers states into console
 
-Avaliable shortcuts alltime: 
+Available shortcuts all-time: 
 
  - **F3** : Reset the DCPU
- - **F9** : Ejects/Inserts a floppy
+ - **F9** : Ejects/Inserts a floppy (warring! Uses the same disk image for all floppy devices!)
  - **System+F12** : Activate/Deactivate debug mode. Note that System is Windows/Apple/Super key
+
+LOAD-OUT DESCRIPTION FILES
+--------------------------
+A custom device load-out can be set using a XML file describing what devices will be used. The XML file follow this structure :
+
+    <?xml version="1.0" encoding="utf-8"?>
+    <loadout>
+      <hardware>
+        <device type="GenericClock" />
+        <device type="GenericKeyboard" />
+        <device type="M35FD" />
+        <device type="LEM1803" />
+        <device type="CGM1084" />
+        <device type="SimpleSpeaker" />
+      </hardware>
+    </loadout>
+
+The devices will be loaded in the same order that is in the XML file. Also can read the load-out from a **.10csln** solution file from **DevKit**.
+Actually admit this device list:
+
+- **GenericClock** : Generic Clock
+- **GenericKeyboard** : Generic Keyboard
+- **M35FD** : Mackpar 3.5" Floppy drive
+- **LEM1802** : LEM 1802 monitor
+- **LEM1803** : LEM 1803 monitor
+- **CGM1084** : CGM 1084 monitor
+- **SimpleSpeaker** : Basic buzzer / IBM PC like speaker device
 
 TODO
 ----
 
- - <s>Finnish CGM code and create a 8x8 font</s>
- - Set a way of how configure what devices will be used in the machine
+ - Manager of floppy disks in use.
  - Implemente BadSector bitmap for floppies
  - A tool to create floppies and fill/copy data to it.
- - GUI of the floppy drive to eject and insert diferent floppies.
+ - GUI of the floppy drive to eject and insert different floppies.
  - Several optimizations on rendering monitor loops
  - Rename variables/namespaces with a convention -> Apply code convention of Trillek proyect more strictly.
  - More options to Debug mode
