@@ -83,8 +83,8 @@ public:
 protected:
     std::deque<uint16_t> keybuffer;
 
-    uint16_t msg;       /// Interrupt Msg
-    bool event;         /// Was a keyboard event ?
+    uint16_t msg;           /// Interrupt Msg
+    uint_fast16_t events;   /// Was a keyboard event ?
 
 private:
 };

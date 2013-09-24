@@ -7,7 +7,7 @@ namespace cpu {
 
 namespace keyboard {
 
-GKeyboard::GKeyboard() : msg(0), event(false)
+GKeyboard::GKeyboard() : msg(0), events(0)
 { }
 
 GKeyboard::~GKeyboard()
@@ -18,15 +18,15 @@ void GKeyboard::attachTo (DCPU* cpu, size_t index)
     this->IHardware::attachTo(cpu, index);
 
     msg = 0;
-    event = false;
+    events = 0;
     keybuffer.clear();
 }
 
 bool GKeyboard::checkInterrupt (uint16_t &msg)
 {
-    if (event && this->msg > 0) {
+    if (events > 0 && this->msg > 0) {
         msg = this->msg;
-        event = false;
+        events--;
         LOG_DEBUG << "[GKeyboard] Interrupt!";
         return true;
     }
@@ -80,7 +80,7 @@ void GKeyboard::pushKeyEvent (bool keydown, unsigned char scancode)
 {
     uint16_t k = scancode | ( keydown ? 0x0100 : 0x0000 );
     keybuffer.push_front(k);
-    event = true;
+    events++;
     while (keybuffer.size() > BUFFER_SIZE) {
         keybuffer.pop_back(); // Removes old elements
     }
