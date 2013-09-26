@@ -60,7 +60,7 @@ Just type **dcpu-vm --help** to get these infos.
                 cgm -> Colour Graphics Monitor (-cgm)
                 [c] : compatible with Lem1802 0x10c programs
         --no-sound : disable the sound speaker device
-        -floppy <filename> (-fd) : floppy image file
+        -floppy <filenames...> (-fd) : floppy image files
 
 
 

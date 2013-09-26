@@ -162,7 +162,7 @@ void M35FD::insertFloppy (std::shared_ptr<M35_Floppy> floppy)
     this->floppy->drive = this;
     
     trigger = true; // State changes, and error could
-    LOG << "[M35FD] Disk inserted!"; 
+    LOG << "[M35FD] Disk inserted! " << floppy->getFilename(); 
 }
 
 void M35FD::eject()
@@ -172,7 +172,7 @@ void M35FD::eject()
         this->floppy = std::shared_ptr<M35_Floppy>(); // like = NULL
     }
 
-    LOG << "[M35FD] Disk ejected!"; 
+    LOG << "[M35FD] Disk ejected! "; 
 
     if (state == STATE_CODES::BUSY) // Wops!
         error = ERROR_CODES::EJECT;
@@ -192,8 +192,8 @@ size_t data_pos (size_t sector, size_t index)
 }
 
 M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
-                        tracks(tracks), bad_sectors(NULL), wp_flag(wp), 
-                        last_sector(0), cursor(0), drive(NULL)
+                        filename(filename), tracks(tracks), bad_sectors(NULL),
+                        wp_flag(wp), last_sector(0), cursor(0), drive(NULL)
 {
     assert(tracks == 80 || tracks == 40);
    

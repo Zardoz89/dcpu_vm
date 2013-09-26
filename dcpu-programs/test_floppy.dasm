@@ -29,6 +29,12 @@ SET A, isr
 IAS A
 IAQ 0 ; Reneables interrupts
 
+; Waits to get a floppy in teh drive
+:wait_floppy
+SET A, 0
+HWI [fd]
+IFN B, 0x0001 ; READY
+  SET PC, wait_floppy
 
 ; Write to screen
 ; LEM 

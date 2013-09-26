@@ -276,10 +276,18 @@ public:
      */
     void tick();
 
+    /**
+     * Returns the filename
+     */
+    const std::string& getFilename() const
+    {
+        return this->filename;
+    }
+
     friend class M35FD;
 
 protected:
-
+    std::string filename;   /// Mainly for info&debug
     uint8_t tracks;         /// Total tracks of the floppy
     uint8_t* bad_sectors;   /// Bitmap of bad sectors
 

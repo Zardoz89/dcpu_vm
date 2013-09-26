@@ -35,6 +35,8 @@ using namespace cpu;
 std::vector<std::shared_ptr<AbstractMonitor>> monitors;
 std::vector<std::shared_ptr<windows::AbstractWindow>> wins;
 std::vector<std::shared_ptr<m35fd::M35FD>> fdrives;
+std::vector<std::shared_ptr<m35fd::M35_Floppy>> floppies;
+std::vector<std::string> floppy_files;
 
 std::vector<std::shared_ptr<sf::SoundStream>> sound_streams;
 
@@ -105,7 +107,7 @@ void print_help(std::string program_name)
     cout << endl;
     cout << "    --no-sound : disable the sound speaker device";
     cout << endl;
-    cout << "    -floppy <filename> (-fd) : floppy image file";
+    cout << "    -floppy <filenames...> (-fd) : floppy image files";
     cout << endl;
 }
 
@@ -117,7 +119,6 @@ int main (int argc, char **argv)
 
     std::string filename;
     std::string loadout_filename;
-    std::string disk_filename="disk.dsk"; // Floppy disk image
     std::string outname="a.out"; //output assembled filename
     int monitor_type=0; 
     bool debug=false;
@@ -130,6 +131,8 @@ int main (int argc, char **argv)
     
     //TODO make a function that parse argument into a program struct
     for (int k=1; k < argc; k++) { //parse arguments
+        std::string disk_filename;
+
         if (argv[k][0] == '-') {
             std::string opt = argv[k];
             
@@ -157,7 +160,14 @@ int main (int argc, char **argv)
                 LOG_WARN << "Option " + opt +
                         " requierd another argument it will be ignored here";
             } else if ((opt == "-floppy" || opt == "-fd") && argc > k+1) {
-                disk_filename = argv[++k];
+                k++;
+                do {
+                    disk_filename = argv[k];
+                    if (disk_filename[0] == '-')
+                        break;
+
+                    floppy_files.push_back(disk_filename);
+                } while (++k < argc);
             } else if (opt == "-floppy" || opt == "-fd") {
                 LOG_WARN << "Option " + opt + 
                         " requierd another argument it will be ignored here";
@@ -175,7 +185,7 @@ int main (int argc, char **argv)
         }
     }
   
-
+    LOG << "Number of floppy images files: " << floppies.size();
 
     // Find extension of input file
     auto ext_pos= filename.rfind(".");
@@ -220,13 +230,7 @@ int main (int argc, char **argv)
         return 0;
     }
    
-    
-   
-    // TODO Handle in a future
-    // multiples disk and a way of select floppy image to use with a particular
-    // drive
-    auto floppy = std::make_shared<m35fd::M35_Floppy>(disk_filename);
-    
+    // Default laodout
     if (!custom_loadot) {
         LOG << "Loading devices. Using default loadout";
         std::string window_title="dcpu_vm";
@@ -255,7 +259,11 @@ int main (int argc, char **argv)
         auto fd = std::make_shared<m35fd::M35FD>();
         fdrives.push_back(fd);
         dcpu->attachHardware (fd);
-        fd->insertFloppy(floppy);
+        std::string fname = "disk.dsk";
+        if (!floppy_files.empty())
+            fname = floppy_files.front();
+        auto floppy = std::make_shared<m35fd::M35_Floppy>(fname);
+        floppies.push_back(floppy);
 
         // Sets appropriated monitor
         std::shared_ptr<AbstractMonitor> monitor;
@@ -352,9 +360,13 @@ int main (int argc, char **argv)
                 pressed_key = true;
             } else if (sf::Keyboard::isKeyPressed (sf::Keyboard::F9)) {
                 if (!pressed_key ) {
+                    int fd_count = 0;
+                    // TODO: We need a more powerfull way to handle this
+                    // A manager or similar
                     for (auto it = fdrives.begin(); it != fdrives.end(); ++it){
-                        if ((*it)->getState() == m35fd::STATE_CODES::NO_MEDIA) {
-                            (*it)->insertFloppy(floppy); //TODO
+                        if ((*it)->getState() == m35fd::STATE_CODES::NO_MEDIA 
+                                && !floppies.empty()) {
+                            (*it)->insertFloppy( floppies.at(fd_count++)); 
                         } else {
                             (*it)->eject();
                         }
@@ -478,6 +490,9 @@ void process_loadout_xml(tinyxml2::XMLDocument& doc, bool devkit)
         return;
     }
 
+    std::string defname = "disk";
+    unsigned fd_counter = 0;
+
     for ( auto dev = node->FirstChildElement(); dev != NULL; 
             dev = dev->NextSiblingElement()) {
         std::string name = dev->Name();
@@ -541,9 +556,25 @@ void process_loadout_xml(tinyxml2::XMLDocument& doc, bool devkit)
             auto fd = std::make_shared<m35fd::M35FD>();
             fdrives.push_back(fd);
             dcpu->attachHardware (fd);
-            // TODO use attribute "file" to select a initial floppy disk image
-            // TODO create a manager of floppy disks images ?
-            //fd->insertFloppy(floppy);
+
+            std::string fname;
+            if (floppy_files.size() <= fd_counter) {
+                char tmp[10];
+                // Generates filename "diskX.dsk"
+                std::string fname = defname;
+                snprintf(tmp, 10, "%u", fd_counter);
+                fname.append(tmp);
+                fname.append(".dsk");
+                LOG << fname;
+                auto floppy = std::make_shared<m35fd::M35_Floppy>(fname);
+                floppies.push_back(floppy);
+            } else {
+                fname = floppy_files.front();
+                auto floppy = std::make_shared<m35fd::M35_Floppy>(fname);
+                floppies.push_back(floppy);
+            }
+            fd_counter++;
+
         }
         
 
