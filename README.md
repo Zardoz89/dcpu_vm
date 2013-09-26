@@ -72,7 +72,7 @@ There is a debug/step mode that can be activated and deactivated with **System+F
 Available shortcuts all-time: 
 
  - **F3** : Reset the DCPU
- - **F9** : Ejects/Inserts a floppy (warring! Uses the same disk image for all floppy devices!)
+ - **F9** : Ejects/Inserts all floppies!
  - **System+F12** : Activate/Deactivate debug mode. Note that System is Windows/Apple/Super key
 
 LOAD-OUT DESCRIPTION FILES
