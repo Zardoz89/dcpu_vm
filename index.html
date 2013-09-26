@@ -71,22 +71,28 @@ usage : dcpu-vm [-options] &lt;dcpu16-exe&gt;
 --------------------------------------------------------
   options:
     -assemble (-a) : assemble before load (experimental)
+    -output &lt;filename&gt; (-o) : output assembled filename
     -debug (-d) : start in debug mode
             F1  : next step
             F2  : print CPU status
-            F3  : reset (no need debug mode)
-            F9  : ejects/insert floppy (no need debug mode)
             System + F12 : switch debug/run
+    -time (-t) : use timed emulation (else refresh based)
+    -vsync (-v) : use vertical synchronisation
+                    (more accurate but may bug)
+  Hardware loadout options:
+    -loadout (-l) : XML file that describes hardware loadout. If isn't using
+            a loadout file, then a default loadout will be used. The default
+            loadout contains a generic clock, a generic keyboard, a monitor,
+            a floppy drive and a sound speaker.
+            The next options will be used to change the default loadout of
+            the virtual machine.
     --monitor=&lt;monitor_name&gt; : use the following monitor
             1802 -&gt; Lem1802 (default) [c] (-1802)
             1803 -&gt; Lem1803 [c] (-1803)
             cgm -&gt; Colour Graphics Monitor (-cgm)
             [c] : compatible with Lem1802 0x10c programs
-    -output &lt;filename&gt; (-o) : output assembled filename
-    -floppy &lt;filename&gt; (-fd) : floppy image file
-    -time (-t) : use timed emulation (else refresh based)
-    -vsync (-v) : use vertical synchronization
-                    (more accurate but may bug)
+    --no-sound : disable the sound speaker device
+    -floppy &lt;filenames...&gt; (-fd) : floppy image files
 </code></pre>
 
 <p>There is a debug/step mode that can be activated and deactivated with <strong>System+F12</strong>:</p>
@@ -96,24 +102,59 @@ usage : dcpu-vm [-options] &lt;dcpu16-exe&gt;
 <strong>F1</strong> : Single step (print the current instruction on the console)</li>
 <li>
 <strong>F2</strong> : Print registers states into console</li>
-</ul><p>Avaliable shortcuts alltime: </p>
+</ul><p>Available shortcuts all-time: </p>
 
 <ul>
 <li>
 <strong>F3</strong> : Reset the DCPU</li>
 <li>
-<strong>F9</strong> : Ejects/Inserts a floppy</li>
+<strong>F9</strong> : Ejects/Inserts a floppy (warring! Uses the same disk image for all floppy devices!)</li>
 <li>
 <strong>System+F12</strong> : Activate/Deactivate debug mode. Note that System is Windows/Apple/Super key</li>
+</ul><h2>
+<a name="load-out-description-files" class="anchor" href="#load-out-description-files"><span class="octicon octicon-link"></span></a>LOAD-OUT DESCRIPTION FILES</h2>
+
+<p>A custom device load-out can be set using a XML file describing what devices will be used. The XML file follow this structure :</p>
+
+<pre><code>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;loadout&gt;
+  &lt;hardware&gt;
+    &lt;device type="GenericClock" /&gt;
+    &lt;device type="GenericKeyboard" /&gt;
+    &lt;device type="M35FD" /&gt;
+    &lt;device type="LEM1803" /&gt;
+    &lt;device type="CGM1084" /&gt;
+    &lt;device type="SimpleSpeaker" /&gt;
+  &lt;/hardware&gt;
+&lt;/loadout&gt;
+</code></pre>
+
+<p>The devices will be loaded in the same order that is in the XML file. Also can read the load-out from a <strong>.10csln</strong> solution file from <strong>DevKit</strong>.
+Actually admit this device list:</p>
+
+<ul>
+<li>
+<strong>GenericClock</strong> : Generic Clock</li>
+<li>
+<strong>GenericKeyboard</strong> : Generic Keyboard</li>
+<li>
+<strong>M35FD</strong> : Mackpar 3.5" Floppy drive</li>
+<li>
+<strong>LEM1802</strong> : LEM 1802 monitor</li>
+<li>
+<strong>LEM1803</strong> : LEM 1803 monitor</li>
+<li>
+<strong>CGM1084</strong> : CGM 1084 monitor</li>
+<li>
+<strong>SimpleSpeaker</strong> : Basic buzzer / IBM PC like speaker device</li>
 </ul><h2>
 <a name="todo" class="anchor" href="#todo"><span class="octicon octicon-link"></span></a>TODO</h2>
 
 <ul>
-<li>Finnish CGM code and create a 8x8 font</li>
-<li>Set a way of how configure what devices will be used in the machine</li>
+<li>Manager of floppy disks in use.</li>
 <li>Implemente BadSector bitmap for floppies</li>
 <li>A tool to create floppies and fill/copy data to it.</li>
-<li>GUI of the floppy drive to eject and insert diferent floppies.</li>
+<li>GUI of the floppy drive to eject and insert different floppies.</li>
 <li>Several optimizations on rendering monitor loops</li>
 <li>Rename variables/namespaces with a convention -&gt; Apply code convention of Trillek proyect more strictly.</li>
 <li>More options to Debug mode</li>
