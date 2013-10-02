@@ -60,7 +60,7 @@ bool DCPU::loadProgram (const uint16_t* prog,unsigned int size,unsigned int offs
     assert (size > 0);    
     if (RAM_SIZE < offset + size)
     {
-        std::cerr << "error: cannot load the program not enough ram !\n";
+        LOG_ERROR << "Cannot load the program not enough ram !";
         return false;
     }
     
@@ -76,19 +76,22 @@ bool DCPU::loadProgramFromFile(const std::string& filename,
     FILE* f = fopen(filename.c_str(),"rb");
     if (!f)
     {
-        std::cerr<< "error: file \"" << filename << "\" not found"<< std::endl;
+        LOG_ERROR << "File \"" << filename << "\" not found";
         return false;
     }
     int size = fsize(f);
-    if (RAM_SIZE < offset + size)
+    if (RAM_SIZE < offset + size/2 + 1)
     {
-        std::cerr << "error: cannot load the program not enough ram !\n";
+        char buff[33];
+        sprintf(buff,"%d",size);
+        LOG_ERROR << "Cannot load the program not enough ram ! (Program"
+                  + std::string(" size: ") + buff;
         fclose(f);
         return false;
     }
     else if (size%2)
     {
-        std::cout<<"warning: file cannot be splitted into WORD properly\n";
+        LOG_WARN <<  "File cannot be splitted into WORD properly";
     }
     
     

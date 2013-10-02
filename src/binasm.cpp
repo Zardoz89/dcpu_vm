@@ -906,11 +906,15 @@ bool BinAsm::assemble()
                     error_count++;
                 } 
             }
+            
             for (uint16_t k=0; k<count;k++)
             {
                 _bin[_offset]=init;
                 _offset++;
             }
+            char buff[100];
+            sprintf(buff,"reserved %u, offset 0x%X",count,_offset);
+            LOG << buff;
         }
         else 
         {

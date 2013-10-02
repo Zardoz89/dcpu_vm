@@ -132,7 +132,7 @@ class BinAsm
         //Unresolved labels
         std::map<uint16_t,std::string> _unresolved;
         std::map<std::string,uint16_t> _labels;
-        uint16_t _bin[0x1000];
+        uint16_t _bin[0x10000];
         uint16_t _offset;
 		
 
