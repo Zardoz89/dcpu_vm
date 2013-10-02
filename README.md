@@ -27,7 +27,10 @@ To make a Debug build:
     cmake -DCMAKE_BUILD_TYPE=Debug ..
 
 Run **make install** to copy the executable to the root of the project
-This project fork is made to run perfectly on windows without boost
+Tested compiler :
+  - GCC 4.7 Linux
+  - MinGW 4.7 Windows
+  - Add yours here !
 
 RUNNING
 -------
