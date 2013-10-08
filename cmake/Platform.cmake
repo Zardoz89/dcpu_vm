@@ -28,12 +28,14 @@ if (MSVC)
 else (MSVC)
     set(PLATFORM_FLAGS "-Wall" ) # Generic flags
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
-    
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
     if (CMAKE_HOST_WIN32)
       set(DCPU_VM_SEARCH_PATHS
           C:/MinGW
           )
+		#mingw static compilation
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++") 
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -static-libgcc")	
     endif (CMAKE_HOST_WIN32)
     
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
