@@ -16,7 +16,7 @@ KeyboardWindow::KeyboardWindow(sptr_GKeyboard keyboard) : keyboard(keyboard)
 
 {
     char tmp[32];
-    std::snprintf(tmp, 32, "Keyboard DevId=%zu", keyboard->getDevIndex());
+    snprintf(tmp, 32, "Keyboard DevId=%zu", keyboard->getDevIndex());
 
     this->create(sf::VideoMode(484, 196), tmp, sf::Style::Titlebar |
                   sf::Style::Close);

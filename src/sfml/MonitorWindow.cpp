@@ -12,7 +12,7 @@ MonitorWindow::MonitorWindow(sptr_AbstractMonitor monitor,
 
     border_add = monitor->borderSize()*2;
     char tmp[48];
-    std::snprintf(tmp, 48, "%s DevId=%u", title.c_str(),
+    snprintf(tmp, 48, "%s DevId=%u", title.c_str(),
                    monitor->getDevIndex());
 
     this->create(sf::VideoMode(monitor->phyWidth()+border_add,
