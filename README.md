@@ -10,6 +10,11 @@ In addition, includes some extra tools.
 Based on [Benedek Vartok VM](https://bitbucket.org/benedek/dcpu-16/overview)
 
 
+### REQUISITES
+
+DCPU VM needs SFML 2.1 installed in your system with the include files. 
+CMake handles the job of find the include files if your setup your system ain the apropiated way.
+
 COMPILATION
 -----------
 
