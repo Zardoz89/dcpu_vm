@@ -7,7 +7,6 @@
 #include <dcpu/devices/m35fd.hpp>
 #include <log.hpp>
 
-#define PARTITION_HEADER_SIZE 4
 
 int main(int argc, char** argv)
 {
@@ -23,61 +22,53 @@ int main(int argc, char** argv)
     LOG_ERROR << std::string(argv[1]) + " : cannot open the file !";
   }
   int in_size = fsize(in);
-  char* buffer_in = (char*) malloc(in_size);
+  char* buffer_in = (char*) malloc(in_size + 2*cpu::m35fd::SECTOR_SIZE);
   fread(buffer_in,1,in_size,in);
   fclose(in);
-  cpu::m35fd::M35_Floppy floppy(argv[2]);
   
+  unsigned char master_boot_record[512] = {0};
+  unsigned end_sector = in_size/cpu::m35fd::SECTOR_SIZE + 1;
   
-  /*int rest = ;
-  if (rest <= 0)
+  //Bootable master_boot_record magic
+  master_boot_record[510]=0x55;
+  master_boot_record[511]=0xAA;
+  
+  if (in_size <= 440) //Use MBR to put our program
   {
-    std::cerr << argv[1] << " : file is too big !" << std::endl;
-  }
-  
-  FILE* out = fopen(argv[2],"wb");
-  if (!out)
-  {
-    std::cerr << argv[2] << " : cannot open the file !" << std::endl;
-    return 0xdead;
+    memcpy(master_boot_record,buffer_in,in_size);
+    LOG << "Use MBR to boot";
   }
   else
   {
-    /// File Header 
-    const char magic1 = 'F', magic2 = 1;
-    const unsigned char bootable_sign = 0xFE; //FloppyExecutable
-    const char nb_tracks = 80;
-    fwrite(&magic1,1,1,out);
-    fwrite(&magic2,1,1,out);
-    fwrite(&bootable_sign,1,1,out);
-    fwrite(&nb_tracks,1,1,out);
+    LOG << "Use mrboot signature to boot";
+    //MrBoot Special Magic
+    master_boot_record[440] = 0xAE; 
+    master_boot_record[441] = 0xFB;
+    //0xFBAE : Floppy Bootable And Executable
     
-    /// write pure datas 
-    fwrite(buffer_in,1,in_size,out);
-    if (rest > 0) //Fill the rest with 0
-    { 
-      char* zeros = (char*) malloc(rest);
-      memset(zeros,0,rest);
-      fwrite(zeros,1,rest,out);
-      free(zeros);
-    }
     
-    /// write bad sectors 
-    unsigned char* bad_sectors = (unsigned char*) malloc(80*512*18/8);
-    int end_good = rest/8;
-    memset(bad_sectors,0x00,end_good);
-    if (rest%8)
-    {
-      bad_sectors[end_good] = 0xFF << (8 - rest%8);
-      end_good++;
-    }
-    memset(&(bad_sectors[end_good]),0xFF,80*512*18/8 - end_good);
-    fwrite(bad_sectors,1,80*512*18/8,out);
-    free(bad_sectors);
+    master_boot_record[442] = 0x1; //begin program sector
+    master_boot_record[443] = end_sector;//End program sector...
     
-    /// finnish 
-    fclose(out);
+    //Reserve partition 0 for our program
+    master_boot_record[446] = 0x8; //Active
+    master_boot_record[446+2] = 0x1;
+    master_boot_record[446+4] = 0xFE; //partition type
+    master_boot_record[446+6] = end_sector; 
+    master_boot_record[446+0xc] = end_sector - 1;    
   }
-  free(buffer_in);*/
+  
+  
+  
+  cpu::m35fd::M35_Floppy floppy(argv[2]);
+  floppy.writeToFile(0,(char*)master_boot_record);
+  if (in_size > 440) 
+  {
+    for (unsigned i=1;i<=end_sector;i++)
+    {
+      floppy.writeToFile(i,&(buffer_in[cpu::m35fd::SECTOR_SIZE*(i-1)]));
+    }
+  }
+  free(buffer_in);
   return 0;
 }

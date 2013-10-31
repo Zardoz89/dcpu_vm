@@ -308,7 +308,7 @@ ERROR_CODES M35_Floppy::writeToFile(uint16_t sector,const char* data)
     if (wp_flag)
       return ERROR_CODES::PROTECTED;
     
-    datafile.seekg(4 + tracks * sector * SECTOR_SIZE, std::ios::beg);
+    datafile.seekg(4 + sector * SECTOR_SIZE, std::ios::beg);
     datafile.write(data, SECTOR_SIZE);
     
     return ERROR_CODES::NONE;

@@ -53,7 +53,7 @@ static const char FileHeader[] = {'F', 1};
 class M35_Floppy;
 
 /**
- * How many cycles need to move to a neraby track
+ * How many cycles need to move to a nearby track
  */
 static const unsigned SEEK_CYCLES_PER_TRACK     = 240;
 
