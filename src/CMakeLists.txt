@@ -93,3 +93,17 @@ target_link_libraries(pbm2font
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
+# bin2dsk tool
+add_executable(bin2dsk
+    bin2dsk.cpp
+    )
+
+include_directories(bin2dsk
+    ${DCPU-VM_INCLUDE_DIRS}
+)
+
+target_link_libraries(bin2dsk
+    dcpu
+    ${CMAKE_THREAD_LIBS_INIT}
+)
+

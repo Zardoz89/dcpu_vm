@@ -7,7 +7,6 @@
         <device type="GenericClock" />
         <device type="GenericKeyboard" />
         <device type="M35FD" />
-        <device type="M35FD" />
         <device type="LEM1803" />
         <device type="CGM1084" />
         <device type="SimpleSpeaker" />

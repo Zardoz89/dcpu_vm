@@ -42,7 +42,7 @@ std::vector<std::shared_ptr<sf::SoundStream>> sound_streams;
 
 auto dcpu = std::make_shared<DCPU>();
 
-bool custom_loadot = false; /// Use a custom loadout
+bool custom_loadout = false; /// Use a custom loadout
 bool no_sound=false;        /// Disable audio/Speaker
 
 // Process loadout from a XML document
@@ -159,7 +159,7 @@ int main (int argc, char **argv)
             } else if (opt == "-output" || opt == "-o") {
                 LOG_WARN << "Option " + opt +
                         " requierd another argument it will be ignored here";
-            } else if ((opt == "-floppy" || opt == "-fd") && argc > k+1) {
+            } else if ((opt == "-floppy" || opt == "-fd") && argc >= k+1) {
                 k++;
                 do {
                     disk_filename = argv[k];
@@ -185,7 +185,6 @@ int main (int argc, char **argv)
         }
     }
   
-    LOG << "Number of floppy images files: " << floppies.size();
 
     // Find extension of input file
     auto ext_pos= filename.rfind(".");
@@ -231,7 +230,7 @@ int main (int argc, char **argv)
     }
    
     // Default laodout
-    if (!custom_loadot) {
+    if (!custom_loadout) {
         LOG << "Loading devices. Using default loadout";
         std::string window_title="dcpu_vm";
         auto gclock = std::make_shared<Generic_Clock>();
@@ -294,6 +293,8 @@ int main (int argc, char **argv)
         wins.push_back(window);
         window->setSplashImage(splash_file);
     }
+    
+    LOG << "Number of floppy images files: " << floppies.size();
 
     if (use_vsync) {
         LOG_WARN << "vsync activated may bug";
@@ -579,6 +580,6 @@ void process_loadout_xml(tinyxml2::XMLDocument& doc, bool devkit)
     }
 
     LOG << "Custom loadout";
-    custom_loadot = true;
+    custom_loadout = true;
 }
 
