@@ -15,33 +15,33 @@ namespace m35fd {
  * M35 Floppy Drive commands
  */
 enum class COMMANDS : uint16_t {
-    POLL,
-    SET_INTERRUPT,
-    READ_SECTOR,
-    WRITE_SECTOR,
-    GET_NUMBER_TRACKS
+    POLL=0,
+    SET_INTERRUPT=1,
+    READ_SECTOR=2,
+    WRITE_SECTOR=3,
+    GET_NUMBER_TRACKS=4
 };
 
 /**
  * M35 Floppy Drive status codes
  */
 enum class STATE_CODES : uint16_t {
-    NO_MEDIA,   /// There's no floppy in the drive
-    READY,      /// The drive is ready to accept commands
-    READY_WP,   /// Same as ready, but the floppy is Write Protected
-    BUSY,       /// The drive is busy either reading or writing a sector
+    NO_MEDIA=0,   /// There's no floppy in the drive
+    READY=1,      /// The drive is ready to accept commands
+    READY_WP=2,   /// Same as ready, but the floppy is Write Protected
+    BUSY=3,       /// The drive is busy either reading or writing a sector
 };
 
 /**
  * M35 Floppy Device error codes
  */
 enum class ERROR_CODES : uint16_t {
-    NONE,       /// No error since the last poll
-    BUSY,       /// Drive is busy performning a action
-    NO_MEDIA,   /// Attempted to read or write without a floppy
-    PROTECTED,  /// Attempted to write to a protected floppy
-    EJECT,      /// The floppy was ejected while was reading/writing
-    BAD_SECTOR, /// The requested sector is broken, the data on it is lost
+    NONE=0,       /// No error since the last poll
+    BUSY=1,       /// Drive is busy performning a action
+    NO_MEDIA=2,   /// Attempted to read or write without a floppy
+    PROTECTED=3,  /// Attempted to write to a protected floppy
+    EJECT=4,      /// The floppy was ejected while was reading/writing
+    BAD_SECTOR=5, /// The requested sector is broken, the data on it is lost
 
     BROKEN = 0xFFFF /// There's been some major software/hardware problem. 
                     /// Try to do a hard reset the device.
@@ -130,6 +130,7 @@ public:
     {
         return error;
     }
+    
 
     friend class M35_Floppy;
 
@@ -159,7 +160,7 @@ protected:
  *            ----------------------------------------------
  *            |             Bad Sectors BitMap             |
  *            |                   size =                   |
- *            | Tracks * SECTORS_PER_TRACK *SECTOR_SIZE / 8|
+ *            |          Tracks * SECTORS_PER_TRACK / 8    |
  *            |                                            |
  *            ----------------------------------------------
  * Header:
@@ -180,8 +181,8 @@ protected:
  * The bitmap stores 8 sectors state in each byte. It uses the MSB bit for 
  * the lowest sector and LSB for the bigger sector.
  * To read is a particular sector is bad, you read the byte at
- *     ( ( (4 + Size of Data secction) + 
- *         (sector * SECTOR_SIZE)/8 ) & 128 >> (sector % 8) ) != 0
+ *     ( (4 + Size of Data secction) + 
+ *         (sector /8 ) & 128 >> (sector % 8) ) != 0
  *
  * The RAW data will be read/write directly to the file, but the bitmap will
  * be keep in RAM for quick read of it.
@@ -283,6 +284,11 @@ public:
     {
         return this->filename;
     }
+    
+    /**
+     * Write all the wholes bad sector on the file associated
+     */
+    void writeBadSectorsToFile();
 
     friend class M35FD;
 

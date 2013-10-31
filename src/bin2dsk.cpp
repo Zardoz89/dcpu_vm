@@ -2,7 +2,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 #include "file.h"
+#include <dcpu/devices/m35fd.hpp>
+#include <log.hpp>
 
 #define PARTITION_HEADER_SIZE 4
 
@@ -10,20 +13,23 @@ int main(int argc, char** argv)
 {
   if (argc < 3)
   {
-    std::cerr << "Error no input arguments" << std::endl;
-    std::cout << "Usage: " << argv[0] << " input output" << std::endl;
+    LOG_ERROR << "no input arguments";
+    LOG << std::string("Usage: ") + std::string(argv[0]) + " input output";
     return 0xdead;
   }
   FILE* in = fopen(argv[1],"rb");
   if (!in)
   {
-    std::cerr << argv[1] << " : cannot open the file !" << std::endl;
+    LOG_ERROR << std::string(argv[1]) + " : cannot open the file !";
   }
   int in_size = fsize(in);
   char* buffer_in = (char*) malloc(in_size);
   fread(buffer_in,1,in_size,in);
   fclose(in);
-  int rest = 0xB4000-in_size-PARTITION_HEADER_SIZE;
+  cpu::m35fd::M35_Floppy floppy(argv[2]);
+  
+  
+  /*int rest = ;
   if (rest <= 0)
   {
     std::cerr << argv[1] << " : file is too big !" << std::endl;
@@ -37,7 +43,7 @@ int main(int argc, char** argv)
   }
   else
   {
-    /* File Header */
+    /// File Header 
     const char magic1 = 'F', magic2 = 1;
     const unsigned char bootable_sign = 0xFE; //FloppyExecutable
     const char nb_tracks = 80;
@@ -46,13 +52,7 @@ int main(int argc, char** argv)
     fwrite(&bootable_sign,1,1,out);
     fwrite(&nb_tracks,1,1,out);
     
-    /* 0xFE | version | size in bytes | */
-    const unsigned char mrboot_version = 1; 
-    fwrite(&bootable_sign,1,1,out);
-    fwrite(&mrboot_version,1,1,out);
-    fwrite(&in_size,1,2,out);
-    
-    /* write pure datas */
+    /// write pure datas 
     fwrite(buffer_in,1,in_size,out);
     if (rest > 0) //Fill the rest with 0
     { 
@@ -62,7 +62,7 @@ int main(int argc, char** argv)
       free(zeros);
     }
     
-    /* write bad sectors */ 
+    /// write bad sectors 
     unsigned char* bad_sectors = (unsigned char*) malloc(80*512*18/8);
     int end_good = rest/8;
     memset(bad_sectors,0x00,end_good);
@@ -75,9 +75,9 @@ int main(int argc, char** argv)
     fwrite(bad_sectors,1,80*512*18/8,out);
     free(bad_sectors);
     
-    /* finnish */
+    /// finnish 
     fclose(out);
   }
-  free(buffer_in);
+  free(buffer_in);*/
   return 0;
 }

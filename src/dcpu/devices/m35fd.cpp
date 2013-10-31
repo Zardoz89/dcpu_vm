@@ -205,19 +205,46 @@ M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
         LOG << "[M35FD] Disk datafile not exists. Creating it."; 
     } 
     f.close();
-
-    bad_sectors = new uint8_t[(tracks * SECTORS_PER_TRACK) >> 3];
+    unsigned  bitmap_size = (tracks * SECTORS_PER_TRACK) >> 3;
+    
 
     if (create_header) {
         datafile.open(filename, std::ios::in | std::ios::out | 
                                 std::ios::binary | std::ios::trunc);
+        /* Fresh disk ? no bad sectors ! */         
+        bad_sectors = new uint8_t[bitmap_size];        
+        for (unsigned k=0; k < bitmap_size;k++) bad_sectors[k]=0;
+         /* file header */
         datafile.write(&FileHeader[0], 1);
         datafile.write(&FileHeader[1], 1);
         datafile.seekg(1, std::fstream::cur);
         datafile.write((const char*)(&tracks), 1);
+        /* Put random data */
+        datafile.seekg(tracks * SECTORS_PER_TRACK * SECTOR_SIZE, std::fstream::cur);
+        /* Writes bad sectors */
+        writeBadSectorsToFile();
+        
     } else {
         datafile.open(filename, std::ios::in | std::ios::out |
                                 std::ios::binary);
+        
+        char r;
+        /* Check our file */
+        datafile.read(&r, 1);
+        if (r!='F') LOG_ERROR << filename + " is not a valid floppy disk image";
+        datafile.read(&r, 1);
+        if (r!=1) LOG_ERROR << filename + " is not compatible with this program version";
+        datafile.seekg(1, std::fstream::cur);
+        datafile.read((char*)(&tracks), 1);
+        if (tracks != 40 && tracks != 80)
+           LOG_ERROR << filename + " have not a a standard number of tracks";
+        
+        /* Get bad_sector bitmap from the file */         
+        bitmap_size = (tracks * SECTORS_PER_TRACK) >> 3;
+        bad_sectors = new uint8_t[bitmap_size];
+        datafile.seekg(tracks * SECTORS_PER_TRACK * SECTOR_SIZE, std::fstream::cur);
+        datafile.read((char*)bad_sectors,bitmap_size);
+        
     }
 }
 
@@ -233,12 +260,24 @@ M35_Floppy::~M35_Floppy()
 
 bool M35_Floppy::isSectorBad (uint16_t sector) const
 {
-    return false; // TODO
+    return !(bad_sectors[sector/8] & 128 >> (sector % 8)); 
 }
 
 void M35_Floppy::setSectorBad (uint16_t sector, bool state)
 {
-    return; // TODO
+  if (isSectorBad(sector) == state)
+    return; //nothing to do
+  
+  unsigned opt_sector_8 = sector >> 3;
+  
+  if (state)
+    bad_sectors[opt_sector_8] |= 128 >> (sector % 8);
+  else
+    bad_sectors[opt_sector_8] &= ~(128 >> (sector % 8));
+    
+  datafile.seekg(4 + tracks * SECTORS_PER_TRACK * SECTOR_SIZE + opt_sector_8, std::ios::beg);
+  datafile.write((const char*)(&(bad_sectors[opt_sector_8])), 1);
+  
 }
 
 ERROR_CODES M35_Floppy::write (uint16_t sector, uint16_t addr,
@@ -296,6 +335,13 @@ void M35_Floppy::tick()
             datafile.write (buff, 2);
         }
     }
+}
+
+void M35_Floppy::writeBadSectorsToFile()
+{
+  unsigned sectors = tracks * SECTORS_PER_TRACK;
+  datafile.seekg(4 + sectors * SECTOR_SIZE, std::ios::beg);
+  datafile.write((const char*)(&bad_sectors), sectors);
 }
 
 } // END OF NAMESPACE m35fd

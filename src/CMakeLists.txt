@@ -104,6 +104,7 @@ include_directories(bin2dsk
 
 target_link_libraries(bin2dsk
     dcpu
+    dcpu-devices
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
