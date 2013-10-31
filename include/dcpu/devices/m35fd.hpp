@@ -263,6 +263,15 @@ public:
      */
     ERROR_CODES write (uint16_t sector, uint16_t addr, unsigned& cycles);
     
+    
+    /**
+     * Try to write data at the desired sector (Not during an emulation !) 
+     * @param sector Desired sector to be writed
+     * @param the data to write must be SECTOR_SIZE at least !!
+     * @return NONE, PROTECTED or BAD_SECTOR
+     */
+    ERROR_CODES writeToFile(uint16_t sector, const char* data);
+    
     /**
      * Try to read data at the desired sector
      * @param sector Desired sector to be writed

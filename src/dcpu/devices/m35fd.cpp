@@ -286,6 +286,8 @@ ERROR_CODES M35_Floppy::write (uint16_t sector, uint16_t addr,
     // From 0 to max
     if (sector >= SECTORS_PER_TRACK*tracks)
         return ERROR_CODES::BAD_SECTOR;
+    if (wp_flag)
+      return ERROR_CODES::PROTECTED;
 
     cycles = setTrack(sector / SECTORS_PER_TRACK);
     cycles += WRITE_CYCLES_PER_SECTOR;
@@ -295,6 +297,20 @@ ERROR_CODES M35_Floppy::write (uint16_t sector, uint16_t addr,
     reading = false;
 
     last_sector = sector;
+    return ERROR_CODES::NONE;
+}
+
+ERROR_CODES M35_Floppy::writeToFile(uint16_t sector,const char* data) 
+{
+    // From 0 to max
+    if (sector >= SECTORS_PER_TRACK*tracks)
+        return ERROR_CODES::BAD_SECTOR;
+    if (wp_flag)
+      return ERROR_CODES::PROTECTED;
+    
+    datafile.seekg(4 + tracks * sector * SECTOR_SIZE, std::ios::beg);
+    datafile.write(data, SECTOR_SIZE);
+    
     return ERROR_CODES::NONE;
 }
 
