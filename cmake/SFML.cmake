@@ -68,11 +68,10 @@ if (SFML_SYSTEM_LIBRARY)
         if (SFML_GRAPHICS_LIBRARY)
             if (SFML_AUDIO_LIBRARY)
                 set (SFML_LIBRARIES 
-				    "${SFML_AUDIO_LIBRARY}"
-					"${SFML_GRAPHICS_LIBRARY}"
+				            "${SFML_AUDIO_LIBRARY}"
+					          "${SFML_GRAPHICS_LIBRARY}"
                     "${SFML_WINDOW_LIBRARY}" 
                     "${SFML_SYSTEM_LIBRARY}" 
-                    
                     )
             else (SFML_AUDIO_LIBRARY)
                 message(FATAL_ERROR "sfml-audio library not found")

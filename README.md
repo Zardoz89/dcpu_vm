@@ -51,7 +51,7 @@ Just type **dcpu-vm --help** to get these infos.
         -debug (-d) : start in debug mode
                 F1  : next step
                 F2  : print CPU status
-                System + F12 : switch debug/run
+                F10 : switch debug/run
         -time (-t) : use timed emulation (else refresh based)
         -vsync (-v) : use vertical synchronisation
                         (more accurate but may bug)

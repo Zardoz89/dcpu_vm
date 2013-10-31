@@ -72,7 +72,7 @@ void print_help(std::string program_name)
     cout << endl;
     cout << "            F9  : ejects/inserts floppy";
     cout << endl;
-    cout << "            System + F12 : switch debug/run";
+    cout << "            F10 : switch debug/run";
     cout << endl;
     cout << "    -time (-t) : use timed emulation (else refresh based)";
     cout << endl;
@@ -374,9 +374,7 @@ int main (int argc, char **argv)
                 }
 
                 pressed_key = true;
-            } else if (sf::Keyboard::isKeyPressed (sf::Keyboard::F12) &&
-                    (sf::Keyboard::isKeyPressed (sf::Keyboard::LSystem) ||
-                     sf::Keyboard::isKeyPressed (sf::Keyboard::RSystem) )) {
+            } else if (sf::Keyboard::isKeyPressed (sf::Keyboard::F10)) {
                 if (!pressed_key ) {
                     debug = !debug;
                     if (debug)
