@@ -13,8 +13,14 @@ int main(int argc, char** argv)
   if (argc < 3)
   {
     LOG_ERROR << "no input arguments";
-    LOG << std::string("Usage: ") + std::string(argv[0]) + " input output";
+    LOG << std::string("Usage: ") + std::string(argv[0]) + " input output (-f)" ;
     return 0xdead;
+  }
+  bool force_mr_boot;
+  if (argc >= 4)
+  {
+    force_mr_boot = std::string("-f")==argv[3];
+    LOG << "force write mrboot disk...";
   }
   FILE* in = fopen(argv[1],"rb");
   if (!in)
@@ -29,11 +35,18 @@ int main(int argc, char** argv)
   unsigned char master_boot_record[512] = {0};
   unsigned end_sector = in_size/cpu::m35fd::SECTOR_SIZE + 1;
   
+  if (end_sector > 64)
+  {
+    LOG_ERROR << std::string(argv[1]) + " take more than authorized sectors [max size 64kb]";
+    return 0xdead;
+  }
+  
   //Bootable master_boot_record magic
+  
   master_boot_record[510]=0x55;
   master_boot_record[511]=0xAA;
   
-  if (in_size <= 440) //Use MBR to put our program
+  if (in_size <= 440 && !force_mr_boot) //Use MBR to put our program
   {
     memcpy(master_boot_record,buffer_in,in_size);
     LOG << "Use MBR to boot";
@@ -42,8 +55,8 @@ int main(int argc, char** argv)
   {
     LOG << "Use mrboot signature to boot";
     //MrBoot Special Magic
-    master_boot_record[440] = 0xAE; 
-    master_boot_record[441] = 0xFB;
+    master_boot_record[440] = 0xFB; 
+    master_boot_record[441] = 0xAE;
     //0xFBAE : Floppy Bootable And Executable
     
     
