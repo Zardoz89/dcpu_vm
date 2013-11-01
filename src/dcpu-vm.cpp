@@ -70,6 +70,8 @@ void print_help(std::string program_name)
     cout << endl;
     cout << "            F3  : reset (no need debug mode)";
     cout << endl;
+    cout << "            F4  : dump the ram";
+    cout << endl;
     cout << "            F9  : ejects/inserts floppy";
     cout << endl;
     cout << "            F10 : switch debug/run";
@@ -356,6 +358,15 @@ int main (int argc, char **argv)
                     LOG << "Reset dcpu";
                     dcpu->reset();
                     dcpu->loadProgramFromFile(filename);
+                }
+
+                pressed_key = true;
+            } else if (sf::Keyboard::isKeyPressed (sf::Keyboard::F4)) {
+                if (!pressed_key ) {
+                    LOG << "Ram dumped in \"ram_dump:\"";
+                    FILE* f=fopen("ram_dump","wb");
+                    fwrite((const char*) dcpu->getMem(),1,cpu::RAM_SIZE*2,f);
+                    fclose(f);
                 }
 
                 pressed_key = true;

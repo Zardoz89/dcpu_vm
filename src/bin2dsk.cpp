@@ -20,7 +20,7 @@ int main(int argc, char** argv)
   if (argc >= 4)
   {
     force_mr_boot = std::string("-f")==argv[3];
-    LOG << "force write mrboot disk...";
+    LOG << "Force write mrboot disk...";
   }
   FILE* in = fopen(argv[1],"rb");
   if (!in)
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
   
   cpu::m35fd::M35_Floppy floppy(argv[2]);
   floppy.writeToFile(0,(char*)master_boot_record);
-  if (in_size > 440) 
+  if (in_size > 440 || force_mr_boot) 
   {
     for (unsigned i=1;i<=end_sector;i++)
     {

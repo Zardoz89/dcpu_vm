@@ -187,8 +187,8 @@ void M35FD::eject()
 
 size_t data_pos (size_t sector, size_t index)
 {
-    return 4 + sector*SECTOR_SIZE*2 + index*2; 
-    // We wrok with Words, but file post is in bytes!!   
+    return 4 + sector*SECTOR_SIZE + index*2; 
+    // We work with Words, but file post is in bytes!!   
 }
 
 M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
@@ -205,7 +205,7 @@ M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
         LOG << "[M35FD] Disk datafile not exists. Creating it."; 
     } 
     f.close();
-    unsigned  bitmap_size = (tracks * SECTORS_PER_TRACK) >> 3;
+    unsigned  bitmap_size = (tracks * SECTORS_PER_TRACK) / 8;
     
 
     if (create_header) {
@@ -219,8 +219,6 @@ M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
         datafile.write(&FileHeader[1], 1);
         datafile.seekg(1, std::fstream::cur);
         datafile.write((const char*)(&tracks), 1);
-        /* Put random data */
-        datafile.seekg(tracks * SECTORS_PER_TRACK * SECTOR_SIZE, std::fstream::cur);
         /* Writes bad sectors */
         writeBadSectorsToFile();
         
@@ -240,7 +238,7 @@ M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
            LOG_ERROR << filename + " have not a a standard number of tracks";
         
         /* Get bad_sector bitmap from the file */         
-        bitmap_size = (tracks * SECTORS_PER_TRACK) >> 3;
+        bitmap_size = (tracks * SECTORS_PER_TRACK) / 8;
         bad_sectors = new uint8_t[bitmap_size];
         datafile.seekg(tracks * SECTORS_PER_TRACK * SECTOR_SIZE, std::fstream::cur);
         datafile.read((char*)bad_sectors,bitmap_size);
@@ -335,7 +333,7 @@ ERROR_CODES M35_Floppy::read (uint16_t sector, uint16_t addr,
 void M35_Floppy::tick()
 {
     char buff[2];
-    if (count < SECTOR_SIZE) {
+    if (count < SECTOR_SIZE/2) {
         datafile.seekp(data_pos (last_sector, count), std::ios::beg);
         // TODO Force endianess
         if (reading) {
@@ -357,7 +355,7 @@ void M35_Floppy::writeBadSectorsToFile()
 {
   unsigned sectors = tracks * SECTORS_PER_TRACK;
   datafile.seekg(4 + sectors * SECTOR_SIZE, std::ios::beg);
-  datafile.write((const char*)(&bad_sectors), sectors);
+  datafile.write((const char*)(bad_sectors), sectors/8);
 }
 
 } // END OF NAMESPACE m35fd
