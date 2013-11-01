@@ -28,12 +28,12 @@ int main(int argc, char** argv)
     LOG_ERROR << std::string(argv[1]) + " : cannot open the file !";
   }
   int in_size = fsize(in);
-  char* buffer_in = (char*) malloc(in_size + 2*cpu::m35fd::SECTOR_SIZE);
+  char* buffer_in = (char*) malloc(in_size + 2*cpu::m35fd::SECTOR_SIZE_BYTES);
   fread(buffer_in,1,in_size,in);
   fclose(in);
   
-  unsigned char master_boot_record[512] = {0};
-  unsigned end_sector = in_size/cpu::m35fd::SECTOR_SIZE + 1;
+  uint16_t master_boot_record[512] = {0};
+  unsigned end_sector = in_size/cpu::m35fd::SECTOR_SIZE_BYTES + 1;
   
   if (end_sector > 64)
   {
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
   
   cpu::m35fd::M35_Floppy floppy(argv[2],40);
   floppy.writeToFile(0,(char*)master_boot_record);
-  if (in_size > 440 || force_mr_boot) 
+  if (in_size > 880 || force_mr_boot) 
   {
     for (unsigned i=1;i<=end_sector;i++)
     {

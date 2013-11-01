@@ -187,7 +187,7 @@ void M35FD::eject()
 
 size_t data_pos (size_t sector, size_t index)
 {
-    return 4 + sector*SECTOR_SIZE + index*2; 
+    return 4 + sector*SECTOR_SIZE_BYTES + index*2; 
     // We work with Words, but file post is in bytes!!   
 }
 
@@ -195,7 +195,7 @@ M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
                         filename(filename), tracks(tracks), bad_sectors(NULL),
                         wp_flag(wp), last_sector(0), cursor(0), drive(NULL)
 {
-    assert(tracks == 80 || tracks == 40 || tracks == 160);
+    assert(tracks == 80 || tracks == 40);
    
     // Qucik and dirty way to see if file exists
     bool create_header = false;
@@ -234,13 +234,13 @@ M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
         if (r!=1) LOG_ERROR << filename + " is not compatible with this program version";
         datafile.seekg(1, std::fstream::cur);
         datafile.read((char*)(&tracks), 1);
-        if (tracks != 40 && tracks != 80 && tracks != 160)
+        if (tracks != 40 && tracks != 80)
            LOG_ERROR << filename + " have not a a standard number of tracks";
         
         /* Get bad_sector bitmap from the file */         
         bitmap_size = (tracks * SECTORS_PER_TRACK) / 8;
         bad_sectors = new uint8_t[bitmap_size];
-        datafile.seekg(tracks * SECTORS_PER_TRACK * SECTOR_SIZE, std::fstream::cur);
+        datafile.seekg(tracks * SECTORS_PER_TRACK * SECTOR_SIZE_BYTES, std::fstream::cur);
         datafile.read((char*)bad_sectors,bitmap_size);
         
     }
@@ -273,7 +273,7 @@ void M35_Floppy::setSectorBad (uint16_t sector, bool state)
   else
     bad_sectors[opt_sector_8] &= ~(128 >> (sector % 8));
     
-  datafile.seekg(4 + tracks * SECTORS_PER_TRACK * SECTOR_SIZE + opt_sector_8, std::ios::beg);
+  datafile.seekg(4 + tracks * SECTORS_PER_TRACK * SECTOR_SIZE_BYTES + opt_sector_8, std::ios::beg);
   datafile.write((const char*)(&(bad_sectors[opt_sector_8])), 1);
   
 }
@@ -306,8 +306,8 @@ ERROR_CODES M35_Floppy::writeToFile(uint16_t sector,const char* data)
     if (wp_flag)
       return ERROR_CODES::PROTECTED;
     
-    datafile.seekg(4 + sector * SECTOR_SIZE, std::ios::beg);
-    datafile.write(data, SECTOR_SIZE);
+    datafile.seekg(4 + sector * SECTOR_SIZE_BYTES, std::ios::beg);
+    datafile.write(data, SECTOR_SIZE_BYTES);
     
     return ERROR_CODES::NONE;
 }
@@ -333,7 +333,7 @@ ERROR_CODES M35_Floppy::read (uint16_t sector, uint16_t addr,
 void M35_Floppy::tick()
 {
     char buff[2];
-    if (count < SECTOR_SIZE/2) {
+    if (count < SECTOR_SIZE) {
         datafile.seekp(data_pos (last_sector, count), std::ios::beg);
         // TODO Force endianess
         if (reading) {
@@ -354,7 +354,7 @@ void M35_Floppy::tick()
 void M35_Floppy::writeBadSectorsToFile()
 {
   unsigned sectors = tracks * SECTORS_PER_TRACK;
-  datafile.seekg(4 + sectors * SECTOR_SIZE, std::ios::beg);
+  datafile.seekg(4 + 2*sectors * SECTOR_SIZE, std::ios::beg);
   datafile.write((const char*)(bad_sectors), sectors/8);
 }
 

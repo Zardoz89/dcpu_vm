@@ -72,6 +72,7 @@ static const unsigned SECTORS_PER_TRACK         = 18;
  * How many words are stored in a sector
  */
 static const unsigned SECTOR_SIZE               = 512;
+static const unsigned SECTOR_SIZE_BYTES         = 1024;
 
 /**
  * Mackapar 3,5" floppy drive
@@ -155,7 +156,7 @@ protected:
  *            ----------------------------------------------
  *            |                   Data                     |
  *            |                  size =                    |
- *            |  Tracks * SECTORS_PER_TRACK * SECTOR_SIZE  |
+ *            | 2*Tracks * SECTORS_PER_TRACK * SECTOR_SIZE |
  *            |                                            |
  *            ----------------------------------------------
  *            |             Bad Sectors BitMap             |
@@ -171,7 +172,7 @@ protected:
  * basic header.
  *
  * Floppy data:
- * Tracks : Number of tracks, should be 40, 80 or 160, I don't expect any other
+ * Tracks : Number of tracks, should be 40 or 80, I don't expect any other
  * track size.
  *
  * Data: RAW data. To access a particular sector, you only need to read at
