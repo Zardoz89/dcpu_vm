@@ -171,7 +171,7 @@ protected:
  * basic header.
  *
  * Floppy data:
- * Tracks : Number of tracks, should be 40 or 80, I don't expect any other
+ * Tracks : Number of tracks, should be 40, 80 or 160, I don't expect any other
  * track size.
  *
  * Data: RAW data. To access a particular sector, you only need to read at

@@ -24,7 +24,7 @@ bool BinAsm::load(const std::string& filename)
     _unresolved.clear();
     _labels.clear();
 	
-	FILE* f = fopen(filename.c_str(),"r");
+	FILE* f = fopen(filename.c_str(),"rb");
 	if (!f)
 	{
 		LOG_ERROR << filename << " not found !";
@@ -37,8 +37,6 @@ bool BinAsm::load(const std::string& filename)
     memset((void*)buff,'\0',size+1);
 	fread(buff,1,size,f);
 	fclose(f);
-    //strange bug windows add a t i don't know why...
-    //if (size>2 && (buff[size-2]==EOF||buff[size-2]=='t')) buff[size-2] = '\0';
 	buff[size] = '\0';
 	_fullsrc = buff;
 	_src=_fullsrc;
@@ -50,32 +48,49 @@ bool BinAsm::load(const std::string& filename)
 
 void BinAsm::remove_comments(std::string& str)
 {
-	std::string::iterator b = str.begin();
 	bool in_comment = false;
 	bool special_case = false;
-	for (std::string::iterator i=b; i!=str.end();i++)
+  std::string::iterator b=str.begin();
+  std::string::iterator i=str.begin();
+	while (i!=str.end())
 	{
+    if (*i == 0xD && !special_case && !in_comment)
+    {
+      str.erase(i);
+      i=str.begin();
+    }
 		if (special_case && (*i == '\'' || *i == '"') && *(i-1) != '\\')
+    {
 			special_case = false;
-		else if (*i == '\'' || *i == '"')
+      i++;
+    }
+		else if (*i == '\'' || *i == '"') {
 			special_case = true;
+      i++;
+    }
 		else if (*i == ';' && !special_case && !in_comment)
 		{
 			b = i;
 			in_comment = true;
+      i++;
 		}
 		else if (*i == '\n' && in_comment) 
 		{
 			in_comment = false;
-            special_case = false;
+      special_case = false;
 			str.erase(b,i);
 			i=str.begin();
 		}
-        else if (*i == '\n')
-        {
-            in_comment = false;
-            special_case = false;
-        }
+    else if (*i == '\n')
+    {
+      in_comment = false;
+      special_case = false;
+      i++;
+    }
+    else 
+    {
+      i++;
+    }
 	}
 	if (in_comment && !special_case) str.erase(b,str.end());
 }

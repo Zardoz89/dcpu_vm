@@ -195,7 +195,7 @@ M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
                         filename(filename), tracks(tracks), bad_sectors(NULL),
                         wp_flag(wp), last_sector(0), cursor(0), drive(NULL)
 {
-    assert(tracks == 80 || tracks == 40);
+    assert(tracks == 80 || tracks == 40 || tracks == 160);
    
     // Qucik and dirty way to see if file exists
     bool create_header = false;
@@ -234,7 +234,7 @@ M35_Floppy::M35_Floppy(const std::string filename, uint8_t tracks, bool wp) :
         if (r!=1) LOG_ERROR << filename + " is not compatible with this program version";
         datafile.seekg(1, std::fstream::cur);
         datafile.read((char*)(&tracks), 1);
-        if (tracks != 40 && tracks != 80)
+        if (tracks != 40 && tracks != 80 && tracks != 160)
            LOG_ERROR << filename + " have not a a standard number of tracks";
         
         /* Get bad_sector bitmap from the file */         

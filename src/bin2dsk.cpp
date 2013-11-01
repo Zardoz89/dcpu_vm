@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   
   
   
-  cpu::m35fd::M35_Floppy floppy(argv[2]);
+  cpu::m35fd::M35_Floppy floppy(argv[2],40);
   floppy.writeToFile(0,(char*)master_boot_record);
   if (in_size > 440 || force_mr_boot) 
   {
