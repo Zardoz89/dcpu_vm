@@ -80,8 +80,9 @@ There is a debug/step mode that can be activated and deactivated with **System+F
 Available shortcuts all-time: 
 
  - **F3** : Reset the DCPU
+ - **F4**  : Dump the ram into file "dump_ram"
  - **F9** : Ejects/Inserts all floppies!
- - **System+F12** : Activate/Deactivate debug mode. Note that System is Windows/Apple/Super key
+ - **F10** : Activate/Deactivate debug mode.
 
 LOAD-OUT DESCRIPTION FILES
 --------------------------
@@ -156,8 +157,19 @@ PBM2FONT reads the PBM file, and makes a grid of 4x8, or 8x8 cells. Each cell is
 ![Creating a font with The Gimp](https://raw.github.com/Zardoz89/dcpu_vm/gh-pages/images/gimp_font.png)
 
 
+BIN2DSK
+--------
+BIN2DSK is a small tool to convert bin dcpu programs into bootables floppy disk images (.dsk).
 
+### RUN
 
+    usage : bin2dsk <input.bin> <output.dsk> (-f)
+    
+Actually there are 2 way to boot from a floppy with the mrboot program : 
+ - the program is small so it can be stored on the MBR (sector 0) and loaded at the address 0x7C00
+ - the program is too big and it is stored into many sectors so only mrboot can boot it with a signature on the sector 0
+ 
+You can force the program to create mrboot signed floppy by using the option -f  after the filenames 
 
 
 
