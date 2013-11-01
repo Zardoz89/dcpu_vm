@@ -15,11 +15,11 @@ namespace m35fd {
  * M35 Floppy Drive commands
  */
 enum class COMMANDS : uint16_t {
-    POLL=0,
-    SET_INTERRUPT=1,
-    READ_SECTOR=2,
-    WRITE_SECTOR=3,
-    GET_NUMBER_TRACKS=4
+    POLL=0x0,
+    SET_INTERRUPT=0x1,
+    READ_SECTOR=0x2,
+    WRITE_SECTOR=0x3,
+    GET_NUMBER_TRACKS=0x4
 };
 
 /**
