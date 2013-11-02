@@ -9,7 +9,7 @@ find_path(SFML_INCLUDE_DIR
 
 message(STATUS "Looking for sfml-system library")
 find_library(SFML_SYSTEM_LIBRARY
-    NAMES sfml-system
+    NAMES sfml-system-s sfml-system
     HINTS
     NO_DEFAULT_PATH
     NO_CMAKE_ENVIRONMENT_PATH
@@ -23,7 +23,7 @@ find_library(SFML_SYSTEM_LIBRARY
 
 message(STATUS "Looking for sfml-window library")
 find_library(SFML_WINDOW_LIBRARY
-    NAMES sfml-window
+    NAMES sfml-window-s sfml-window
     HINTS
     NO_DEFAULT_PATH
     NO_CMAKE_ENVIRONMENT_PATH
@@ -37,7 +37,7 @@ find_library(SFML_WINDOW_LIBRARY
 
 message(STATUS "Looking for sfml-graphics library")
 find_library(SFML_GRAPHICS_LIBRARY
-    NAMES sfml-graphics
+    NAMES sfml-graphics-s sfml-graphics
     HINTS
     NO_DEFAULT_PATH
     NO_CMAKE_ENVIRONMENT_PATH
@@ -51,7 +51,7 @@ find_library(SFML_GRAPHICS_LIBRARY
 
 message(STATUS "Looking for sfml-audio library")
 find_library(SFML_AUDIO_LIBRARY
-    NAMES sfml-audio
+    NAMES sfml-audio-s sfml-audio
     HINTS
     NO_DEFAULT_PATH
     NO_CMAKE_ENVIRONMENT_PATH

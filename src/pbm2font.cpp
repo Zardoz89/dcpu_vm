@@ -15,6 +15,7 @@
 #include <iomanip> 
 #include <cstdlib>
 #include <cstdint>
+#include <cctype>
 
 #include "config.hpp"
 
@@ -209,7 +210,7 @@ int main (int argc, char **argv)
 
         }
         
-        if (++x >= width) {
+        if (++x >= (unsigned) width) {
             x = 0;
             y++;
         }

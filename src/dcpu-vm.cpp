@@ -413,14 +413,13 @@ int main (int argc, char **argv)
         if (!debug)
         {
             unsigned int tick_needed;
+			double tmp;
             if (use_time) {
-                double tmp = delta / 10.0f;
-                tick_needed= tmp+0.5; 
-                //trash fix Visual don't know the function round lol!
+                tmp = delta / 10.0f; //trash fix Visual don't know the function round lol!
             } else {
-                double tmp = dcpu->getClock() / (double)(FRAMERATE);
-                tick_needed= tmp+0.5;
+                tmp = dcpu->getClock() / (double)(FRAMERATE);
             }
+			tick_needed= (unsigned int)(tmp+0.5); 
             ticks_counter += tick_needed;
 
             // Outputs every second (if runs to ~100% of speed)

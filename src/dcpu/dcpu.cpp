@@ -50,7 +50,7 @@ void DCPU::reset()
     ra = rb = rc = rx = ry = rz = ri = rj = rex = rsp = ria = rpc = 0;
     
     int_queueing = skipping_flag = on_fire = false;
-    wait_cycles = tot_cycles = 0;
+    wait_cycles =  tot_cycles = 0;
     
 }
 
@@ -554,7 +554,7 @@ int DCPU::realStep()
             break;
             
         case HWN:
-            *a = attached_hardware.size();
+            *a = (uint16_t) attached_hardware.size();
             cycles += 2;
             break;
             

@@ -34,7 +34,8 @@ To make a Debug build:
 Run **make install** to copy the executable to the root of the project
 Tested compiler :
   - GCC 4.7 Linux
-  - MinGW 4.7 Windows
+  - MinGW 4.8 Windows
+  - Visual Studio 2012
   - Add yours here !
 
 RUNNING

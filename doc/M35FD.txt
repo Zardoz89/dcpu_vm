@@ -113,3 +113,49 @@ M35FD floppy disk image (.dsk)
  Note: a 3"5 floppy have only 80 tracks but 2 faces (so 160 tracks)
  In out case the double face of the floppy is not emulated so to have a
  1.44MB like real 3"5 floppy we simply 2x the number of tracks -> 160
+
+
+Floppy partitions
+
+ The actuals Floppy specs are not compatibles with standarts floppy
+ so i decided to implement my own partion system FP16
+
+
+Floppy Sector0
+ The sector 0 of a floppy contains informations about partitions  
+ 
+ WORD                     DESCRIPTION
+
+   0x0       
+    .        Ignored. May contains SET PC,Whatever instruction for 
+    .        compatibility with others systems
+   0x2        
+            
+   0x3       Magic   (0x16) Indicate FP16 Partition system
+   0x4       Version (0x1) 
+
+   0x5       Boot Partition Size (0x0 if non bootable) in sectors
+   0x6       Boot Partition Sector Begin (usually 0x1 if bootable) 
+             Ignored if 0x5 is 0.
+
+   0x7       Table partition Size in sectors (usually 0x59)
+   0x8       Sector of Root folder Table (first table)
+
+   0x9       Data Partition Size in sectors (usually 0x55F if non bootable)
+   0xA       Data Partition Begin Sector
+
+   0xB       Fast alloc sector : first data sector that is free 
+             (0x0 if not available)
+
+   0xC  
+    .        Null-terminated string that represent the 
+    .        Floppy Name 
+    .
+   0x2C      
+
+   
+   0x2D
+    .
+    .        Ignored ! can be used in futur
+    .
+   0x200           

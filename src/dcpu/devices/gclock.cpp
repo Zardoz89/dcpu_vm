@@ -67,7 +67,7 @@ void Generic_Clock::update()
         int64_t now_tick = delta/max_acum;
         if (now_tick > clock_ticks)
         {
-            trigger = msg > 0 ? now_tick - clock_ticks : 0; //no ticks lost !
+            trigger = msg > 0 ? (int) (now_tick - clock_ticks) : 0; //no ticks lost !
             clock_ticks = now_tick;
             ticks++; //Ticks the number of events since the last call command 0
         }

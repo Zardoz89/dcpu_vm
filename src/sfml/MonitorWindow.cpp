@@ -117,8 +117,8 @@ void MonitorWindow::handleEvents()
             focus = false;
 
         } else if (event.type == sf::Event::Resized) {
-            double diffWidth = std::abs(event.size.width - old_size.x);
-            double diffHeight = std::abs(event.size.height - old_size.y);
+            double diffWidth = std::abs((double) event.size.width - old_size.x);
+            double diffHeight = std::abs((double) event.size.height - old_size.y);
 
             if (diffWidth > diffHeight) { // Enforces aspect ratio
                 newsize.x = event.size.width;

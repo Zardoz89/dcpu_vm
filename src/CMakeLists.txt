@@ -40,7 +40,7 @@ set(TinyXML-2_SRCS
 
 # DCPU-VM core lib
 add_library( dcpu
-    SHARED
+    STATIC
     ${dcpu_SRCS}
     )
     
@@ -50,7 +50,7 @@ include_directories(dcpu
 
 # DCPU-DEVICES lib
 add_library( dcpu-devices
-    SHARED
+    STATIC 
     ${dcpu-devices_SRCS}
     )
     

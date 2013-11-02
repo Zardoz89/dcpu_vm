@@ -3,8 +3,9 @@
 
 int fsize(FILE *fp){
     int prev=ftell(fp);
+	int sz;
     fseek(fp, 0L, SEEK_END);
-    int sz=ftell(fp);
+    sz=ftell(fp);
     fseek(fp,prev,SEEK_SET); //go back to where we were
     return sz;
 }
@@ -19,7 +20,8 @@ void fwritetext(const char* filename, const char* text)
 
 void fswitchendian(uint16_t* f, unsigned int size)
 {
-	for (unsigned int i = 0; i < size; i++)
+	unsigned int i;
+	for (i = 0; i < size; i++)
 	{
 		const uint8_t up =  f[i] & 0xFF;
 		const uint8_t down =  f[i] >> 8;

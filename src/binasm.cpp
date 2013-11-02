@@ -173,7 +173,7 @@ std::vector<std::string> BinAsm::split_line(const std::string& line)
 bool BinAsm::get_value(const std::string& word, uint16_t& v, std::string& err,
                                                             bool& unresolved)
 {
-	unsigned int s = word.size();
+	unsigned int s = (unsigned int) word.size();
     unresolved=false;
     if (!s) 
     {

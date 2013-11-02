@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include "config.hpp"
 
 namespace audio {
 
@@ -44,9 +45,9 @@ void SquareGenerator::setFreq(uint16_t f)
     f = f > sr_2 ? sr_2 : f;
 
     if (f < INV_LATENCY) { // We not need to use all buffer
-        buff_size = std::ceil(getSampleRate() / (double)(f));
+        buff_size = (size_t)( std::ceil(getSampleRate() / (double)(f)));
     } else {
-        buff_size = std::ceil(getSampleRate() / (double)(INV_LATENCY));
+        buff_size = (size_t)(std::ceil(getSampleRate() / (double)(INV_LATENCY)));
     }
    
     freq = f;
@@ -73,7 +74,7 @@ int16_t SquareGenerator::generator()
     double tmp = 2*3.1416 /(double)(getSampleRate());
     double out = std::sin(tmp * phase * freq); // Base freq
 
-    auto sr_2 = getSampleRate() /2;
+    uint32_t sr_2 = getSampleRate() /2;
 
     // We must avoid add harmonics over Nyquist limit or will be alised and 
     // will sound like strange noise mixed with the signal
@@ -95,7 +96,7 @@ int16_t SquareGenerator::generator()
     out = 2 * out / 3.1416;
 
     phase++;
-    return out * 0.9 * INT16_MAX ;
+    return (int16_t) (out * 0.9 * INT16_MAX);
 }
 
 } // END OF NAMESPACE audio
