@@ -282,7 +282,7 @@ ERROR_CODES M35_Floppy::write (uint16_t sector, uint16_t addr,
                                 unsigned& cycles) 
 {
     // From 0 to max
-    if (sector >= SECTORS_PER_TRACK*tracks)
+    if (sector >= SECTORS_PER_TRACK*tracks || isSectorBad (sector))
         return ERROR_CODES::BAD_SECTOR;
     if (wp_flag)
       return ERROR_CODES::PROTECTED;
@@ -316,7 +316,7 @@ ERROR_CODES M35_Floppy::read (uint16_t sector, uint16_t addr,
                                 unsigned& cycles) 
 {
     // From 0 to max
-    if (sector >= SECTORS_PER_TRACK*tracks)
+    if (sector >= SECTORS_PER_TRACK*tracks || isSectorBad (sector))
         return ERROR_CODES::BAD_SECTOR;
     
     cycles = setTrack(sector / SECTORS_PER_TRACK);
