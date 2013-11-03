@@ -116,7 +116,6 @@ TODO
 ----
 
  - Manager of floppy disks in use.
- - Implemente BadSector bitmap for floppies
  - A tool to create floppies and fill/copy data to it.
  - GUI of the floppy drive to eject and insert different floppies.
  - Several optimizations on rendering monitor loops
