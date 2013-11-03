@@ -20,6 +20,16 @@
 
 #endif
 
+#if _MSC_VER
+#define snprintf _snprintf
+//Fucking warnings
+#pragma warning(disable : 4996)
+#pragma warning(disable : 4333)
+#pragma warning(disable : 4018)
+#pragma warning(disable : 4244)
+#pragma warning(disable : 4018)
+#endif
+
 #if _MSC_VER && !__INTEL_COMPILER
 //manual type def
 // NOTE <cstdint> is supported from MSVC2012. 
@@ -45,6 +55,7 @@ typedef unsigned long long uint64_t;
 
 // Version of the program
 static const char _VERSION[] = "@PACKAGE_VERSION@";
-static const char _PRG_NAME[] = "@PACKAGE_NAME@";
+static const char _PRG_NAME[] = "dcpu-vm";
 
 #endif // __CONFIG__HPP_
+
