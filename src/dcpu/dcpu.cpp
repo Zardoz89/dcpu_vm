@@ -607,6 +607,10 @@ size_t DCPU::attachHardware (std::shared_ptr<IHardware> new_hw)
     if (attached_hardware.size() < MAX_DEVICES && new_hw) {
         attached_hardware.push_back (new_hw);
         new_hw->attachTo (this, attached_hardware.size() - 1);
+
+		if (new_hw->needTick())
+			needtick_hardware.push_back(new_hw);
+
         return attached_hardware.size() - 1;
     }
     
@@ -619,6 +623,13 @@ std::shared_ptr<IHardware> DCPU::detachHardware (size_t index)
         auto dev = attached_hardware[index];
         attached_hardware.erase (index + attached_hardware.begin() );
         dev->detach();
+		needtick_hardware.clear();
+
+		for (auto hw = attached_hardware.begin(); hw != attached_hardware.end();
+            hw ++) {
+			if ((*hw)->needTick())
+				needtick_hardware.push_back(*hw);
+		}
         return dev;
     }
     
@@ -757,7 +768,7 @@ void DCPU::handleHWInterrupts()
 void DCPU::tickHardware()
 {
 
-    for (auto hw = attached_hardware.begin(); hw != attached_hardware.end();
+    for (auto hw = needtick_hardware.begin(); hw != needtick_hardware.end();
             hw ++) {
         (*hw)->tick();
     }

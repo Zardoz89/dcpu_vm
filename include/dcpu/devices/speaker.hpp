@@ -44,6 +44,8 @@ public:
     virtual void tick() 
     { }
 
+	virtual bool needTick() {return false;}
+
     /**
      * @brief Returns actual frencuency of square wave sound generated
      */

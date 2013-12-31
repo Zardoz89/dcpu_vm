@@ -248,7 +248,8 @@ private:
     
     /* hardware: */
     std::vector<std::shared_ptr<IHardware>> attached_hardware;
-    
+    std::vector<std::shared_ptr<IHardware>> needtick_hardware; //reduce useless calls
+
     /* interrupt queue: */
     std::deque<uint16_t> int_queue;
     
@@ -305,7 +306,12 @@ public:
     /**
      * @brief Does a CPU Clock Tick
      */
-    virtual void tick() = 0;
+	virtual void tick() = 0;
+
+	/**
+	 * @brief does the hardware need to be ticked ?!
+	 */
+	virtual bool needTick() {return true;} //leave true for maximum compatibility
 
     /**
      * @brief Return attached Hardware Dev. Index
