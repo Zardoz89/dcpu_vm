@@ -1,16 +1,17 @@
 #include(GL)
-include(SFML)
+#include(SFML)
+find_package(SFML COMPONENTS audio graphics window system)
 
 set(dcpu_SRCS
     ./dcpu/dcpu.cpp
-    ./dcpu/disassembler.cpp  
+    ./dcpu/disassembler.cpp
     file.c
     )
 
 set(dcpu-vm_SRCS
     dcpu-vm.cpp
     #./dcpu/dcpu.cpp
-    #./dcpu/disassembler.cpp  
+    #./dcpu/disassembler.cpp
     binasm.cpp
     #file.c
     )
@@ -43,23 +44,23 @@ add_library( dcpu
     STATIC
     ${dcpu_SRCS}
     )
-    
+
 include_directories(dcpu
     ${DCPU-VM_INCLUDE_DIRS}
 )
 
 # DCPU-DEVICES lib
 add_library( dcpu-devices
-    STATIC 
+    STATIC
     ${dcpu-devices_SRCS}
     )
-    
+
 include_directories(dcpu-devices
     ${DCPU-VM_INCLUDE_DIRS}
 )
 
 # Main executable
-add_executable(dcpu-vm 
+add_executable(dcpu-vm
     ${dcpu-vm_SRCS}
     ${dcpu-vm_GRAPHICS_SRCS}
     ${dcpu-vm_SFML_SRCS}
