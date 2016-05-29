@@ -12,7 +12,7 @@ Based on [Benedek Vartok VM](https://bitbucket.org/benedek/dcpu-16/overview)
 
 ### REQUISITES
 
-DCPU VM needs SFML 2.1 installed in your system with the include files. 
+DCPU VM needs SFML 2.1 installed in your system with the include files.
 CMake handles the job of find the include files if your setup your system ain the apropiated way.
 
 COMPILATION
@@ -22,11 +22,11 @@ COMPILATION
     cd build
     cmake ..
     make
-    
+
 To make a Release build (compiling with optimizations):
 
     cmake -DCMAKE_BUILD_TYPE=Release ..
-    
+
 To make a Debug build:
 
     cmake -DCMAKE_BUILD_TYPE=Debug ..
@@ -43,7 +43,7 @@ RUNNING
 
 Just type **dcpu-vm --help** to get these infos.
 
-    dcpu-vm 0.1
+    dcpu-vm 0.2.0
     usage : dcpu-vm [-options] <dcpu16-exe>
     --------------------------------------------------------
       options:
@@ -74,11 +74,11 @@ Just type **dcpu-vm --help** to get these infos.
 
 
 There is a debug/step mode that can be activated and deactivated with **System+F12**:
- 
+
  - **F1** : Single step (print the current instruction on the console)
  - **F2** : Print registers states into console
 
-Available shortcuts all-time: 
+Available shortcuts all-time:
 
  - **F3** : Reset the DCPU
  - **F4**  : Dump the ram into file "dump_ram"
@@ -115,6 +115,11 @@ Actually admit this device list:
 TODO
 ----
 
+ - **Update to Techcomplint specs**
+ - **bin2dsk** option to :
+   - Raw copy to disk
+   - Install custom bootloader on sector 0
+ - Rewrite custom specs
  - Manager of floppy disks in use.
  - A tool to create floppies and fill/copy data to it.
  - GUI of the floppy drive to eject and insert different floppies.
@@ -123,8 +128,8 @@ TODO
  - More options to Debug mode
  - DCPU manager and separated graphic rendering threads
  - Correct bad English :P
- 
- 
+
+
 TOOLS
 =====
 
@@ -147,7 +152,7 @@ Just type **pbm2font --help** to get these infos.
                 dat -> Uses universal .dat output format
                 hex_dump -> Generates a hexadecimal dump
                 By default, the ouput format is "dat" and the charset is 4x8
-                
+
 If no output file has been chosen, then it will write to standard out.
 
 ### HOW IT WORKS
@@ -163,14 +168,19 @@ BIN2DSK is a small tool to convert bin dcpu programs into bootables floppy disk 
 
 ### RUN
 
-    usage : bin2dsk <input.bin> <output.dsk> (-f)
-    
-Actually there are 2 way to boot from a floppy with the mrboot program : 
- - the program is small so it can be stored on the MBR (sector 0) and loaded at the address 0x7C00
- - the program is too big and it is stored into many sectors so only mrboot can boot it with a signature on the sector 0
- 
-You can force the program to create mrboot signed floppy by using the option -f  after the filenames 
+    usage : bin2dsk <input.bin> <output.dsk> (-b mrboot|bbos)
 
+Actually there are a few ways to boot from a floppy:
+ - Using BBOS :
+    - Using the BBOS bootloader
+    - Puting the magic number on boot sector (custom bootloader or a program of less that 510 words). Loads at address 0x0000
+ - Using mrboot :
+    - Using MrBoot bootloader
+    - Puting the magic number on boot sector. Loads at the address 0x7C00
+
+The -b option controls this. If -b is not pass, the binary file will be copy as is to the disk.
+With "mrboot" option, would put mrboot bootloader on the disk.
+With "bbos" option, would pur BBOS bootloader on the disk.
 
 
 
